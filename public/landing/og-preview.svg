@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="t">
-  <title id="t">3D Box Studio ù browser packaging simulator preview</title>
+  <title id="t">Free packaging box designer ó 3D Box Studio preview</title>
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0a0d14"/>
@@ -17,7 +17,7 @@
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <text x="72" y="120" fill="#e8eaef" font-family="system-ui,sans-serif" font-size="52" font-weight="700">3D Box Studio</text>
-  <text x="72" y="185" fill="#8b93a4" font-family="system-ui,sans-serif" font-size="26">Packaging simulator in your browser</text>
+  <text x="72" y="185" fill="#8b93a4" font-family="system-ui,sans-serif" font-size="26">Free 3D packaging box designer in your browser</text>
   <g transform="translate(620 120)" filter="url(#glow)">
     <path fill="url(#box)" d="M0 80 L140 20 L280 80 L140 140 Z"/>
     <path fill="#6d5238" d="M0 80 L0 220 L140 280 L140 140 Z"/>
@@ -25,5 +25,5 @@
     <path fill="#c4a574" d="M140 20 L280 80 L140 140 L0 80 Z"/>
   </g>
   <rect x="72" y="480" width="1056" height="3" rx="1.5" fill="#3d9eff" opacity="0.5"/>
-  <text x="72" y="560" fill="#6b7384" font-family="system-ui,sans-serif" font-size="18">Free ù No account ù Runs locally in your browser</text>
+  <text x="72" y="560" fill="#6b7384" font-family="system-ui,sans-serif" font-size="18">Free ∑ No account ∑ Runs locally in your browser</text>
 </svg>

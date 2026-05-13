@@ -69,17 +69,63 @@ label {
   margin-bottom: 0.35rem;
 }
 
-.panel-section {
-  margin-bottom: 1.25rem;
+.panel-collapse {
+  margin-bottom: 1.1rem;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: rgba(0, 0, 0, 0.22);
 }
 
-.panel-section h3 {
+.panel-collapse-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--muted);
-  margin: 0 0 0.65rem;
   font-weight: 600;
+  user-select: none;
+}
+
+.panel-collapse-summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-collapse-summary::after {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-135deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0.85;
+  margin-top: -0.15rem;
+}
+
+.panel-collapse[open] > .panel-collapse-summary::after {
+  transform: rotate(45deg);
+  margin-top: 0.1rem;
+}
+
+.panel-collapse-summary:hover {
+  color: var(--text);
+}
+
+.panel-collapse-summary:hover::after {
+  border-color: var(--text);
+  opacity: 1;
+}
+
+.panel-collapse-body {
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--panel-border);
 }
 
 .btn {
@@ -173,4 +219,12 @@ label {
     opacity: 0.55;
     transform: scale(0.92);
   }
+}
+
+.studio-top-bar-link {
+  transition: color 0.15s ease;
+}
+
+.studio-top-bar-link:hover {
+  color: var(--text);
 }

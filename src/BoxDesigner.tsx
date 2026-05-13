@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type SyntheticEvent,
+} from "react";
 import type { RootState } from "@react-three/fiber";
 import {
   BOX_DESIGN_STORAGE_KEY,
@@ -75,6 +84,20 @@ function IconClearImage() {
       <line x1="10" y1="11" x2="10" y2="17" />
       <line x1="14" y1="11" x2="14" y2="17" />
     </svg>
+  );
+}
+
+function PanelCollapse({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <details
+      className="panel-collapse"
+      open={open}
+      onToggle={(e: SyntheticEvent<HTMLDetailsElement>) => setOpen(e.currentTarget.open)}
+    >
+      <summary className="panel-collapse-summary">{title}</summary>
+      <div className="panel-collapse-body">{children}</div>
+    </details>
   );
 }
 
@@ -503,8 +526,7 @@ export default function BoxDesigner() {
           </p>
         </header>
 
-        <section className="panel-section">
-          <h3>Saved design</h3>
+        <PanelCollapse title="Saved design">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             Everything below is stored in your browser under <span className="dim-badge">{BOX_DESIGN_STORAGE_KEY}</span> and
             reapplied on reload (images as base64; very large files may hit storage limits). Use JSON to move a design
@@ -539,10 +561,9 @@ export default function BoxDesigner() {
               {persistMessage}
             </p>
           )}
-        </section>
+        </PanelCollapse>
 
-        <section className="panel-section">
-          <h3>Outer dimensions</h3>
+        <PanelCollapse title="Outer dimensions">
           <div style={{ marginBottom: "0.65rem" }}>
             <label>Unit</label>
             <select value={unit} onChange={(e) => setUnit(e.target.value as LengthUnit)}>
@@ -584,10 +605,9 @@ export default function BoxDesigner() {
             </div>
           </div>
           <div className="dim-badge">{dimHint}</div>
-        </section>
+        </PanelCollapse>
 
-        <section className="panel-section">
-          <h3>Board / material</h3>
+        <PanelCollapse title="Board / material">
           <label>Preset</label>
           <select value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
             {MATERIAL_PRESETS.map((p) => (
@@ -599,10 +619,9 @@ export default function BoxDesigner() {
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.5rem" }}>
             PBR-style response (roughness, clearcoat, metalness). Drop your own substrate by swapping presets in code.
           </p>
-        </section>
+        </PanelCollapse>
 
-        <section className="panel-section">
-          <h3>Opening style</h3>
+        <PanelCollapse title="Opening style">
           <label>Mechanism</label>
           <select value={opening} onChange={(e) => setOpening(e.target.value as OpeningStyle)}>
             {openingOptions.map((o) => (
@@ -635,10 +654,9 @@ export default function BoxDesigner() {
               <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => setOpenT(Number(e.target.value))} />
             </div>
           )}
-        </section>
+        </PanelCollapse>
 
-        <section className="panel-section">
-          <h3>Face artwork</h3>
+        <PanelCollapse title="Face artwork">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             PNG or JPG recommended. Art is UV-stretched to each rectangle; for print-ready proofs, design to the flat dieline
             first, then preview here. Hover the rotate and clear icons beside each face for hints; rotation advances 90° per
@@ -688,43 +706,64 @@ export default function BoxDesigner() {
               )}
             </div>
           ))}
-          <div className="row-2" style={{ marginTop: "0.5rem" }}>
-            <button type="button" className="btn" onClick={clearAllTextures}>
+          <div style={{ marginTop: "0.5rem" }}>
+            <button type="button" className="btn" style={{ width: "100%" }} onClick={clearAllTextures}>
               Clear all artwork
             </button>
-            <button type="button" className="btn btn-primary" onClick={exportPng}>
-              Export viewport PNG
-            </button>
           </div>
-        </section>
+        </PanelCollapse>
 
-        <section className="panel-section">
-          <h3>Viewport & lighting</h3>
+        <PanelCollapse title="Viewport & lighting">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            Record captures only the 3D preview (left)—not the settings panel. After a 3-second countdown, recording runs up
-            to 15 seconds while you adjust options on the right; you can stop early. The file is MP4 when your browser
-            supports it, otherwise WebM (plays in most players).
+            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Capture.</strong> Export a still of the 3D preview as PNG,
+            or record a short clip (only the viewport on the left—not this panel). After a 3-second countdown, recording runs
+            up to 15 seconds while you change options here; you can stop early. The file is MP4 when your browser supports it,
+            otherwise WebM (plays in most players).
           </p>
-          <div className="row-2" style={{ marginBottom: "0.75rem" }}>
-            {recordPhase === "countdown" ? (
-              <>
+          {recordPhase === "recording" ? (
+            <>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={stopViewportRecording}
+                  style={{ width: "100%", borderColor: "#b91c1c", color: "#fecaca" }}
+                >
+                  Stop & download video
+                </button>
+              </div>
+              <div style={{ marginBottom: "0.75rem" }}>
+                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
+                  Export viewport PNG
+                </button>
+              </div>
+            </>
+          ) : recordPhase === "countdown" ? (
+            <>
+              <div className="row-2" style={{ marginBottom: "0.5rem" }}>
                 <button type="button" className="btn btn-ghost" onClick={cancelRecordCountdown}>
                   Cancel countdown
                 </button>
                 <span className="dim-badge" style={{ marginTop: 0, alignSelf: "center" }}>
                   Starting in {recordCountdown}…
                 </span>
-              </>
-            ) : recordPhase === "recording" ? (
-              <button type="button" className="btn" onClick={stopViewportRecording} style={{ borderColor: "#b91c1c", color: "#fecaca" }}>
-                Stop & download video
-              </button>
-            ) : (
+              </div>
+              <div style={{ marginBottom: "0.75rem" }}>
+                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
+                  Export viewport PNG
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="row-2" style={{ marginBottom: "0.75rem" }}>
               <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
                 Record presentation (15s)
               </button>
-            )}
-          </div>
+              <button type="button" className="btn" onClick={exportPng}>
+                Export viewport PNG
+              </button>
+            </div>
+          )}
           {recordError && (
             <p style={{ fontSize: "0.8rem", color: "#fca5a5", margin: "0 0 0.65rem" }} role="alert">
               {recordError}
@@ -852,7 +891,7 @@ export default function BoxDesigner() {
               </div>
             )}
           </div>
-        </section>
+        </PanelCollapse>
       </aside>
     </div>
   );

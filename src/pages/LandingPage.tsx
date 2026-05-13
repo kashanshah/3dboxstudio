@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useMemo } from "react";
+import { useLayoutEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getSiteOrigin } from "../seo/siteConfig";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_DOMAIN, SITE_ORIGIN_PUBLIC } from "../siteMeta";
@@ -6,21 +6,15 @@ import ShowcaseSection from "../components/ShowcaseSection";
 import "../landing.css";
 
 function LogoMark() {
-  const uid = useId().replace(/:/g, "");
-  const gradId = `lm-g-${uid}`;
   return (
-    <svg className="landing-logo-mark" width="34" height="34" viewBox="0 0 32 32" aria-hidden>
-      <defs>
-        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#5eb0ff" />
-          <stop offset="100%" stopColor="#2563a8" />
-        </linearGradient>
-      </defs>
-      <path
-        fill={`url(#${gradId})`}
-        d="M16 2L4 9v14l12 7 12-7V9L16 2zm0 2.2l8.5 5-8.5 4.9L7.5 9.2 16 4.2zM6 11.4l8 4.6v8.5l-8-4.7v-8.4zm10 13.1v-8.5l8-4.6v8.4l-8 4.7z"
-      />
-    </svg>
+    <img
+      className="landing-logo-mark"
+      src="/logo-mark.svg"
+      width={34}
+      height={34}
+      alt=""
+      decoding="async"
+    />
   );
 }
 
@@ -128,13 +122,13 @@ function BrowserShell({ children }: { children: React.ReactNode }) {
 }
 
 const DESC =
-  "3D Box Studio is a free, open-source packaging simulator in your browser (3dboxstudio.com). Configure carton dimensions, PBR materials, lid and flap openings, per-face artwork with rotation, HDRI lighting, export viewport PNGs, and import/export a portable JSON file of your full design (including embedded images). Saves locally—no account required.";
+  "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
 
 export default function LandingPage() {
   const origin = useMemo(() => getSiteOrigin(), []);
 
   useLayoutEffect(() => {
-    document.title = "3D Box Studio — Open-source packaging simulator & carton preview";
+    document.title = "Free packaging box designer — 3D Box Studio | 3dboxstudio.com";
     const setMeta = (name: string, content: string, attr: "name" | "property" = "name") => {
       let el = document.querySelector(`meta[${attr}="${name}"]`);
       if (!el) {
@@ -315,11 +309,11 @@ export default function LandingPage() {
             <div className="landing-container">
               <section className="landing-hero" aria-labelledby="hero-heading">
               <div className="landing-hero-copy">
-                <p className="landing-eyebrow">Open source · Browser · WebGL · No account</p>
+                <p className="landing-eyebrow">Free forever · Browser · WebGL · No account</p>
                 <h1 id="hero-heading" className="landing-display">
-                  <span className="landing-hero-title-line">3D Box Studio</span>
-                  <span className="landing-hero-title-accent">& packaging simulator</span>
-                  <span className="landing-hero-title-line landing-hero-title-sub">in your browser</span>
+                  <span className="landing-hero-title-line">Free packaging box designer</span>
+                  <span className="landing-hero-title-accent">and 3D carton simulator</span>
+                  <span className="landing-hero-title-line landing-hero-title-sub">3D Box Studio · in your browser</span>
                 </h1>
                 <p className="landing-hero-lead">
                   Preview folding cartons and mailer-style boxes with realistic materials, HDRI lighting, lid and flap motions,
@@ -336,12 +330,13 @@ export default function LandingPage() {
                   </a>
                 </div>
                 <ul className="landing-hero-meta" aria-label="Highlights">
-                  <li>Open source</li>
+                  <li>Free packaging designer</li>
                   <li>No signup</li>
                   <li>Runs locally</li>
                   <li>Save in-browser</li>
                   <li>Export PNG</li>
                   <li>JSON import/export</li>
+                  <li>Open source (MIT)</li>
                 </ul>
               </div>
               <figure className="landing-hero-visual">
@@ -742,7 +737,7 @@ export default function LandingPage() {
             </a>
           </p>
           <p className="landing-footer-tag">
-            Open source · {SITE_DOMAIN} · MIT licensed · browser 3D packaging preview.
+            Free packaging box designer · {SITE_DOMAIN} · 3D preview in your browser · open source (MIT).
           </p>
           {origin ? (
             <p className="landing-footer-tip">

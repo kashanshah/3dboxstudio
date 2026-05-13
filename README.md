@@ -1,9 +1,14 @@
+<p align="center">
+  <a href="https://3dboxstudio.com/">
+    <img src="./public/logo.svg" alt="3D Box Studio" width="280" />
+  </a>
+</p>
+
 # 3D Box Studio
 
-**Live site:** [3dboxstudio.com](https://3dboxstudio.com)  
-**Repository:** [github.com/kashanshah/3dboxstudio](https://github.com/kashanshah/3dboxstudio)
+**Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, and **JSON import/export** (designs with embedded images). Work is saved in **localStorage** unless you clear it.
 
-Free, **open-source** browser app to preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, and **JSON import/export** (designs with embedded images). Work is saved in **localStorage** in your browser unless you clear it.
+The project is also **open source** under the MIT License—issues and PRs welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
 
 ## Stack
 
@@ -31,7 +36,7 @@ Create a `.env` file (see `.env.example`) and set:
 
 - **`VITE_SITE_ORIGIN`** — Full origin of your deployment, **no trailing slash**, e.g. `https://3dboxstudio.com`. Used for canonical URLs, Open Graph, and JSON-LD on the landing page.
 
-## Open source
+## License & contributing
 
 Licensed under the [MIT License](./LICENSE). Issues and pull requests are welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
 

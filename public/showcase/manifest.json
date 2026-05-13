@@ -3,8 +3,30 @@
     {
       "src": "/showcase/videos/kazomo-spin-mop.mp4",
       "type": "video",
-      "alt": "Kazomo spin mop — 360° packaging-style product video",
-      "caption": "Example client reel (MP4 under public/showcase/videos/). Add rows for each asset in public/showcase/images/ or videos/."
+      "layout": "wide",
+      "alt": "Kazomo spin mop — 360° turntable packaging video",
+      "caption": "Turntable reel: gloss highlights, soft shadow tray, and label read at a glance—ideal for Amazon PDP or pitch decks."
+    },
+    {
+      "src": "/showcase/images/box-preview-1778644832942.webp",
+      "type": "image",
+      "layout": "tall",
+      "alt": "Stylized carton with studio lighting",
+      "caption": "Structural hero still: warm board tones and rim light that read on both retina displays and printed one-pagers."
+    },
+    {
+      "src": "/showcase/images/box-preview-1778644848577.webp",
+      "type": "image",
+      "layout": "standard",
+      "alt": "3D Box Studio interface with viewport and controls",
+      "caption": "Live studio layout—dimensions, materials, and the WebGL viewport together so art directors can iterate without leaving the browser."
+    },
+    {
+      "src": "/showcase/images/box-preview-1778644859410.webp",
+      "type": "image",
+      "layout": "standard",
+      "alt": "Per-face artwork upload panel",
+      "caption": "Per-face artwork controls: quick rotate and clear so dieline exports map cleanly onto the 3D preview."
     }
   ]
 }

@@ -1,21 +1,32 @@
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { GITHUB_REPO_URL } from "../siteMeta";
 
 export type ShowcaseFilter = "all" | "image" | "video";
+
+export type ShowcaseLayout = "standard" | "tall" | "wide";
 
 export type ShowcaseItem = {
   src: string;
   type: "image" | "video";
   alt?: string;
   caption?: string;
+  layout?: ShowcaseLayout;
 };
 
 const FALLBACK_ITEMS: ShowcaseItem[] = [
   {
     src: "/showcase/videos/kazomo-spin-mop.mp4",
     type: "video",
+    layout: "wide",
     alt: "Product packaging-style rotation video",
+    caption: "Example turntable reel from the showcase folder.",
   },
 ];
+
+function parseLayout(v: unknown): ShowcaseLayout {
+  if (v === "tall" || v === "wide" || v === "standard") return v;
+  return "standard";
+}
 
 function normalizeManifest(raw: unknown): ShowcaseItem[] {
   if (!raw || typeof raw !== "object" || !("items" in raw)) return FALLBACK_ITEMS;
@@ -33,16 +44,22 @@ function normalizeManifest(raw: unknown): ShowcaseItem[] {
       type,
       alt: typeof o.alt === "string" ? o.alt : undefined,
       caption: typeof o.caption === "string" ? o.caption : undefined,
+      layout: parseLayout(o.layout),
     });
   }
   return out.length > 0 ? out : FALLBACK_ITEMS;
 }
 
+function layoutClass(layout: ShowcaseLayout | undefined): string {
+  const l = layout ?? "standard";
+  if (l === "tall") return "landing-showcase-tile--tall";
+  if (l === "wide") return "landing-showcase-tile--wide";
+  return "landing-showcase-tile--standard";
+}
+
 export default function ShowcaseSection() {
   const [allItems, setAllItems] = useState<ShowcaseItem[]>(FALLBACK_ITEMS);
   const [filter, setFilter] = useState<ShowcaseFilter>("all");
-  const [index, setIndex] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -61,48 +78,6 @@ export default function ShowcaseSection() {
     if (filter === "all") return allItems;
     return allItems.filter((x) => x.type === filter);
   }, [allItems, filter]);
-
-  useEffect(() => {
-    setIndex((i) => {
-      if (filtered.length === 0) return 0;
-      return Math.min(i, filtered.length - 1);
-    });
-  }, [filtered.length, filter, allItems.length]);
-
-  const current = filtered[index] ?? null;
-
-  useEffect(() => {
-    if (!autoPlay || filtered.length <= 1) return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mq.matches) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (filtered.length ? (i + 1) % filtered.length : 0));
-    }, 7000);
-    return () => window.clearInterval(id);
-  }, [autoPlay, filtered.length, filter]);
-
-  const goPrev = useCallback(() => {
-    if (filtered.length === 0) return;
-    setIndex((i) => (i - 1 + filtered.length) % filtered.length);
-  }, [filtered.length]);
-
-  const goNext = useCallback(() => {
-    if (filtered.length === 0) return;
-    setIndex((i) => (i + 1) % filtered.length);
-  }, [filtered.length]);
-
-  const onStageKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        goNext();
-      }
-    },
-    [goPrev, goNext]
-  );
 
   const counts = useMemo(
     () => ({
@@ -125,19 +100,20 @@ export default function ShowcaseSection() {
             03
           </span>
           <div className="landing-section-head-copy">
-            <p className="landing-eyebrow landing-eyebrow--section">Showcase</p>
+            <p className="landing-eyebrow landing-eyebrow--section">Portfolio</p>
             <h2 id="showcase-heading" className="landing-display">
               Packaging visuals &amp; motion
             </h2>
           </div>
         </div>
+
         <p className="landing-section-intro">
-          A rotating reel of images and short clips from <code>public/showcase/</code>. Edit{" "}
-          <code>public/showcase/manifest.json</code> whenever you add files under <code>images/</code> or{" "}
-          <code>videos/</code>.
+          Stills and short clips we ship to sell structure, print, and motion in one breath—turntable captures for PDPs,
+          board-and-foil looks for pitch decks, and in-app shots that show how teams actually work inside{" "}
+          <strong>3D Box Studio</strong>. The grid below mixes photos and video; filter when you only want one format.
         </p>
 
-        <div className="landing-showcase-toolbar" role="group" aria-label="Showcase filters and playback">
+        <div className="landing-showcase-toolbar" role="group" aria-label="Showcase filters">
           <div className="landing-showcase-filters">
             <span className="landing-showcase-filters-label" id="showcase-filter-label">
               Show
@@ -165,84 +141,58 @@ export default function ShowcaseSection() {
               ))}
             </div>
           </div>
-          <label className="landing-showcase-autoplay">
-            <input type="checkbox" checked={autoPlay} onChange={(e) => setAutoPlay(e.target.checked)} />
-            Auto-advance (7s)
-          </label>
         </div>
 
         {filtered.length === 0 ? (
           <p className="landing-showcase-empty" role="status">
-            No items match this filter. Add photos or videos to the manifest, or switch to <strong>All</strong>.
+            No items match this filter. Switch to <strong>All</strong> or add entries in{" "}
+            <code>public/showcase/manifest.json</code>.
           </p>
         ) : (
-          <>
-            <div
-              className="landing-showcase-stage-wrap"
-              tabIndex={0}
-              onKeyDown={onStageKeyDown}
-              role="region"
-              aria-roledescription="carousel"
-              aria-label="Showcase media"
-            >
-              <button type="button" className="landing-showcase-arrow landing-showcase-arrow--prev" onClick={goPrev} aria-label="Previous item">
-                ‹
-              </button>
-              <div className="landing-showcase-stage" aria-live="polite" aria-atomic="true">
-                {current?.type === "video" ? (
-                  <video
-                    key={current.src}
-                    className="landing-showcase-media"
-                    src={current.src}
-                    controls
-                    playsInline
-                    loop
-                    preload="metadata"
-                    aria-label={current.alt ?? "Showcase video"}
-                  />
-                ) : (
-                  <img
-                    key={current?.src}
-                    className="landing-showcase-media"
-                    src={current?.src}
-                    alt={current?.alt ?? "Showcase image"}
-                    loading="lazy"
-                  />
-                )}
-              </div>
-              <button type="button" className="landing-showcase-arrow landing-showcase-arrow--next" onClick={goNext} aria-label="Next item">
-                ›
-              </button>
-            </div>
-            {current?.caption && <p className="landing-showcase-caption">{current.caption}</p>}
-            <p className="landing-showcase-hint">
-              Focus the gallery (Tab), then <span className="landing-showcase-hint-kbd">←</span> /{" "}
-              <span className="landing-showcase-hint-kbd">→</span> · {index + 1} of {filtered.length}
-            </p>
-
-            <div className="landing-showcase-thumbs" role="tablist" aria-label="Showcase thumbnails">
-              {filtered.map((item, i) => (
-                <button
-                  key={`${item.src}-${i}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={i === index}
-                  className={`landing-showcase-thumb${i === index ? " is-active" : ""}`}
-                  onClick={() => setIndex(i)}
-                  title={item.alt ?? (item.type === "video" ? "Video" : "Image")}
-                >
+          <div className="landing-showcase-masonry" role="list">
+            {filtered.map((item, i) => (
+              <figure
+                key={`${item.src}-${i}`}
+                className={`landing-showcase-tile ${layoutClass(item.layout)}`}
+                role="listitem"
+              >
+                <div className="landing-showcase-tile-media-wrap">
                   {item.type === "video" ? (
-                    <span className="landing-showcase-thumb-video" aria-hidden>
-                      ▶
-                    </span>
+                    <video
+                      className="landing-showcase-tile-video"
+                      src={item.src}
+                      controls
+                      playsInline
+                      loop
+                      preload={i === 0 ? "metadata" : "none"}
+                      aria-label={item.alt ?? "Showcase video"}
+                    />
                   ) : (
-                    <img src={item.src} alt="" loading="lazy" />
+                    <img
+                      className="landing-showcase-tile-img"
+                      src={item.src}
+                      alt={item.alt ?? "Showcase image"}
+                      loading="lazy"
+                      decoding="async"
+                    />
                   )}
-                </button>
-              ))}
-            </div>
-          </>
+                </div>
+                {item.caption && <figcaption className="landing-showcase-tile-caption">{item.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
         )}
+
+        <p className="landing-showcase-footnote">
+          Curating your own reel? Drop files under <code>public/showcase/images/</code> or{" "}
+          <code>public/showcase/videos/</code>, list them in <code>manifest.json</code>, and use optional{" "}
+          <code>layout</code>: <code>&quot;standard&quot;</code>, <code>&quot;tall&quot;</code>, or{" "}
+          <code>&quot;wide&quot;</code> for the masonry spans. Source lives on{" "}
+          <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+          .
+        </p>
       </div>
     </section>
   );
