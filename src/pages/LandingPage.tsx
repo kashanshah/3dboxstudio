@@ -1,5 +1,6 @@
+import { Fancybox } from "@fancyapps/ui";
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { getSiteOrigin } from "../seo/siteConfig";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_DOMAIN, SITE_ORIGIN_PUBLIC } from "../siteMeta";
@@ -163,128 +164,6 @@ const LANDING_PRODUCT_GALLERY: LandingGalleryItem[] = [
   },
 ];
 
-function LandingGalleryLightbox({
-  items,
-  index,
-  onClose,
-  onPrev,
-  onNext,
-}: {
-  items: LandingGalleryItem[];
-  index: number;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-}) {
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const item = items[index];
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        onPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        onNext();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, onPrev, onNext]);
-
-  useEffect(() => {
-    closeRef.current?.focus();
-  }, [index]);
-
-  if (!item) return null;
-
-  const canPrev = index > 0;
-  const canNext = index < items.length - 1;
-
-  return createPortal(
-    <div
-      className="landing-lightbox-root"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="landing-lightbox-title"
-    >
-      <button
-        type="button"
-        className="landing-lightbox-backdrop"
-        tabIndex={-1}
-        aria-label="Close gallery"
-        onClick={onClose}
-      />
-      <div className="landing-lightbox-sheet">
-        <div className="landing-lightbox-toolbar">
-          <p id="landing-lightbox-title" className="landing-lightbox-title">
-            {item.caption}
-          </p>
-          <span className="landing-lightbox-counter" aria-live="polite">
-            {index + 1} / {items.length}
-          </span>
-          <button ref={closeRef} type="button" className="landing-lightbox-close" onClick={onClose} aria-label="Close gallery">
-            <span aria-hidden>×</span>
-          </button>
-        </div>
-        <div className="landing-lightbox-stage">
-          <button
-            type="button"
-            className="landing-lightbox-nav landing-lightbox-nav--prev"
-            onClick={onPrev}
-            disabled={!canPrev}
-            aria-label="Previous screenshot"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-              <path
-                d="M15 6l-6 6 6 6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.25"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-          <div className="landing-lightbox-frame">
-            <img
-              className="landing-lightbox-img"
-              src={item.src}
-              width={item.width}
-              height={item.height}
-              alt={item.alt}
-              decoding="async"
-            />
-          </div>
-          <button
-            type="button"
-            className="landing-lightbox-nav landing-lightbox-nav--next"
-            onClick={onNext}
-            disabled={!canNext}
-            aria-label="Next screenshot"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
-              <path
-                d="M9 6l6 6-6 6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.25"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
 const DESC =
   "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
 
@@ -298,36 +177,26 @@ export default function LandingPage() {
   const [navBarHeight, setNavBarHeight] = useState(0);
   const navBarRef = useRef<HTMLElement | null>(null);
   const navPanelRef = useRef<HTMLElement | null>(null);
-  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
-  const galleryFocusReturnRef = useRef<HTMLElement | null>(null);
 
-  const openGallery = useCallback((index: number) => {
-    galleryFocusReturnRef.current = document.activeElement as HTMLElement | null;
-    setGalleryIndex(index);
-  }, []);
-
-  const closeGallery = useCallback(() => {
-    setGalleryIndex(null);
-    queueMicrotask(() => {
-      galleryFocusReturnRef.current?.focus?.();
-      galleryFocusReturnRef.current = null;
+  const openProductTourGallery = useCallback((startIndex: number) => {
+    const slides = LANDING_PRODUCT_GALLERY.map((shot) => ({
+      src: shot.src,
+      type: "image" as const,
+      caption: shot.caption,
+      alt: shot.alt,
+    }));
+    Fancybox.show(slides, {
+      startIndex,
+      closeExisting: true,
+      theme: "auto",
+      placeFocusBack: true,
     });
-  }, []);
-
-  const galleryPrev = useCallback(() => {
-    setGalleryIndex((i) => (i === null ? null : Math.max(0, i - 1)));
-  }, []);
-
-  const galleryNext = useCallback(() => {
-    setGalleryIndex((i) =>
-      i === null ? null : Math.min(LANDING_PRODUCT_GALLERY.length - 1, i + 1)
-    );
   }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 880px)");
     const syncBodyScrollLock = () => {
-      const lock = galleryIndex !== null || (navOpen && mq.matches);
+      const lock = navOpen && mq.matches;
       document.body.style.overflow = lock ? "hidden" : "";
     };
     syncBodyScrollLock();
@@ -336,7 +205,7 @@ export default function LandingPage() {
       mq.removeEventListener("change", syncBodyScrollLock);
       document.body.style.overflow = "";
     };
-  }, [galleryIndex, navOpen]);
+  }, [navOpen]);
 
   useEffect(() => {
     if (!navOpen) return;
@@ -563,11 +432,6 @@ export default function LandingPage() {
               <span />
             </span>
           </button>
-          <div
-            className={`landing-nav-scrim${navOpen ? " is-visible" : ""}`}
-            aria-hidden
-            onClick={() => setNavOpen(false)}
-          />
           <nav
             ref={navPanelRef}
             id="landing-primary-nav"
@@ -807,7 +671,8 @@ export default function LandingPage() {
           </div>
           <p className="landing-section-intro">
             Below are illustrative screenshots of the interface layout and key workflows. Click any shot to open a
-            full-size gallery (arrow keys to browse, Escape to close). Replace images with real captures from{" "}
+            full-size lightbox (same viewer as the portfolio—arrow keys to browse, Escape to close). Replace images with
+            real captures from{" "}
             <Link to="/studio">your live studio</Link> for even stronger social proof and SEO image search coverage.
           </p>
           <div className="landing-screens">
@@ -816,7 +681,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   className="landing-shot-expand"
-                  onClick={() => openGallery(i)}
+                  onClick={() => openProductTourGallery(i)}
                   aria-haspopup="dialog"
                   aria-label={`Open screenshot ${i + 1} in gallery: ${shot.caption}`}
                 >
@@ -1037,15 +902,6 @@ export default function LandingPage() {
         </div>
         </div>
       </footer>
-      {galleryIndex !== null && (
-        <LandingGalleryLightbox
-          items={LANDING_PRODUCT_GALLERY}
-          index={galleryIndex}
-          onClose={closeGallery}
-          onPrev={galleryPrev}
-          onNext={galleryNext}
-        />
-      )}
     </div>
   );
 }

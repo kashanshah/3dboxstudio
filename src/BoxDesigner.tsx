@@ -717,8 +717,9 @@ export default function BoxDesigner() {
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             <strong style={{ color: "var(--text)", fontWeight: 600 }}>Export & record.</strong> PNG is a still of the 3D
             preview on the left (not this panel). Video records that same viewport: after a 3-second countdown, capture runs up
-            to 15 seconds while you change options in the sidebar; you can stop early. Output is MP4 when your browser supports
-            it, otherwise WebM.
+            to 15 seconds while you change options in the sidebar; you can stop early. A one-second end card credits{" "}
+            <strong style={{ color: "var(--text)", fontWeight: 600 }}>www.3dboxstudio.com</strong>. Output is MP4 when your
+            browser supports it, otherwise WebM.
           </p>
           {recordPhase === "recording" ? (
             <>

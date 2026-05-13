@@ -4,6 +4,10 @@ export type ViewportRecordingPhase = "idle" | "countdown" | "recording";
 
 const COUNTDOWN_START = 3;
 const MAX_RECORD_MS = 15_000;
+/** Extra tail card appended to every export (matches primary button gradient + panel tone). */
+const OUTRO_MS = 1000;
+const CREDIT_LINE = "Made with";
+const CREDIT_URL = "www.3dboxstudio.com";
 
 function pickRecorderMime(): string | undefined {
   const candidates = [
@@ -35,6 +39,28 @@ function downloadBlob(blob: Blob, extension: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Same stops as `.btn-primary` plus a touch of `--panel` at the bottom edge. */
+function drawOutroFrame(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, "#4aa3ff");
+  g.addColorStop(0.55, "#3d9eff");
+  g.addColorStop(0.88, "#2563a8");
+  g.addColorStop(1, "#141820");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = "#f8fafc";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const line1 = Math.round(Math.max(16, Math.min(32, w / 24)));
+  const line2 = Math.round(Math.max(14, Math.min(26, w / 20)));
+  const gap = line1 * 0.55;
+  ctx.font = `600 ${line1}px system-ui, "DM Sans", sans-serif`;
+  ctx.fillText(CREDIT_LINE, w / 2, h / 2 - gap);
+  ctx.font = `700 ${line2}px system-ui, "DM Sans", sans-serif`;
+  ctx.fillText(CREDIT_URL, w / 2, h / 2 + gap * 0.65);
+}
+
 export function useViewportRecording() {
   const [phase, setPhase] = useState<ViewportRecordingPhase>("idle");
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -48,6 +74,12 @@ export function useViewportRecording() {
   const maxDurationTimeoutRef = useRef<number | undefined>(undefined);
   const tickIntervalRef = useRef<number | undefined>(undefined);
   const endingRef = useRef(false);
+
+  const getCanvasRef = useRef<() => HTMLCanvasElement | null>(() => null);
+  const compositeRef = useRef<{ canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null>(null);
+  const paintRafRef = useRef<number | null>(null);
+  const inOutroRef = useRef(false);
+  const outroEndAtRef = useRef(0);
 
   const clearCountdownInterval = useCallback(() => {
     if (countdownIntervalRef.current !== undefined) {
@@ -67,10 +99,28 @@ export function useViewportRecording() {
     }
   }, []);
 
+  const stopPaintLoop = useCallback(() => {
+    if (paintRafRef.current !== null) {
+      cancelAnimationFrame(paintRafRef.current);
+      paintRafRef.current = null;
+    }
+  }, []);
+
   const cleanupStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }, []);
+
+  const disposeComposite = useCallback(() => {
+    compositeRef.current = null;
+  }, []);
+
+  const cleanupCapture = useCallback(() => {
+    stopPaintLoop();
+    disposeComposite();
+    cleanupStream();
+    inOutroRef.current = false;
+  }, [cleanupStream, disposeComposite, stopPaintLoop]);
 
   const finalizeStop = useCallback(() => {
     clearRecordingTimers();
@@ -78,12 +128,14 @@ export function useViewportRecording() {
     const mr = mediaRecorderRef.current;
     if (!mr || mr.state === "inactive") {
       endingRef.current = false;
-      cleanupStream();
+      cleanupCapture();
       setPhase("idle");
       return;
     }
-    mr.stop();
-  }, [clearRecordingTimers, cleanupStream]);
+    if (inOutroRef.current) return;
+    inOutroRef.current = true;
+    outroEndAtRef.current = performance.now() + OUTRO_MS;
+  }, [clearRecordingTimers, cleanupCapture]);
 
   const stop = useCallback(() => {
     if (phase !== "recording") return;
@@ -96,6 +148,8 @@ export function useViewportRecording() {
     () => () => {
       clearCountdownInterval();
       clearRecordingTimers();
+      stopPaintLoop();
+      disposeComposite();
       cleanupStream();
       const mr = mediaRecorderRef.current;
       if (mr && mr.state !== "inactive") {
@@ -106,7 +160,7 @@ export function useViewportRecording() {
         }
       }
     },
-    [clearCountdownInterval, clearRecordingTimers, cleanupStream]
+    [clearCountdownInterval, clearRecordingTimers, cleanupStream, disposeComposite, stopPaintLoop]
   );
 
   const cancelCountdown = useCallback(() => {
@@ -117,18 +171,32 @@ export function useViewportRecording() {
 
   const beginCapture = useCallback(
     (getCanvas: () => HTMLCanvasElement | null) => {
-      const canvas = getCanvas();
-      if (!canvas?.captureStream) {
+      getCanvasRef.current = getCanvas;
+      const glCanvas = getCanvas();
+      if (!glCanvas?.captureStream) {
         setError("Could not access the 3D canvas for recording.");
         setPhase("idle");
         return;
       }
 
+      const composite = document.createElement("canvas");
+      const ctx = composite.getContext("2d", { alpha: false, desynchronized: true });
+      if (!ctx) {
+        setError("Could not prepare the recording surface.");
+        setPhase("idle");
+        return;
+      }
+
+      composite.width = glCanvas.width;
+      composite.height = glCanvas.height;
+      compositeRef.current = { canvas: composite, ctx };
+
       let stream: MediaStream;
       try {
-        stream = canvas.captureStream(30);
+        stream = composite.captureStream(30);
       } catch {
         setError("Recording this view is not supported in your browser.");
+        compositeRef.current = null;
         setPhase("idle");
         return;
       }
@@ -147,20 +215,58 @@ export function useViewportRecording() {
           recorder = new MediaRecorder(stream);
         } catch {
           setError("Could not start the video recorder.");
-          cleanupStream();
+          cleanupCapture();
           setPhase("idle");
           return;
         }
       }
 
       endingRef.current = false;
+      inOutroRef.current = false;
+
+      const paint = () => {
+        const pair = compositeRef.current;
+        const mr = mediaRecorderRef.current;
+        if (!pair || !mr || mr.state === "inactive") {
+          stopPaintLoop();
+          return;
+        }
+        const { canvas, ctx: c2d } = pair;
+        const gl = getCanvasRef.current();
+        const now = performance.now();
+
+        if (inOutroRef.current) {
+          if (canvas.width > 0 && canvas.height > 0) {
+            drawOutroFrame(c2d, canvas.width, canvas.height);
+          }
+          if (now >= outroEndAtRef.current) {
+            stopPaintLoop();
+            try {
+              mr.stop();
+            } catch {
+              /* ignore */
+            }
+            return;
+          }
+        } else if (gl && gl.width > 0 && gl.height > 0) {
+          if (canvas.width !== gl.width || canvas.height !== gl.height) {
+            canvas.width = gl.width;
+            canvas.height = gl.height;
+          }
+          c2d.drawImage(gl, 0, 0);
+        }
+
+        paintRafRef.current = requestAnimationFrame(paint);
+      };
+
+      paintRafRef.current = requestAnimationFrame(paint);
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
       };
 
       recorder.onstop = () => {
-        cleanupStream();
+        cleanupCapture();
         mediaRecorderRef.current = null;
         const mime = recorder.mimeType || "video/webm";
         const blob = new Blob(chunksRef.current, { type: mime });
@@ -175,6 +281,8 @@ export function useViewportRecording() {
         recorder.start(200);
       } catch {
         setError("Could not start recording.");
+        stopPaintLoop();
+        disposeComposite();
         cleanupStream();
         mediaRecorderRef.current = null;
         setPhase("idle");
@@ -185,7 +293,7 @@ export function useViewportRecording() {
       const startedAt = performance.now();
       const updateRemaining = () => {
         const elapsed = (performance.now() - startedAt) / 1000;
-        const left = Math.max(0, Math.ceil((MAX_RECORD_MS / 1000) - elapsed));
+        const left = Math.max(0, Math.ceil(MAX_RECORD_MS / 1000 - elapsed));
         setRecordRemainingSec(left);
       };
       updateRemaining();
@@ -197,7 +305,7 @@ export function useViewportRecording() {
         finalizeStop();
       }, MAX_RECORD_MS);
     },
-    [cleanupStream, finalizeStop]
+    [cleanupCapture, disposeComposite, finalizeStop, stopPaintLoop]
   );
 
   const start = useCallback(

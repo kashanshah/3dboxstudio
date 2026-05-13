@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fancybox } from "@fancyapps/ui";
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import LandingStudioCta from "./LandingStudioCta";
 import { GITHUB_REPO_URL } from "../siteMeta";
 
@@ -58,6 +60,27 @@ function layoutClass(layout: ShowcaseLayout | undefined): string {
   return "landing-showcase-tile--standard";
 }
 
+function ShowcaseEnlargeIcon() {
+  return (
+    <svg
+      className="landing-showcase-tile-enlarge-svg"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"
+      />
+    </svg>
+  );
+}
+
 export default function ShowcaseSection() {
   const [allItems, setAllItems] = useState<ShowcaseItem[]>(FALLBACK_ITEMS);
   const [filter, setFilter] = useState<ShowcaseFilter>("all");
@@ -75,6 +98,12 @@ export default function ShowcaseSection() {
     return () => ac.abort();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      Fancybox.destroy();
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     if (filter === "all") return allItems;
     return allItems.filter((x) => x.type === filter);
@@ -87,6 +116,23 @@ export default function ShowcaseSection() {
       video: allItems.filter((x) => x.type === "video").length,
     }),
     [allItems]
+  );
+
+  const openShowcaseGallery = useCallback(
+    (startIndex: number) => {
+      const slides = filtered.map((it) => ({
+        src: it.src,
+        type: it.type === "video" ? ("video" as const) : ("image" as const),
+        caption: it.caption ?? it.alt ?? "",
+      }));
+      if (slides.length === 0) return;
+      Fancybox.show(slides, {
+        startIndex,
+        closeExisting: true,
+        theme: "auto",
+      });
+    },
+    [filtered]
   );
 
   return (
@@ -159,23 +205,44 @@ export default function ShowcaseSection() {
               >
                 <div className="landing-showcase-tile-media-wrap">
                   {item.type === "video" ? (
-                    <video
-                      className="landing-showcase-tile-video"
-                      src={item.src}
-                      controls
-                      playsInline
-                      loop
-                      preload={i === 0 ? "metadata" : "none"}
-                      aria-label={item.alt ?? "Showcase video"}
-                    />
+                    <>
+                      <video
+                        className="landing-showcase-tile-video"
+                        src={item.src}
+                        controls
+                        playsInline
+                        loop
+                        preload={i === 0 ? "metadata" : "none"}
+                        aria-label={item.alt ?? "Showcase video"}
+                      />
+                      <button
+                        type="button"
+                        className="landing-showcase-tile-enlarge"
+                        onClick={() => openShowcaseGallery(i)}
+                        aria-label={
+                          item.alt ? `Open gallery: ${item.alt}` : "Open video in fullscreen gallery"
+                        }
+                      >
+                        <ShowcaseEnlargeIcon />
+                      </button>
+                    </>
                   ) : (
-                    <img
-                      className="landing-showcase-tile-img"
-                      src={item.src}
-                      alt={item.alt ?? "Showcase image"}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    <button
+                      type="button"
+                      className="landing-showcase-tile-zoom"
+                      onClick={() => openShowcaseGallery(i)}
+                      aria-label={
+                        item.alt ? `Open gallery: ${item.alt}` : "Open image in fullscreen gallery"
+                      }
+                    >
+                      <img
+                        className="landing-showcase-tile-img"
+                        src={item.src}
+                        alt={item.alt ?? "Showcase image"}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
                   )}
                 </div>
                 {item.caption && <figcaption className="landing-showcase-tile-caption">{item.caption}</figcaption>}
