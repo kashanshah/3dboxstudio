@@ -27,6 +27,27 @@
       "layout": "standard",
       "alt": "Per-face artwork upload panel",
       "caption": "Per-face artwork controls: quick rotate and clear so dieline exports map cleanly onto the 3D preview."
+    },
+    {
+      "src": "/showcase/images/box.webp",
+      "type": "image",
+      "layout": "standard",
+      "alt": "3D Box Studio interface with viewport and controls",
+      "caption": "3D Box Studio interface with viewport and controls"
+    },
+    {
+      "src": "/showcase/images/box-2.webp",
+      "type": "image",
+      "layout": "standard",
+      "alt": "3D Box Studio interface with viewport and controls",
+      "caption": "3D Box Studio interface with viewport and controls"
+    },
+    {
+      "src": "/showcase/images/box-3.webp",
+      "type": "image",
+      "layout": "standard",
+      "alt": "3D Box Studio interface with viewport and controls",
+      "caption": "3D Box Studio interface with viewport and controls"
     }
   ]
 }
