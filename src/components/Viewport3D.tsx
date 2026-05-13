@@ -182,7 +182,7 @@ function Scene({
       <ambientLight intensity={0.35} />
       <directionalLight
         ref={keyLightRef}
-        castShadow
+        castShadow={!cleanCapture}
         position={[maxDim * 2.5, maxDim * 4, maxDim * 1.2]}
         intensity={1.15}
         shadow-mapSize={[2048, 2048]}
@@ -191,7 +191,7 @@ function Scene({
 
       {/* Environment suspends while HDRI loads — keep the box outside so it always mounts */}
       <Suspense fallback={null}>
-        <Environment preset={envPreset} />
+        <Environment preset={envPreset} environmentIntensity={cleanCapture ? 0.45 : 1} />
       </Suspense>
       <PackagingBox
         width={width}
@@ -205,6 +205,7 @@ function Scene({
         openT={openT}
         wireframe={wireframe}
         textureRotationDeg={textureRotationDeg}
+        cleanCapture={cleanCapture}
       />
 
       {!cleanCapture && (
@@ -245,10 +246,13 @@ function ViewportRendererProfile({
 
   useLayoutEffect(() => {
     if (!cleanCapture) return;
-    const previous = gl.shadowMap.type;
+    const previousShadowType = gl.shadowMap.type;
+    const previousShadowEnabled = gl.shadowMap.enabled;
+    gl.shadowMap.enabled = false;
     gl.shadowMap.type = THREE.BasicShadowMap;
     return () => {
-      gl.shadowMap.type = previous;
+      gl.shadowMap.enabled = previousShadowEnabled;
+      gl.shadowMap.type = previousShadowType;
     };
   }, [cleanCapture, gl]);
 

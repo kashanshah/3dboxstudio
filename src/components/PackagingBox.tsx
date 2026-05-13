@@ -31,6 +31,7 @@ function FacePlane({
   rotation,
   wireframe,
   textureRotationDeg = 0,
+  cleanCapture = false,
 }: {
   url: string | null;
   preset: MaterialPreset;
@@ -40,12 +41,23 @@ function FacePlane({
   wireframe: boolean;
   /** Rotate the texture in its plane (degrees), pivot at center. */
   textureRotationDeg?: number;
+  cleanCapture?: boolean;
 }) {
   const map = useLoadedTexture(url);
   const inset = Math.max(0.06, Math.min(args[0], args[1]) * 0.04);
   const innerMat = getInnerLinerMaterial();
 
   const mat = useMemo(() => {
+    if (cleanCapture) {
+      return new THREE.MeshStandardMaterial({
+        color: preset.color,
+        roughness: preset.roughness,
+        metalness: preset.metalness,
+        envMapIntensity: preset.envMapIntensity * 0.45,
+        side: THREE.FrontSide,
+        wireframe,
+      });
+    }
     return new THREE.MeshPhysicalMaterial({
       color: preset.color,
       roughness: preset.roughness,
@@ -57,6 +69,7 @@ function FacePlane({
       wireframe,
     });
   }, [
+    cleanCapture,
     preset.clearcoat,
     preset.clearcoatRoughness,
     preset.color,
@@ -86,11 +99,11 @@ function FacePlane({
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh position={[0, 0, 0]} material={mat} castShadow receiveShadow>
+      <mesh position={[0, 0, 0]} material={mat} castShadow={!cleanCapture} receiveShadow={!cleanCapture}>
         <planeGeometry args={args} />
       </mesh>
       {!wireframe && (
-        <mesh position={[0, 0, -inset]} material={innerMat} receiveShadow>
+        <mesh position={[0, 0, -inset]} material={innerMat} receiveShadow={!cleanCapture}>
           <planeGeometry args={args} />
         </mesh>
       )}
@@ -113,6 +126,8 @@ export interface PackagingBoxProps {
   wireframe: boolean;
   /** Per-face in-plane texture rotation (degrees). */
   textureRotationDeg: Partial<Record<FaceId, number>>;
+  /** Simpler materials and no shadow casting while recording. */
+  cleanCapture?: boolean;
 }
 
 export function PackagingBox({
@@ -127,6 +142,7 @@ export function PackagingBox({
   openT,
   wireframe,
   textureRotationDeg: texRot,
+  cleanCapture = false,
 }: PackagingBoxProps) {
   const angle = openT * ((75 * Math.PI) / 180);
   const rr = texRot;
@@ -144,6 +160,7 @@ export function PackagingBox({
         position={[0, -h / 2 - EPS, 0]}
         rotation={[Math.PI / 2, 0, 0]}
         wireframe={wireframe}
+        cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "bottom")}
       />
 
@@ -154,6 +171,7 @@ export function PackagingBox({
         position={[0, 0, d / 2 + EPS]}
         rotation={[0, 0, 0]}
         wireframe={wireframe}
+        cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "front")}
       />
 
@@ -164,6 +182,7 @@ export function PackagingBox({
         position={[0, 0, -d / 2 - EPS]}
         rotation={[0, Math.PI, 0]}
         wireframe={wireframe}
+        cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "back")}
       />
 
@@ -174,6 +193,7 @@ export function PackagingBox({
         position={[w / 2 + EPS, 0, 0]}
         rotation={[0, Math.PI / 2, 0]}
         wireframe={wireframe}
+        cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "right")}
       />
 
@@ -187,6 +207,7 @@ export function PackagingBox({
               position={[-EPS, 0, 0]}
               rotation={[0, -Math.PI / 2, 0]}
               wireframe={wireframe}
+              cleanCapture={cleanCapture}
               textureRotationDeg={faceRotation(rr, "left")}
             />
           </group>
@@ -199,6 +220,7 @@ export function PackagingBox({
           position={[-w / 2 - EPS, 0, 0]}
           rotation={[0, -Math.PI / 2, 0]}
           wireframe={wireframe}
+          cleanCapture={cleanCapture}
           textureRotationDeg={faceRotation(rr, "left")}
         />
       )}
@@ -214,6 +236,7 @@ export function PackagingBox({
                 position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
+                cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topLeft")}
               />
             </group>
@@ -227,6 +250,7 @@ export function PackagingBox({
                 position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
+                cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topRight")}
               />
             </group>
@@ -243,6 +267,7 @@ export function PackagingBox({
                 position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
+                cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topLeft")}
               />
             </group>
@@ -256,6 +281,7 @@ export function PackagingBox({
                 position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
+                cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topRight")}
               />
             </group>
@@ -271,6 +297,7 @@ export function PackagingBox({
               position={[0, EPS, 0]}
               rotation={[-Math.PI / 2, 0, 0]}
               wireframe={wireframe}
+              cleanCapture={cleanCapture}
               textureRotationDeg={faceRotation(rr, "top")}
             />
           </group>
@@ -282,8 +309,9 @@ export function PackagingBox({
           args={[w, d]}
           position={[0, h / 2 + EPS, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
-          wireframe={wireframe}
-          textureRotationDeg={faceRotation(rr, "top")}
+              wireframe={wireframe}
+              cleanCapture={cleanCapture}
+              textureRotationDeg={faceRotation(rr, "top")}
         />
       )}
     </group>

@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
   BOX_DESIGN_STORAGE_KEY,
@@ -131,6 +132,32 @@ export default function BoxDesigner() {
     stop: stopViewportRecording,
     cancelCountdown: cancelRecordCountdown,
   } = useViewportRecording();
+
+  const isRecordingViewport = recordPhase === "recording";
+
+  const commitOpening = useCallback(
+    (value: OpeningStyle) => {
+      if (isRecordingViewport) {
+        flushSync(() => setOpening(value));
+      } else {
+        setOpening(value);
+      }
+      r3fRef.current?.invalidate();
+    },
+    [isRecordingViewport]
+  );
+
+  const commitOpenT = useCallback(
+    (value: number) => {
+      if (isRecordingViewport) {
+        flushSync(() => setOpenT(value));
+      } else {
+        setOpenT(value);
+      }
+      r3fRef.current?.invalidate();
+    },
+    [isRecordingViewport]
+  );
 
   const textureUrls = useFaceObjectUrls(faceFiles);
 
@@ -626,7 +653,7 @@ export default function BoxDesigner() {
 
         <PanelCollapse title="Opening style">
           <label>Mechanism</label>
-          <select value={opening} onChange={(e) => setOpening(e.target.value as OpeningStyle)}>
+          <select value={opening} onChange={(e) => commitOpening(e.target.value as OpeningStyle)}>
             {openingOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -654,7 +681,7 @@ export default function BoxDesigner() {
           {opening !== "closed" && (
             <div style={{ marginTop: "0.75rem" }}>
               <label>Open amount ({Math.round(openT * 100)}%)</label>
-              <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => setOpenT(Number(e.target.value))} />
+              <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => commitOpenT(Number(e.target.value))} />
             </div>
           )}
         </PanelCollapse>

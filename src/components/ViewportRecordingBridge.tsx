@@ -36,6 +36,8 @@ export function ViewportRecordingBridge() {
       canvas.height = glCanvas.height;
     }
 
+    state.gl.setRenderTarget(null);
+    state.gl.clear(true, true, true);
     state.gl.render(state.scene, state.camera);
     state.gl.getContext().finish();
     ctx.imageSmoothingEnabled = false;
