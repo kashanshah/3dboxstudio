@@ -420,6 +420,8 @@ export default function BoxDesigner() {
           envPreset={envPreset}
           textureRotationDeg={textureRotationDeg}
           snappyOrbit={recordPhase === "recording"}
+          recordingActive={recordPhase === "recording"}
+          cleanCapture={recordPhase === "recording"}
           onCanvasReady={(state) => {
             r3fRef.current = state;
           }}

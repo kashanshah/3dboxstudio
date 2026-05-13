@@ -12,6 +12,7 @@ import {
 import * as THREE from "three";
 import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls.js";
 import { PackagingBox } from "./PackagingBox";
+import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
 
 function applyOrbitZoomDistance(
@@ -118,6 +119,12 @@ export interface Viewport3DProps {
    * Recording uses a 2D copy each frame; damped orbit looks like a trailing “shadow” on video.
    */
   snappyOrbit?: boolean;
+  /** Mount the post-render capture bridge (viewport recording). */
+  recordingActive?: boolean;
+  /**
+   * Lighter shadows and no contact shadow pass while recording — reduces smear on motion.
+   */
+  cleanCapture?: boolean;
 }
 
 function Scene({
@@ -140,6 +147,8 @@ function Scene({
   zoomFraction,
   onZoomFractionChange,
   snappyOrbit = false,
+  recordingActive = false,
+  cleanCapture = false,
 }: Omit<Viewport3DProps, "showAxesGizmo" | "onCanvasReady">) {
   const maxDim = Math.max(width, height, length, 1);
   const camDist = maxDim * 2.2;
@@ -198,7 +207,9 @@ function Scene({
         textureRotationDeg={textureRotationDeg}
       />
 
-      <ContactShadows opacity={0.45} scale={maxDim * 8} blur={2.4} far={maxDim * 5} position={[0, -height / 2 - 0.05, 0]} />
+      {!cleanCapture && (
+        <ContactShadows opacity={0.45} scale={maxDim * 8} blur={2.4} far={maxDim * 5} position={[0, -height / 2 - 0.05, 0]} />
+      )}
 
       {showGrid && (
         <Grid
@@ -219,12 +230,33 @@ function Scene({
         zoomFraction={zoomFraction}
         onZoomFractionChange={onZoomFractionChange}
       />
+
+      {recordingActive && <ViewportRecordingBridge />}
     </>
   );
 }
 
+function ViewportRendererProfile({
+  cleanCapture,
+}: {
+  cleanCapture: boolean;
+}) {
+  const gl = useThree((s) => s.gl);
+
+  useLayoutEffect(() => {
+    if (!cleanCapture) return;
+    const previous = gl.shadowMap.type;
+    gl.shadowMap.type = THREE.BasicShadowMap;
+    return () => {
+      gl.shadowMap.type = previous;
+    };
+  }, [cleanCapture, gl]);
+
+  return null;
+}
+
 export function Viewport3D(props: Viewport3DProps) {
-  const { showAxesGizmo, onCanvasReady, ...sceneProps } = props;
+  const { showAxesGizmo, onCanvasReady, recordingActive = false, cleanCapture = false, ...sceneProps } = props;
   const handleCreated = (state: RootState) => {
     state.gl.toneMapping = THREE.ACESFilmicToneMapping;
     state.gl.toneMappingExposure = 1;
@@ -235,8 +267,14 @@ export function Viewport3D(props: Viewport3DProps) {
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 0 }}>
-      <Canvas shadows onCreated={handleCreated} gl={{ preserveDrawingBuffer: true }}>
-        <Scene {...sceneProps} />
+      <Canvas
+        shadows
+        frameloop={recordingActive ? "always" : "demand"}
+        onCreated={handleCreated}
+        gl={{ preserveDrawingBuffer: true }}
+      >
+        <ViewportRendererProfile cleanCapture={cleanCapture} />
+        <Scene {...sceneProps} recordingActive={recordingActive} cleanCapture={cleanCapture} />
         {showAxesGizmo && (
           <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
             <GizmoViewport axisColors={["#ff6b8a", "#5be7a9", "#6bb8ff"]} labelColor="white" />

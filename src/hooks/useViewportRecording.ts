@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  resetViewportRecordingCapture,
+  viewportRecordingCapture,
+} from "../viewportRecordingCapture";
+import { preloadViewportRecordingOutroAssets } from "../viewportRecordingOutro";
 
 export type ViewportRecordingPhase = "idle" | "countdown" | "recording";
 
@@ -6,8 +11,6 @@ const COUNTDOWN_START = 3;
 const MAX_RECORD_MS = 15_000;
 /** Extra tail card appended to every export (matches primary button gradient + panel tone). */
 const OUTRO_MS = 1000;
-const CREDIT_LINE = "Made with";
-const CREDIT_URL = "www.3dBoxStudio.com";
 
 function pickRecorderMime(): string | undefined {
   const candidates = [
@@ -39,28 +42,6 @@ function downloadBlob(blob: Blob, extension: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Same stops as `.btn-primary` plus a touch of `--panel` at the bottom edge. */
-function drawOutroFrame(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, "#4aa3ff");
-  g.addColorStop(0.55, "#3d9eff");
-  g.addColorStop(0.88, "#2563a8");
-  g.addColorStop(1, "#141820");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, w, h);
-
-  ctx.fillStyle = "#f8fafc";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const line1 = Math.round(Math.max(32, Math.min(32, w / 24)));
-  const line2 = Math.round(Math.max(24, Math.min(26, w / 20)));
-  const gap = line1 * 0.55;
-  ctx.font = `600 ${line1}px system-ui, "DM Sans", sans-serif`;
-  ctx.fillText(CREDIT_LINE, w / 2, h / 2 - gap);
-  ctx.font = `700 ${line2}px system-ui, "DM Sans", sans-serif`;
-  ctx.fillText(CREDIT_URL, w / 2, h / 2 + gap * 0.65);
-}
-
 export function useViewportRecording() {
   const [phase, setPhase] = useState<ViewportRecordingPhase>("idle");
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -74,12 +55,6 @@ export function useViewportRecording() {
   const maxDurationTimeoutRef = useRef<number | undefined>(undefined);
   const tickIntervalRef = useRef<number | undefined>(undefined);
   const endingRef = useRef(false);
-
-  const getCanvasRef = useRef<() => HTMLCanvasElement | null>(() => null);
-  const compositeRef = useRef<{ canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } | null>(null);
-  const paintRafRef = useRef<number | null>(null);
-  const inOutroRef = useRef(false);
-  const outroEndAtRef = useRef(0);
 
   const clearCountdownInterval = useCallback(() => {
     if (countdownIntervalRef.current !== undefined) {
@@ -99,28 +74,15 @@ export function useViewportRecording() {
     }
   }, []);
 
-  const stopPaintLoop = useCallback(() => {
-    if (paintRafRef.current !== null) {
-      cancelAnimationFrame(paintRafRef.current);
-      paintRafRef.current = null;
-    }
-  }, []);
-
   const cleanupStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }, []);
 
-  const disposeComposite = useCallback(() => {
-    compositeRef.current = null;
-  }, []);
-
   const cleanupCapture = useCallback(() => {
-    stopPaintLoop();
-    disposeComposite();
+    resetViewportRecordingCapture();
     cleanupStream();
-    inOutroRef.current = false;
-  }, [cleanupStream, disposeComposite, stopPaintLoop]);
+  }, [cleanupStream]);
 
   const finalizeStop = useCallback(() => {
     clearRecordingTimers();
@@ -132,9 +94,9 @@ export function useViewportRecording() {
       setPhase("idle");
       return;
     }
-    if (inOutroRef.current) return;
-    inOutroRef.current = true;
-    outroEndAtRef.current = performance.now() + OUTRO_MS;
+    if (viewportRecordingCapture.inOutro) return;
+    viewportRecordingCapture.inOutro = true;
+    viewportRecordingCapture.outroEndAt = performance.now() + OUTRO_MS;
   }, [clearRecordingTimers, cleanupCapture]);
 
   const stop = useCallback(() => {
@@ -148,9 +110,7 @@ export function useViewportRecording() {
     () => () => {
       clearCountdownInterval();
       clearRecordingTimers();
-      stopPaintLoop();
-      disposeComposite();
-      cleanupStream();
+      cleanupCapture();
       const mr = mediaRecorderRef.current;
       if (mr && mr.state !== "inactive") {
         try {
@@ -160,7 +120,7 @@ export function useViewportRecording() {
         }
       }
     },
-    [clearCountdownInterval, clearRecordingTimers, cleanupStream, disposeComposite, stopPaintLoop]
+    [clearCountdownInterval, clearRecordingTimers, cleanupCapture]
   );
 
   const cancelCountdown = useCallback(() => {
@@ -171,16 +131,15 @@ export function useViewportRecording() {
 
   const beginCapture = useCallback(
     (getCanvas: () => HTMLCanvasElement | null) => {
-      getCanvasRef.current = getCanvas;
       const glCanvas = getCanvas();
-      if (!glCanvas?.captureStream) {
+      if (!glCanvas) {
         setError("Could not access the 3D canvas for recording.");
         setPhase("idle");
         return;
       }
 
       const composite = document.createElement("canvas");
-      const ctx = composite.getContext("2d", { alpha: false, desynchronized: true });
+      const ctx = composite.getContext("2d", { alpha: false });
       if (!ctx) {
         setError("Could not prepare the recording surface.");
         setPhase("idle");
@@ -189,21 +148,14 @@ export function useViewportRecording() {
 
       composite.width = glCanvas.width;
       composite.height = glCanvas.height;
-      compositeRef.current = { canvas: composite, ctx };
 
       let stream: MediaStream;
       try {
-        // Prefer display-like cadence; 30fps + damped orbit looked like trailing/smear on motion.
-        stream = composite.captureStream(60);
+        stream = composite.captureStream(30);
       } catch {
-        try {
-          stream = composite.captureStream(30);
-        } catch {
-          setError("Recording this view is not supported in your browser.");
-          compositeRef.current = null;
-          setPhase("idle");
-          return;
-        }
+        setError("Recording this view is not supported in your browser.");
+        setPhase("idle");
+        return;
       }
 
       streamRef.current = stream;
@@ -213,7 +165,7 @@ export function useViewportRecording() {
       let recorder: MediaRecorder;
       try {
         recorder = preferredMime
-          ? new MediaRecorder(stream, { mimeType: preferredMime, videoBitsPerSecond: 10_000_000 })
+          ? new MediaRecorder(stream, { mimeType: preferredMime, videoBitsPerSecond: 5_000_000 })
           : new MediaRecorder(stream);
       } catch {
         try {
@@ -227,44 +179,19 @@ export function useViewportRecording() {
       }
 
       endingRef.current = false;
-      inOutroRef.current = false;
-
-      const paint = () => {
-        const pair = compositeRef.current;
-        const mr = mediaRecorderRef.current;
-        if (!pair || !mr || mr.state === "inactive") {
-          stopPaintLoop();
-          return;
+      viewportRecordingCapture.active = true;
+      viewportRecordingCapture.composite = { canvas: composite, ctx };
+      viewportRecordingCapture.inOutro = false;
+      viewportRecordingCapture.outroEndAt = 0;
+      viewportRecordingCapture.onOutroComplete = () => {
+        const active = mediaRecorderRef.current;
+        if (!active || active.state === "inactive") return;
+        try {
+          active.stop();
+        } catch {
+          /* ignore */
         }
-        const { canvas, ctx: c2d } = pair;
-        const gl = getCanvasRef.current();
-        const now = performance.now();
-
-        if (inOutroRef.current) {
-          if (canvas.width > 0 && canvas.height > 0) {
-            drawOutroFrame(c2d, canvas.width, canvas.height);
-          }
-          if (now >= outroEndAtRef.current) {
-            stopPaintLoop();
-            try {
-              mr.stop();
-            } catch {
-              /* ignore */
-            }
-            return;
-          }
-        } else if (gl && gl.width > 0 && gl.height > 0) {
-          if (canvas.width !== gl.width || canvas.height !== gl.height) {
-            canvas.width = gl.width;
-            canvas.height = gl.height;
-          }
-          c2d.drawImage(gl, 0, 0);
-        }
-
-        paintRafRef.current = requestAnimationFrame(paint);
       };
-
-      paintRafRef.current = requestAnimationFrame(paint);
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -286,9 +213,7 @@ export function useViewportRecording() {
         recorder.start(200);
       } catch {
         setError("Could not start recording.");
-        stopPaintLoop();
-        disposeComposite();
-        cleanupStream();
+        cleanupCapture();
         mediaRecorderRef.current = null;
         setPhase("idle");
         return;
@@ -310,7 +235,7 @@ export function useViewportRecording() {
         finalizeStop();
       }, MAX_RECORD_MS);
     },
-    [cleanupCapture, disposeComposite, finalizeStop, stopPaintLoop]
+    [cleanupCapture, finalizeStop]
   );
 
   const start = useCallback(
@@ -318,13 +243,11 @@ export function useViewportRecording() {
       setError(null);
       if (phase !== "idle") return;
 
+      preloadViewportRecordingOutroAssets();
+
       const canvas = getCanvas();
       if (!canvas) {
         setError("The 3D view is not ready yet. Wait a moment and try again.");
-        return;
-      }
-      if (typeof canvas.captureStream !== "function") {
-        setError("This browser does not support recording the 3D canvas.");
         return;
       }
 
