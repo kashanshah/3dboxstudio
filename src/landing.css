@@ -429,6 +429,12 @@
   color: #1d4ed8;
 }
 
+@media (max-width: 880px) {
+  .landing-eyebrow {
+    letter-spacing: 0;
+  }
+}
+
 .landing-eyebrow--section {
   margin-bottom: 0.5rem;
   display: inline-flex;
