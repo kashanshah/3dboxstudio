@@ -1,0 +1,859 @@
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import type { RootState } from "@react-three/fiber";
+import {
+  BOX_DESIGN_STORAGE_KEY,
+  clearDesignFromStorage,
+  defaultBoxDesignerState,
+  deserializeDesign,
+  readDesignFromStorageSync,
+  serializeDesign,
+  writeDesignToStorage,
+  type BoxDesignerPersistedState,
+  type EnvPreset,
+} from "./boxDesignPersistence";
+import { Viewport3D } from "./components/Viewport3D";
+import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
+import { useFaceObjectUrls } from "./hooks/useTextures";
+import { useViewportRecording } from "./hooks/useViewportRecording";
+import type { BoxDimensions, FaceId, LengthUnit, OpeningStyle, SplitTopHingeSide, TextureRotationDeg } from "./types";
+import {
+  ALL_FACES,
+  SPLIT_TOP_FACES,
+  SPLIT_TOP_HINGE_OPTIONS,
+  faceLabels,
+  labelForSplitTopFace,
+  openingRequiresSplitTop,
+} from "./types";
+
+function toCm(n: number, unit: LengthUnit): number {
+  switch (unit) {
+    case "mm":
+      return n / 10;
+    case "cm":
+      return n;
+    case "in":
+      return n * 2.54;
+    default:
+      return n;
+  }
+}
+
+const openingOptions: { value: OpeningStyle; label: string; hint: string }[] = [
+  { value: "closed", label: "Closed (no motion)", hint: "Rigid box preview" },
+  { value: "lid_from_back", label: "Lid from back", hint: "Single top hinged along the back edge" },
+  {
+    value: "top_split_meet_center",
+    label: "Top center — two flaps",
+    hint: "Meet in the middle; choose Side A or B for hinge edges, then upload artwork for each half.",
+  },
+  { value: "door_left", label: "Door opens — left", hint: "Left panel swings from the front-left edge" },
+];
+
+const faceArtIconBtn: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "0.45rem",
+  minWidth: "2.5rem",
+};
+
+function IconRotate90() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+    </svg>
+  );
+}
+
+function IconClearImage() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
+
+export default function BoxDesigner() {
+  const [unit, setUnit] = useState<LengthUnit>("cm");
+  const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
+  const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
+  const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
+  const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
+  const [opening, setOpening] = useState<OpeningStyle>("closed");
+  const [splitTopHingeSide, setSplitTopHingeSide] = useState<SplitTopHingeSide>("side_a");
+  const [openT, setOpenT] = useState(0.35);
+  const [wireframe, setWireframe] = useState(false);
+  const [showGrid, setShowGrid] = useState(true);
+  const [showAxesGizmo, setShowAxesGizmo] = useState(true);
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [autoRotateSpeed, setAutoRotateSpeed] = useState(0.65);
+  const [autoRotateReverse, setAutoRotateReverse] = useState(false);
+  const [zoomFraction, setZoomFraction] = useState(0.5);
+  const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
+  const [canPersist, setCanPersist] = useState(false);
+  const [persistMessage, setPersistMessage] = useState<string | null>(null);
+
+  const r3fRef = useRef<RootState | null>(null);
+  const {
+    phase: recordPhase,
+    countdown: recordCountdown,
+    recordRemainingSec,
+    error: recordError,
+    start: startViewportRecording,
+    stop: stopViewportRecording,
+    cancelCountdown: cancelRecordCountdown,
+  } = useViewportRecording();
+
+  const textureUrls = useFaceObjectUrls(faceFiles);
+
+  const sceneDims = useMemo(
+    () => ({
+      width: toCm(dims.width, unit),
+      height: toCm(dims.height, unit),
+      length: toCm(dims.length, unit),
+    }),
+    [dims, unit]
+  );
+
+  const preset = useMemo(() => getPreset(materialId), [materialId]);
+
+  const splitTop = openingRequiresSplitTop(opening);
+
+  const textures = useMemo(() => {
+    const out: Partial<Record<FaceId, string | null>> = {};
+    (Object.keys(textureUrls) as FaceId[]).forEach((k) => {
+      const u = textureUrls[k];
+      if (u) out[k] = u;
+    });
+    return out;
+  }, [textureUrls]);
+
+  const buildPersistState = useCallback((): BoxDesignerPersistedState => {
+    return {
+      unit,
+      dims,
+      faceFiles,
+      textureRotationDeg,
+      materialId,
+      opening,
+      splitTopHingeSide,
+      openT,
+      wireframe,
+      showGrid,
+      showAxesGizmo,
+      autoRotate,
+      autoRotateSpeed,
+      autoRotateReverse,
+      zoomFraction,
+      envPreset,
+    };
+  }, [
+    unit,
+    dims,
+    faceFiles,
+    textureRotationDeg,
+    materialId,
+    opening,
+    splitTopHingeSide,
+    openT,
+    wireframe,
+    showGrid,
+    showAxesGizmo,
+    autoRotate,
+    autoRotateSpeed,
+    autoRotateReverse,
+    zoomFraction,
+    envPreset,
+  ]);
+
+  const applyPersistedState = useCallback((restored: BoxDesignerPersistedState) => {
+    setUnit(restored.unit);
+    setDims(restored.dims);
+    setFaceFiles(restored.faceFiles);
+    setTextureRotationDeg(restored.textureRotationDeg);
+    setMaterialId(restored.materialId);
+    setOpening(restored.opening);
+    setSplitTopHingeSide(restored.splitTopHingeSide);
+    setOpenT(restored.openT);
+    setWireframe(restored.wireframe);
+    setShowGrid(restored.showGrid);
+    setShowAxesGizmo(restored.showAxesGizmo);
+    setAutoRotate(restored.autoRotate);
+    setAutoRotateSpeed(restored.autoRotateSpeed);
+    setAutoRotateReverse(restored.autoRotateReverse);
+    setZoomFraction(restored.zoomFraction);
+    setEnvPreset(restored.envPreset);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const raw = readDesignFromStorageSync();
+    if (!raw) {
+      setCanPersist(true);
+      return () => {
+        cancelled = true;
+      };
+    }
+    void deserializeDesign(raw).then((restored) => {
+      if (cancelled) return;
+      if (restored) applyPersistedState(restored);
+      setCanPersist(true);
+    }).catch(() => {
+      if (!cancelled) setCanPersist(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyPersistedState]);
+
+  const importJsonInputRef = useRef<HTMLInputElement>(null);
+
+  const exportDesignJson = useCallback(() => {
+    void (async () => {
+      const json = await serializeDesign(buildPersistState());
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `3d-box-design-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setPersistMessage("JSON file downloaded (includes embedded images).");
+      window.setTimeout(() => setPersistMessage(null), 4000);
+    })();
+  }, [buildPersistState]);
+
+  const onImportJsonChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      void (async () => {
+        let text: string;
+        try {
+          text = await file.text();
+        } catch {
+          setPersistMessage("Could not read that file.");
+          window.setTimeout(() => setPersistMessage(null), 5000);
+          return;
+        }
+        const restored = await deserializeDesign(text);
+        if (!restored) {
+          setPersistMessage("Invalid JSON: expected a v1 design export from this studio.");
+          window.setTimeout(() => setPersistMessage(null), 5000);
+          return;
+        }
+        applyPersistedState(restored);
+        setPersistMessage(`Imported “${file.name}”.`);
+        window.setTimeout(() => setPersistMessage(null), 4000);
+      })();
+    },
+    [applyPersistedState]
+  );
+
+  useEffect(() => {
+    if (!canPersist) return;
+    const t = window.setTimeout(() => {
+      void (async () => {
+        const json = await serializeDesign(buildPersistState());
+        const r = writeDesignToStorage(json);
+        if (!r.ok) setPersistMessage(r.message);
+      })();
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [canPersist, buildPersistState]);
+
+  const saveDesignNow = useCallback(() => {
+    void (async () => {
+      const json = await serializeDesign(buildPersistState());
+      const r = writeDesignToStorage(json);
+      setPersistMessage(r.ok ? "Saved to this browser." : r.message);
+      window.setTimeout(() => setPersistMessage(null), 4000);
+    })();
+  }, [buildPersistState]);
+
+  const eraseSavedDesign = useCallback(() => {
+    if (
+      !window.confirm(
+        "Remove the saved design from this browser and reset all fields (including images) to defaults?"
+      )
+    ) {
+      return;
+    }
+    clearDesignFromStorage();
+    applyPersistedState(defaultBoxDesignerState());
+    setPersistMessage("Saved layout cleared.");
+    window.setTimeout(() => setPersistMessage(null), 4000);
+  }, [applyPersistedState]);
+
+  const setZoomFractionClamped = useCallback((t: number) => {
+    setZoomFraction(Math.min(1, Math.max(0, t)));
+  }, []);
+
+  const setFile = useCallback((id: FaceId, file: File | null) => {
+    setFaceFiles((prev) => ({ ...prev, [id]: file }));
+    if (!file) {
+      setTextureRotationDeg((prev) => {
+        const { [id]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, []);
+
+  const bumpTextureRotationBy90 = useCallback((id: FaceId) => {
+    setTextureRotationDeg((prev) => {
+      const cur = prev[id] ?? 0;
+      const next = ((cur + 90) % 360) as TextureRotationDeg;
+      if (next === 0) {
+        const { [id]: _r, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [id]: next };
+    });
+  }, []);
+
+  const clearAllTextures = useCallback(() => {
+    setFaceFiles({});
+    setTextureRotationDeg({});
+  }, []);
+
+  const applyOneToAll = useCallback(
+    (id: FaceId) => {
+      const f = faceFiles[id];
+      if (!f) return;
+      const next: Partial<Record<FaceId, File | null>> = {};
+      const targets: FaceId[] = splitTop ? [...ALL_FACES.filter((x) => x !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES;
+      targets.forEach((k) => {
+        next[k] = f;
+      });
+      setFaceFiles((prev) => ({ ...prev, ...next }));
+      const rot = textureRotationDeg[id] ?? 0;
+      setTextureRotationDeg((prev) => {
+        const merged = { ...prev };
+        targets.forEach((k) => {
+          if (rot === 0) {
+            delete merged[k];
+          } else {
+            merged[k] = rot as TextureRotationDeg;
+          }
+        });
+        return merged;
+      });
+    },
+    [faceFiles, splitTop, textureRotationDeg]
+  );
+
+  const exportPng = useCallback(() => {
+    const s = r3fRef.current;
+    if (!s?.gl || !s.camera) return;
+    s.gl.render(s.scene, s.camera);
+    const url = s.gl.domElement.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `box-preview-${Date.now()}.png`;
+    a.click();
+  }, []);
+
+  const getPreviewCanvas = useCallback(() => r3fRef.current?.gl.domElement ?? null, []);
+
+  const startPresentationRecording = useCallback(() => {
+    startViewportRecording(getPreviewCanvas);
+  }, [startViewportRecording, getPreviewCanvas]);
+
+  const dimHint = `Scene units: centimeters (converted from ${unit})`;
+
+  return (
+    <div className="box-designer-root">
+      <div
+        style={{
+          position: "relative",
+          borderRight: "1px solid var(--panel-border)",
+          background: "linear-gradient(165deg, #0a0d14 0%, #0c1018 45%, #0a0c10 100%)",
+        }}
+      >
+        <Viewport3D
+          width={sceneDims.width}
+          height={sceneDims.height}
+          length={sceneDims.length}
+          textures={textures}
+          splitTop={splitTop}
+          splitTopHingeSide={splitTopHingeSide}
+          preset={preset}
+          opening={opening}
+          openT={openT}
+          wireframe={wireframe}
+          showGrid={showGrid}
+          showAxesGizmo={showAxesGizmo}
+          autoRotate={autoRotate}
+          autoRotateSpeed={autoRotateSpeed}
+          autoRotateReverse={autoRotateReverse}
+          zoomFraction={zoomFraction}
+          onZoomFractionChange={setZoomFractionClamped}
+          envPreset={envPreset}
+          textureRotationDeg={textureRotationDeg}
+          onCanvasReady={(state) => {
+            r3fRef.current = state;
+          }}
+        />
+        {recordPhase === "countdown" && recordCountdown !== null && (
+          <div
+            role="status"
+            aria-live="assertive"
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              background: "rgba(6, 8, 12, 0.55)",
+              zIndex: 6,
+              pointerEvents: "none",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "clamp(4rem, 18vw, 7rem)",
+                fontWeight: 800,
+                lineHeight: 1,
+                color: "#f8fafc",
+                textShadow: "0 0 40px rgba(59, 130, 246, 0.45)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {recordCountdown}
+            </span>
+          </div>
+        )}
+        {recordPhase === "recording" && (
+          <div
+            style={{
+              position: "absolute",
+              top: 14,
+              left: 14,
+              zIndex: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "8px 12px",
+              borderRadius: "var(--radius)",
+              background: "rgba(127, 29, 29, 0.88)",
+              border: "1px solid rgba(252, 165, 165, 0.5)",
+              color: "#fef2f2",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              pointerEvents: "none",
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: 9,
+                height: 9,
+                borderRadius: "50%",
+                background: "#fecaca",
+                boxShadow: "0 0 0 2px rgba(254, 202, 202, 0.5)",
+                animation: "viewport-rec-pulse 1.1s ease-in-out infinite",
+              }}
+            />
+            REC
+            {recordRemainingSec !== null && (
+              <span style={{ opacity: 0.95, fontVariantNumeric: "tabular-nums" }}>
+                · {recordRemainingSec}s
+              </span>
+            )}
+          </div>
+        )}
+        <div
+          style={{
+            position: "absolute",
+            left: 16,
+            bottom: 16,
+            padding: "10px 14px",
+            borderRadius: "var(--radius)",
+            background: "rgba(12,14,18,0.72)",
+            border: "1px solid var(--panel-border)",
+            fontSize: "0.8rem",
+            color: "var(--muted)",
+            maxWidth: 320,
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          Drag to orbit · Scroll to zoom · Right-drag to pan. Inspired by packaging configurators — this is a lightweight
+          structural + artwork preview (not a full CAD die-line engine).
+        </div>
+      </div>
+
+      <aside
+        style={{
+          overflowY: "auto",
+          padding: "1.1rem 1.15rem 2rem",
+          background: "var(--panel)",
+          borderLeft: "1px solid var(--panel-border)",
+        }}
+      >
+        <header style={{ marginBottom: "1.25rem" }}>
+          <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
+          <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>
+            Dimensions, materials, openings, and per-face artwork.
+          </p>
+        </header>
+
+        <section className="panel-section">
+          <h3>Saved design</h3>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+            Everything below is stored in your browser under <span className="dim-badge">{BOX_DESIGN_STORAGE_KEY}</span> and
+            reapplied on reload (images as base64; very large files may hit storage limits). Use JSON to move a design
+            between browsers, email a snapshot, or keep versioned backups outside localStorage.
+          </p>
+          <div className="row-2">
+            <button type="button" className="btn btn-primary" onClick={saveDesignNow}>
+              Save now
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={eraseSavedDesign}>
+              Clear saved & reset
+            </button>
+          </div>
+          <div className="row-2" style={{ marginTop: "0.55rem" }}>
+            <button type="button" className="btn" onClick={exportDesignJson}>
+              Export JSON
+            </button>
+            <button type="button" className="btn" onClick={() => importJsonInputRef.current?.click()}>
+              Import JSON…
+            </button>
+          </div>
+          <input
+            ref={importJsonInputRef}
+            type="file"
+            accept="application/json,.json"
+            style={{ display: "none" }}
+            aria-label="Import design from JSON file"
+            onChange={onImportJsonChange}
+          />
+          {persistMessage && (
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.55rem 0 0" }} role="status">
+              {persistMessage}
+            </p>
+          )}
+        </section>
+
+        <section className="panel-section">
+          <h3>Outer dimensions</h3>
+          <div style={{ marginBottom: "0.65rem" }}>
+            <label>Unit</label>
+            <select value={unit} onChange={(e) => setUnit(e.target.value as LengthUnit)}>
+              <option value="mm">Millimeters (mm)</option>
+              <option value="cm">Centimeters (cm)</option>
+              <option value="in">Inches (in)</option>
+            </select>
+          </div>
+          <div className="row-3">
+            <div>
+              <label>Width</label>
+              <input
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={dims.width}
+                onChange={(e) => setDims((d) => ({ ...d, width: Number(e.target.value) || 0 }))}
+              />
+            </div>
+            <div>
+              <label>Height</label>
+              <input
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={dims.height}
+                onChange={(e) => setDims((d) => ({ ...d, height: Number(e.target.value) || 0 }))}
+              />
+            </div>
+            <div>
+              <label>Length (depth)</label>
+              <input
+                type="number"
+                min={0.1}
+                step={0.1}
+                value={dims.length}
+                onChange={(e) => setDims((d) => ({ ...d, length: Number(e.target.value) || 0 }))}
+              />
+            </div>
+          </div>
+          <div className="dim-badge">{dimHint}</div>
+        </section>
+
+        <section className="panel-section">
+          <h3>Board / material</h3>
+          <label>Preset</label>
+          <select value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
+            {MATERIAL_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.5rem" }}>
+            PBR-style response (roughness, clearcoat, metalness). Drop your own substrate by swapping presets in code.
+          </p>
+        </section>
+
+        <section className="panel-section">
+          <h3>Opening style</h3>
+          <label>Mechanism</label>
+          <select value={opening} onChange={(e) => setOpening(e.target.value as OpeningStyle)}>
+            {openingOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
+            {openingOptions.find((o) => o.value === opening)?.hint}
+          </p>
+          {opening === "top_split_meet_center" && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <label>Split top — hinge pair</label>
+              <select value={splitTopHingeSide} onChange={(e) => setSplitTopHingeSide(e.target.value as SplitTopHingeSide)}>
+                {SPLIT_TOP_HINGE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
+                {SPLIT_TOP_HINGE_OPTIONS.find((o) => o.value === splitTopHingeSide)?.hint}
+              </p>
+            </div>
+          )}
+          {opening !== "closed" && (
+            <div style={{ marginTop: "0.75rem" }}>
+              <label>Open amount ({Math.round(openT * 100)}%)</label>
+              <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => setOpenT(Number(e.target.value))} />
+            </div>
+          )}
+        </section>
+
+        <section className="panel-section">
+          <h3>Face artwork</h3>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+            PNG or JPG recommended. Art is UV-stretched to each rectangle; for print-ready proofs, design to the flat dieline
+            first, then preview here. Hover the rotate and clear icons beside each face for hints; rotation advances 90° per
+            click.
+          </p>
+          {(splitTop ? [...ALL_FACES.filter((f) => f !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES).map((fid) => (
+            <div key={fid} style={{ marginBottom: "0.65rem" }}>
+              <label>
+                {fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid]}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(fid, e.target.files?.[0] ?? null)}
+                style={{ width: "100%", marginBottom: 6 }}
+              />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={faceArtIconBtn}
+                  onClick={() => bumpTextureRotationBy90(fid)}
+                  title="Rotate artwork 90° on this face"
+                  aria-label="Rotate artwork 90 degrees on this face"
+                >
+                  <IconRotate90 />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={faceArtIconBtn}
+                  onClick={() => setFile(fid, null)}
+                  disabled={!faceFiles[fid]}
+                  title="Remove image from this face"
+                  aria-label="Remove image from this face"
+                >
+                  <IconClearImage />
+                </button>
+                <span className="dim-badge" style={{ marginLeft: "auto", marginTop: 0 }}>
+                  {(textureRotationDeg[fid] ?? 0) === 0 ? "0°" : `${textureRotationDeg[fid]}°`}
+                </span>
+              </div>
+              {faceFiles[fid] && (
+                <button type="button" className="btn" style={{ marginTop: 6, width: "100%" }} onClick={() => applyOneToAll(fid)}>
+                  Use this image for all faces
+                </button>
+              )}
+            </div>
+          ))}
+          <div className="row-2" style={{ marginTop: "0.5rem" }}>
+            <button type="button" className="btn" onClick={clearAllTextures}>
+              Clear all artwork
+            </button>
+            <button type="button" className="btn btn-primary" onClick={exportPng}>
+              Export viewport PNG
+            </button>
+          </div>
+        </section>
+
+        <section className="panel-section">
+          <h3>Viewport & lighting</h3>
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+            Record captures only the 3D preview (left)—not the settings panel. After a 3-second countdown, recording runs up
+            to 15 seconds while you adjust options on the right; you can stop early. The file is MP4 when your browser
+            supports it, otherwise WebM (plays in most players).
+          </p>
+          <div className="row-2" style={{ marginBottom: "0.75rem" }}>
+            {recordPhase === "countdown" ? (
+              <>
+                <button type="button" className="btn btn-ghost" onClick={cancelRecordCountdown}>
+                  Cancel countdown
+                </button>
+                <span className="dim-badge" style={{ marginTop: 0, alignSelf: "center" }}>
+                  Starting in {recordCountdown}…
+                </span>
+              </>
+            ) : recordPhase === "recording" ? (
+              <button type="button" className="btn" onClick={stopViewportRecording} style={{ borderColor: "#b91c1c", color: "#fecaca" }}>
+                Stop & download video
+              </button>
+            ) : (
+              <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
+                Record presentation (15s)
+              </button>
+            )}
+          </div>
+          {recordError && (
+            <p style={{ fontSize: "0.8rem", color: "#fca5a5", margin: "0 0 0.65rem" }} role="alert">
+              {recordError}
+            </p>
+          )}
+          <label>HDRI preset</label>
+          <select value={envPreset} onChange={(e) => setEnvPreset(e.target.value as EnvPreset)}>
+            <option value="studio">Studio</option>
+            <option value="city">City</option>
+            <option value="warehouse">Warehouse</option>
+            <option value="sunset">Sunset</option>
+            <option value="dawn">Dawn</option>
+          </select>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label>Zoom</label>
+            <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: "0.25rem 0 0.4rem" }}>
+              Scroll or pinch on the viewport still zooms; the slider stays in sync with camera distance.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
+                title="Zoom out (camera farther)"
+                aria-label="Zoom out"
+                onClick={() =>
+                  setZoomFraction((z) => Math.min(1, Math.round((z + 0.04) * 1000) / 1000))
+                }
+              >
+                −
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.005}
+                value={zoomFraction}
+                onChange={(e) => setZoomFraction(Number(e.target.value))}
+                style={{ flex: 1 }}
+                aria-valuemin={0}
+                aria-valuemax={1}
+                aria-valuenow={zoomFraction}
+                aria-label="Zoom level"
+              />
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
+                title="Zoom in (camera closer)"
+                aria-label="Zoom in"
+                onClick={() =>
+                  setZoomFraction((z) => Math.max(0, Math.round((z - 0.04) * 1000) / 1000))
+                }
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label className="checkbox-row" style={{ marginBottom: 0 }}>
+              <input type="checkbox" checked={wireframe} onChange={(e) => setWireframe(e.target.checked)} />
+              Wireframe overlay
+            </label>
+            <label className="checkbox-row" style={{ marginBottom: 0 }}>
+              <input type="checkbox" checked={showGrid} onChange={(e) => setShowGrid(e.target.checked)} />
+              Floor grid
+            </label>
+            <label className="checkbox-row" style={{ marginBottom: 0 }}>
+              <input type="checkbox" checked={showAxesGizmo} onChange={(e) => setShowAxesGizmo(e.target.checked)} />
+              Orientation gizmo
+            </label>
+            <label className="checkbox-row" style={{ marginBottom: 0 }}>
+              <input type="checkbox" checked={autoRotate} onChange={(e) => setAutoRotate(e.target.checked)} />
+              Auto-rotate (turntable)
+            </label>
+            {autoRotate && (
+              <div style={{ marginTop: "0.65rem", paddingLeft: "1.5rem" }}>
+                <label>Auto-rotate speed ({autoRotateSpeed.toFixed(2)})</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
+                    title="Decrease speed"
+                    aria-label="Decrease auto-rotate speed"
+                    onClick={() =>
+                      setAutoRotateSpeed((s) => Math.max(0.1, Math.round((s - 0.1) * 100) / 100))
+                    }
+                  >
+                    −
+                  </button>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={4}
+                    step={0.05}
+                    value={autoRotateSpeed}
+                    onChange={(e) => setAutoRotateSpeed(Number(e.target.value))}
+                    style={{ flex: 1 }}
+                    aria-valuemin={0.1}
+                    aria-valuemax={4}
+                    aria-valuenow={autoRotateSpeed}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
+                    title="Increase speed"
+                    aria-label="Increase auto-rotate speed"
+                    onClick={() =>
+                      setAutoRotateSpeed((s) => Math.min(4, Math.round((s + 0.1) * 100) / 100))
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+                <label className="checkbox-row" style={{ marginTop: "0.6rem", marginBottom: 0 }} title="Spin the turntable the other way">
+                  <input
+                    type="checkbox"
+                    checked={autoRotateReverse}
+                    onChange={(e) => setAutoRotateReverse(e.target.checked)}
+                  />
+                  Reverse direction
+                </label>
+              </div>
+            )}
+          </div>
+        </section>
+      </aside>
+    </div>
+  );
+}

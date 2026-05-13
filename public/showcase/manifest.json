@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "src": "/showcase/videos/kazomo-spin-mop.mp4",
+      "type": "video",
+      "alt": "Kazomo spin mop — 360° packaging-style product video",
+      "caption": "Example client reel (MP4 under public/showcase/videos/). Add rows for each asset in public/showcase/images/ or videos/."
+    }
+  ]
+}

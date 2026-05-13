@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-labelledby="h">
+  <title id="h">Illustration of 3D packaging box with lighting</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#141820"/><stop offset="1" stop-color="#0a0c10"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="50%" cy="35%" r="60%">
+      <stop offset="0" stop-color="#3d9eff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#3d9eff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#sky)"/>
+  <rect width="960" height="540" fill="url(#spot)"/>
+  <g transform="translate(480 300)">
+    <path fill="#7a5c3d" d="M-120 40 L0-60 L120 40 L0 140 Z"/>
+    <path fill="#5a432d" d="M-120 40 L-120 140 L0 200 L0 100 Z"/>
+    <path fill="#9a7850" d="M120 40 L120 140 L0 200 L0 100 Z"/>
+    <path fill="#c4a574" d="M0-60 L120 40 L0 100 L-120 40 Z"/>
+    <path fill="none" stroke="#3d9eff" stroke-opacity="0.35" stroke-width="1" d="M-120 40 L0 100 L120 40"/>
+  </g>
+</svg>
