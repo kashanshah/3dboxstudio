@@ -990,7 +990,7 @@
 
 .landing-card-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.9rem;
   margin-bottom: 0.7rem;
 }
