@@ -419,6 +419,7 @@ export default function BoxDesigner() {
           onZoomFractionChange={setZoomFractionClamped}
           envPreset={envPreset}
           textureRotationDeg={textureRotationDeg}
+          snappyOrbit={recordPhase === "recording"}
           onCanvasReady={(state) => {
             r3fRef.current = state;
           }}

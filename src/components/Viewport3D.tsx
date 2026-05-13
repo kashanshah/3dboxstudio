@@ -113,6 +113,11 @@ export interface Viewport3DProps {
   onCanvasReady?: (state: RootState) => void;
   /** Per-face texture rotation in degrees (0 / 90 / 180 / 270). */
   textureRotationDeg: Partial<Record<FaceId, number>>;
+  /**
+   * When true, OrbitControls damping is off so the camera follows motion immediately.
+   * Recording uses a 2D copy each frame; damped orbit looks like a trailing “shadow” on video.
+   */
+  snappyOrbit?: boolean;
 }
 
 function Scene({
@@ -134,6 +139,7 @@ function Scene({
   textureRotationDeg,
   zoomFraction,
   onZoomFractionChange,
+  snappyOrbit = false,
 }: Omit<Viewport3DProps, "showAxesGizmo" | "onCanvasReady">) {
   const maxDim = Math.max(width, height, length, 1);
   const camDist = maxDim * 2.2;
@@ -161,7 +167,7 @@ function Scene({
         minDistance={maxDim * 0.35}
         maxDistance={maxDim * 6}
         target={[0, height * 0.05, 0]}
-        enableDamping
+        enableDamping={!snappyOrbit}
         dampingFactor={0.08}
       />
       <ambientLight intensity={0.35} />

@@ -7,7 +7,7 @@ const MAX_RECORD_MS = 15_000;
 /** Extra tail card appended to every export (matches primary button gradient + panel tone). */
 const OUTRO_MS = 1000;
 const CREDIT_LINE = "Made with";
-const CREDIT_URL = "www.3dboxstudio.com";
+const CREDIT_URL = "www.3dBoxStudio.com";
 
 function pickRecorderMime(): string | undefined {
   const candidates = [
@@ -52,8 +52,8 @@ function drawOutroFrame(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#f8fafc";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const line1 = Math.round(Math.max(16, Math.min(32, w / 24)));
-  const line2 = Math.round(Math.max(14, Math.min(26, w / 20)));
+  const line1 = Math.round(Math.max(32, Math.min(32, w / 24)));
+  const line2 = Math.round(Math.max(24, Math.min(26, w / 20)));
   const gap = line1 * 0.55;
   ctx.font = `600 ${line1}px system-ui, "DM Sans", sans-serif`;
   ctx.fillText(CREDIT_LINE, w / 2, h / 2 - gap);
@@ -193,12 +193,17 @@ export function useViewportRecording() {
 
       let stream: MediaStream;
       try {
-        stream = composite.captureStream(30);
+        // Prefer display-like cadence; 30fps + damped orbit looked like trailing/smear on motion.
+        stream = composite.captureStream(60);
       } catch {
-        setError("Recording this view is not supported in your browser.");
-        compositeRef.current = null;
-        setPhase("idle");
-        return;
+        try {
+          stream = composite.captureStream(30);
+        } catch {
+          setError("Recording this view is not supported in your browser.");
+          compositeRef.current = null;
+          setPhase("idle");
+          return;
+        }
       }
 
       streamRef.current = stream;
@@ -208,7 +213,7 @@ export function useViewportRecording() {
       let recorder: MediaRecorder;
       try {
         recorder = preferredMime
-          ? new MediaRecorder(stream, { mimeType: preferredMime, videoBitsPerSecond: 6_000_000 })
+          ? new MediaRecorder(stream, { mimeType: preferredMime, videoBitsPerSecond: 10_000_000 })
           : new MediaRecorder(stream);
       } catch {
         try {
