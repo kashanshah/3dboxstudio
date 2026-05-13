@@ -208,34 +208,6 @@ function IconArrowRight() {
   );
 }
 
-function HeroZoomIcon() {
-  return (
-    <svg
-      className="landing-hero-visual-zoom-svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      aria-hidden
-    >
-      <circle
-        cx="10"
-        cy="10"
-        r="6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      <path
-        d="M14.5 14.5L20 20"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function BrowserShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="landing-browser">
@@ -310,6 +282,7 @@ const LANDING_PRODUCT_GALLERY: LandingGalleryItem[] = [
 
 const HERO_PREVIEW = {
   src: "/images/hero-img.webp",
+  video: "/showcase/videos/kazomo-spin-mop.mp4",
   width: 960,
   height: 540,
   alt: "Stylized 3D packaging box with studio lighting—representative of the interactive simulator",
@@ -344,25 +317,6 @@ export default function LandingPage() {
       theme: "auto",
       placeFocusBack: true,
     });
-  }, []);
-
-  const openHeroPreviewLightbox = useCallback(() => {
-    Fancybox.show(
-      [
-        {
-          src: HERO_PREVIEW.src,
-          type: "image" as const,
-          caption: HERO_PREVIEW.caption,
-          alt: HERO_PREVIEW.alt,
-        },
-      ],
-      {
-        startIndex: 0,
-        closeExisting: true,
-        theme: "auto",
-        placeFocusBack: true,
-      },
-    );
   }, []);
 
   useEffect(() => {
@@ -716,27 +670,19 @@ export default function LandingPage() {
                   <span className="landing-hero-badge">WebGL live</span>
                   <div className="landing-hero-visual-ring" aria-hidden />
                   <div className="landing-hero-visual-inner">
-                    <button
-                      type="button"
-                      className="landing-hero-visual-zoom"
-                      onClick={openHeroPreviewLightbox}
-                      aria-haspopup="dialog"
-                      aria-label="Open hero image zoomed"
-                    >
-                      <img
-                        src={HERO_PREVIEW.src}
-                        width={HERO_PREVIEW.width}
-                        height={HERO_PREVIEW.height}
-                        alt={HERO_PREVIEW.alt}
-                        decoding="async"
-                      />
-                      <span
-                        className="landing-hero-visual-zoom-badge"
-                        aria-hidden
-                      >
-                        <HeroZoomIcon />
-                      </span>
-                    </button>
+                    <video
+                      className="landing-hero-visual-video"
+                      src={HERO_PREVIEW.video}
+                      poster={HERO_PREVIEW.src}
+                      width={HERO_PREVIEW.width}
+                      height={HERO_PREVIEW.height}
+                      muted
+                      loop
+                      autoPlay
+                      playsInline
+                      aria-label={HERO_PREVIEW.alt}
+                      preload="metadata"
+                    />
                   </div>
                 </figure>
               </section>
