@@ -1,9 +1,12 @@
-import { useLayoutEffect, useMemo } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { getSiteOrigin } from "../seo/siteConfig";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_DOMAIN, SITE_ORIGIN_PUBLIC } from "../siteMeta";
+import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";
 import "../landing.css";
+import GithubLink from "../components/GithubLink";
 
 function LogoMark() {
   return (
@@ -121,11 +124,262 @@ function BrowserShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+type LandingGalleryItem = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  caption: string;
+};
+
+const LANDING_PRODUCT_GALLERY: LandingGalleryItem[] = [
+  {
+    src: "/images/screenshot-1.webp",
+    width: 640,
+    height: 400,
+    alt: "3D Box Studio: control panel beside a live 3D viewport with a sample carton",
+    caption: "Editor layout: parameters and live 3D packaging preview side by side.",
+  },
+  {
+    src: "/images/screenshot-2.webp",
+    width: 640,
+    height: 400,
+    alt: "Per-face artwork upload section in the 3D box packaging simulator",
+    caption: "Per-face artwork uploads with quick rotate and clear actions.",
+  },
+  {
+    src: "/images/screenshot-3.webp",
+    width: 640,
+    height: 400,
+    alt: "Opening styles and material presets in the carton 3D simulator",
+    caption: "Opening styles and board presets for realistic packaging visualization.",
+  },
+  {
+    src: "/images/screenshot-4.webp",
+    width: 640,
+    height: 400,
+    alt: "Recording feature in the 3D box packaging simulator",
+    caption: "Recording feature in the 3D box packaging simulator.",
+  },
+];
+
+function LandingGalleryLightbox({
+  items,
+  index,
+  onClose,
+  onPrev,
+  onNext,
+}: {
+  items: LandingGalleryItem[];
+  index: number;
+  onClose: () => void;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const item = items[index];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        onPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        onNext();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, onPrev, onNext]);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+  }, [index]);
+
+  if (!item) return null;
+
+  const canPrev = index > 0;
+  const canNext = index < items.length - 1;
+
+  return createPortal(
+    <div
+      className="landing-lightbox-root"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="landing-lightbox-title"
+    >
+      <button
+        type="button"
+        className="landing-lightbox-backdrop"
+        tabIndex={-1}
+        aria-label="Close gallery"
+        onClick={onClose}
+      />
+      <div className="landing-lightbox-sheet">
+        <div className="landing-lightbox-toolbar">
+          <p id="landing-lightbox-title" className="landing-lightbox-title">
+            {item.caption}
+          </p>
+          <span className="landing-lightbox-counter" aria-live="polite">
+            {index + 1} / {items.length}
+          </span>
+          <button ref={closeRef} type="button" className="landing-lightbox-close" onClick={onClose} aria-label="Close gallery">
+            <span aria-hidden>×</span>
+          </button>
+        </div>
+        <div className="landing-lightbox-stage">
+          <button
+            type="button"
+            className="landing-lightbox-nav landing-lightbox-nav--prev"
+            onClick={onPrev}
+            disabled={!canPrev}
+            aria-label="Previous screenshot"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+              <path
+                d="M15 6l-6 6 6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <div className="landing-lightbox-frame">
+            <img
+              className="landing-lightbox-img"
+              src={item.src}
+              width={item.width}
+              height={item.height}
+              alt={item.alt}
+              decoding="async"
+            />
+          </div>
+          <button
+            type="button"
+            className="landing-lightbox-nav landing-lightbox-nav--next"
+            onClick={onNext}
+            disabled={!canNext}
+            aria-label="Next screenshot"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+              <path
+                d="M9 6l6 6-6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.25"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 const DESC =
   "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
 
+/** Scroll past this many pixels before the main nav pins to the top of the viewport. */
+const LANDING_NAV_STICKY_AFTER_SCROLL_PX = 700;
+
 export default function LandingPage() {
   const origin = useMemo(() => getSiteOrigin(), []);
+  const [navOpen, setNavOpen] = useState(false);
+  const [navAffixed, setNavAffixed] = useState(false);
+  const [navBarHeight, setNavBarHeight] = useState(0);
+  const navBarRef = useRef<HTMLElement | null>(null);
+  const navPanelRef = useRef<HTMLElement | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
+  const galleryFocusReturnRef = useRef<HTMLElement | null>(null);
+
+  const openGallery = useCallback((index: number) => {
+    galleryFocusReturnRef.current = document.activeElement as HTMLElement | null;
+    setGalleryIndex(index);
+  }, []);
+
+  const closeGallery = useCallback(() => {
+    setGalleryIndex(null);
+    queueMicrotask(() => {
+      galleryFocusReturnRef.current?.focus?.();
+      galleryFocusReturnRef.current = null;
+    });
+  }, []);
+
+  const galleryPrev = useCallback(() => {
+    setGalleryIndex((i) => (i === null ? null : Math.max(0, i - 1)));
+  }, []);
+
+  const galleryNext = useCallback(() => {
+    setGalleryIndex((i) =>
+      i === null ? null : Math.min(LANDING_PRODUCT_GALLERY.length - 1, i + 1)
+    );
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 880px)");
+    const syncBodyScrollLock = () => {
+      const lock = galleryIndex !== null || (navOpen && mq.matches);
+      document.body.style.overflow = lock ? "hidden" : "";
+    };
+    syncBodyScrollLock();
+    mq.addEventListener("change", syncBodyScrollLock);
+    return () => {
+      mq.removeEventListener("change", syncBodyScrollLock);
+      document.body.style.overflow = "";
+    };
+  }, [galleryIndex, navOpen]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navOpen]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 881px)");
+    const onWiden = () => {
+      if (mq.matches) setNavOpen(false);
+    };
+    mq.addEventListener("change", onWiden);
+    return () => mq.removeEventListener("change", onWiden);
+  }, []);
+
+  useEffect(() => {
+    if (!navOpen || !navPanelRef.current) return;
+    const first = navPanelRef.current.querySelector<HTMLElement>("a[href], button");
+    queueMicrotask(() => first?.focus());
+  }, [navOpen]);
+
+  useLayoutEffect(() => {
+    const el = navBarRef.current;
+    if (!el) return;
+    const measure = () => setNavBarHeight(el.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setNavAffixed(window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useLayoutEffect(() => {
     document.title = "Free packaging box designer — 3D Box Studio | 3dboxstudio.com";
@@ -280,21 +534,62 @@ export default function LandingPage() {
       <div className="landing-bg-orb landing-bg-orb--c" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <header className="landing-nav">
+      <GithubLink />
+
+      {navAffixed && navBarHeight > 0 && (
+        <div className="landing-nav-spacer" style={{ height: navBarHeight }} aria-hidden />
+      )}
+      <header
+        ref={navBarRef}
+        className={`landing-nav${navOpen ? " landing-nav--open" : ""}${navAffixed ? " landing-nav--affixed" : ""}`}
+      >
         <div className="landing-container landing-nav-inner">
-          <Link className="landing-brand" to="/">
+          <Link className="landing-brand" to="/" onClick={() => setNavOpen(false)}>
             <LogoMark />
             <span className="landing-brand-text">3D Box Studio</span>
           </Link>
-          <nav className="landing-nav-links" aria-label="Primary">
-            <a href="#features">Features</a>
-            <a href="#gallery">Screenshots</a>
-            <a href="#showcase">Showcase</a>
-            <a href="#faq">FAQ</a>
-            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+          <button
+            type="button"
+            className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
+            aria-expanded={navOpen}
+            aria-controls="landing-primary-nav"
+            id="landing-nav-toggle"
+            onClick={() => setNavOpen((o) => !o)}
+            aria-label={navOpen ? "Close menu" : "Open menu"}
+          >
+            <span className="landing-nav-toggle-bars" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+          <div
+            className={`landing-nav-scrim${navOpen ? " is-visible" : ""}`}
+            aria-hidden
+            onClick={() => setNavOpen(false)}
+          />
+          <nav
+            ref={navPanelRef}
+            id="landing-primary-nav"
+            className={`landing-nav-links${navOpen ? " is-open" : ""}`}
+            aria-label="Primary"
+          >
+            <a href="#features" onClick={() => setNavOpen(false)}>
+              Features
+            </a>
+            <a href="#gallery" onClick={() => setNavOpen(false)}>
+              Screenshots
+            </a>
+            <a href="#showcase" onClick={() => setNavOpen(false)}>
+              Showcase
+            </a>
+            <a href="#faq" onClick={() => setNavOpen(false)}>
+              FAQ
+            </a>
+            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" onClick={() => setNavOpen(false)}>
               GitHub
             </a>
-            <Link to="/studio" className="btn btn-primary landing-nav-cta">
+            <Link to="/studio" className="btn btn-primary landing-nav-cta" onClick={() => setNavOpen(false)}>
               Open studio
               <IconArrowRight />
             </Link>
@@ -482,6 +777,7 @@ export default function LandingPage() {
               </p>
             </article>
             </div>
+            <LandingStudioCta />
           </div>
         </section>
 
@@ -510,47 +806,35 @@ export default function LandingPage() {
             </div>
           </div>
           <p className="landing-section-intro">
-            Below are illustrative screenshots of the interface layout and key workflows. Replace them with real captures
-            from <Link to="/studio">your live studio</Link> for even stronger social proof and SEO image search coverage.
+            Below are illustrative screenshots of the interface layout and key workflows. Click any shot to open a
+            full-size gallery (arrow keys to browse, Escape to close). Replace images with real captures from{" "}
+            <Link to="/studio">your live studio</Link> for even stronger social proof and SEO image search coverage.
           </p>
           <div className="landing-screens">
-            <figure className="landing-shot landing-shot--hero">
-              <BrowserShell>
-                <img
-                  src="/landing/screenshot-studio-ui.svg"
-                  width={640}
-                  height={400}
-                  loading="lazy"
-                  alt="3D Box Studio: control panel beside a live 3D viewport with a sample carton"
-                />
-              </BrowserShell>
-              <figcaption>Editor layout: parameters and live 3D packaging preview side by side.</figcaption>
-            </figure>
-            <figure className="landing-shot">
-              <BrowserShell>
-                <img
-                  src="/landing/screenshot-faces.svg"
-                  width={640}
-                  height={400}
-                  loading="lazy"
-                  alt="Per-face artwork upload section in the 3D box packaging simulator"
-                />
-              </BrowserShell>
-              <figcaption>Per-face artwork uploads with quick rotate and clear actions.</figcaption>
-            </figure>
-            <figure className="landing-shot">
-              <BrowserShell>
-                <img
-                  src="/landing/screenshot-openings.svg"
-                  width={640}
-                  height={400}
-                  loading="lazy"
-                  alt="Opening styles and material presets in the carton 3D simulator"
-                />
-              </BrowserShell>
-              <figcaption>Opening styles and board presets for realistic packaging visualization.</figcaption>
-            </figure>
+            {LANDING_PRODUCT_GALLERY.map((shot, i) => (
+              <figure key={shot.src} className="landing-shot">
+                <button
+                  type="button"
+                  className="landing-shot-expand"
+                  onClick={() => openGallery(i)}
+                  aria-haspopup="dialog"
+                  aria-label={`Open screenshot ${i + 1} in gallery: ${shot.caption}`}
+                >
+                  <BrowserShell>
+                    <img
+                      src={shot.src}
+                      width={shot.width}
+                      height={shot.height}
+                      loading="lazy"
+                      alt={shot.alt}
+                    />
+                  </BrowserShell>
+                </button>
+                <figcaption>{shot.caption}</figcaption>
+              </figure>
+            ))}
           </div>
+          <LandingStudioCta />
           </div>
         </section>
 
@@ -592,20 +876,7 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          </div>
-        </section>
-
-        <section className="landing-section landing-section--kw" aria-labelledby="kw-heading">
-          <div className="landing-container">
-          <h2 id="kw-heading" className="visually-hidden">
-            Related topics
-          </h2>
-          <p className="landing-kw">
-            <strong>Popular searches:</strong> 3D box designer, 3D packaging simulator, carton 3D preview, folding box
-            visualizer, mailer box mockup, structural packaging preview, online box configurator, dieline visualization (flat
-            artwork to 3D preview), PBR packaging render, shipping box designer tool, product box 3D online, corrugated box
-            simulator, retail carton preview, CPG packaging review, print-ready proof companion (preview only).
-          </p>
+          <LandingStudioCta />
           </div>
         </section>
 
@@ -703,6 +974,20 @@ export default function LandingPage() {
       </main>
 
       <footer className="landing-footer">
+      <section className="landing-section landing-section--kw" aria-labelledby="kw-heading">
+          <div className="landing-container">
+          <h2 id="kw-heading" className="visually-hidden">
+            Related topics
+          </h2>
+          <p className="landing-kw">
+            <strong>Popular searches:</strong> 3D box designer, 3D packaging simulator, carton 3D preview, folding box
+            visualizer, mailer box mockup, structural packaging preview, online box configurator, dieline visualization (flat
+            artwork to 3D preview), PBR packaging render, shipping box designer tool, product box 3D online, corrugated box
+            simulator, retail carton preview, CPG packaging review, print-ready proof companion (preview only).
+          </p>
+          </div>
+        </section>
+
         <div className="landing-container">
         <div className="landing-footer-inner">
           <div className="landing-footer-brand">
@@ -752,6 +1037,15 @@ export default function LandingPage() {
         </div>
         </div>
       </footer>
+      {galleryIndex !== null && (
+        <LandingGalleryLightbox
+          items={LANDING_PRODUCT_GALLERY}
+          index={galleryIndex}
+          onClose={closeGallery}
+          onPrev={galleryPrev}
+          onNext={galleryNext}
+        />
+      )}
     </div>
   );
 }

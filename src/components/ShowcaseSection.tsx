@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import LandingStudioCta from "./LandingStudioCta";
 import { GITHUB_REPO_URL } from "../siteMeta";
 
 export type ShowcaseFilter = "all" | "image" | "video";
@@ -149,7 +150,7 @@ export default function ShowcaseSection() {
             <code>public/showcase/manifest.json</code>.
           </p>
         ) : (
-          <div className="landing-showcase-masonry" role="list">
+          <div className="landing-showcase-grid" role="list">
             {filtered.map((item, i) => (
               <figure
                 key={`${item.src}-${i}`}
@@ -187,12 +188,13 @@ export default function ShowcaseSection() {
           Curating your own reel? Drop files under <code>public/showcase/images/</code> or{" "}
           <code>public/showcase/videos/</code>, list them in <code>manifest.json</code>, and use optional{" "}
           <code>layout</code>: <code>&quot;standard&quot;</code>, <code>&quot;tall&quot;</code>, or{" "}
-          <code>&quot;wide&quot;</code> for the masonry spans. Source lives on{" "}
+          <code>&quot;wide&quot;</code> for wider or taller tiles in the grid. Source lives on{" "}
           <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
           .
         </p>
+        <LandingStudioCta />
       </div>
     </section>
   );

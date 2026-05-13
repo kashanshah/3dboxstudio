@@ -713,12 +713,12 @@ export default function BoxDesigner() {
           </div>
         </PanelCollapse>
 
-        <PanelCollapse title="Viewport & lighting">
+        <PanelCollapse title="Viewport capture">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Capture.</strong> Export a still of the 3D preview as PNG,
-            or record a short clip (only the viewport on the left—not this panel). After a 3-second countdown, recording runs
-            up to 15 seconds while you change options here; you can stop early. The file is MP4 when your browser supports it,
-            otherwise WebM (plays in most players).
+            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Export & record.</strong> PNG is a still of the 3D
+            preview on the left (not this panel). Video records that same viewport: after a 3-second countdown, capture runs up
+            to 15 seconds while you change options in the sidebar; you can stop early. Output is MP4 when your browser supports
+            it, otherwise WebM.
           </p>
           {recordPhase === "recording" ? (
             <>
@@ -755,7 +755,7 @@ export default function BoxDesigner() {
               </div>
             </>
           ) : (
-            <div className="row-2" style={{ marginBottom: "0.75rem" }}>
+            <div className="row-1" style={{ marginBottom: "0.75rem" }}>
               <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
                 Record presentation (15s)
               </button>
@@ -769,6 +769,12 @@ export default function BoxDesigner() {
               {recordError}
             </p>
           )}
+        </PanelCollapse>
+
+        <PanelCollapse title="Viewport & lighting">
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+            HDRI lighting, camera zoom, and how the preview is drawn (grid, gizmo, wireframe, turntable).
+          </p>
           <label>HDRI preset</label>
           <select value={envPreset} onChange={(e) => setEnvPreset(e.target.value as EnvPreset)}>
             <option value="studio">Studio</option>

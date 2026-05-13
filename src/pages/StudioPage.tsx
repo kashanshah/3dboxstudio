@@ -1,4 +1,4 @@
-import { useLayoutEffect, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import BoxDesigner from "../BoxDesigner";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "../siteMeta";
@@ -39,6 +39,8 @@ const STUDIO_DESC =
   "Free packaging box designer (3D Box Studio): dimensions, materials, openings, per-face artwork, lighting, PNG export, local save. Open source (MIT).";
 
 export default function StudioPage() {
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+
   useLayoutEffect(() => {
     document.title = "Studio — Free packaging box designer | 3D Box Studio";
     const setMeta = (name: string, content: string) => {
@@ -57,58 +59,132 @@ export default function StudioPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!headerMenuOpen) return;
+    const mq = window.matchMedia("(min-width: 721px)");
+    const onWide = () => {
+      if (mq.matches) setHeaderMenuOpen(false);
+    };
+    mq.addEventListener("change", onWide);
+    return () => mq.removeEventListener("change", onWide);
+  }, [headerMenuOpen]);
+
+  useEffect(() => {
+    if (!headerMenuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setHeaderMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [headerMenuOpen]);
+
+  useEffect(() => {
+    if (!headerMenuOpen) return;
+    const mq = window.matchMedia("(max-width: 720px)");
+    const sync = () => {
+      document.body.style.overflow = mq.matches ? "hidden" : "";
+    };
+    sync();
+    mq.addEventListener("change", sync);
+    return () => {
+      mq.removeEventListener("change", sync);
+      document.body.style.overflow = "";
+    };
+  }, [headerMenuOpen]);
+
+  const closeHeaderMenu = () => setHeaderMenuOpen(false);
+
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", minHeight: 480 }}>
-      <header
-        style={{
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "8px 14px",
-          borderBottom: "1px solid var(--panel-border)",
-          background: "var(--panel)",
-        }}
-      >
-        <Link to="/" style={{ color: "var(--muted)", textDecoration: "none", fontSize: "0.85rem", fontWeight: 500 }}>
+      <header className="studio-header">
+        <Link className="studio-header-home" to="/" onClick={closeHeaderMenu}>
           ← Home
         </Link>
-        <span style={{ color: "var(--panel-border)", userSelect: "none" }} aria-hidden>
+        <span className="studio-header-sep" aria-hidden>
           |
         </span>
         <img
+          className="studio-header-logo"
           src="/logo-mark.svg"
           width={26}
           height={26}
           alt=""
           decoding="async"
-          style={{ display: "block", flexShrink: 0, filter: "drop-shadow(0 1px 4px rgba(61, 158, 255, 0.35))" }}
         />
-        <span style={{ fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.02em" }}>3D Box Studio</span>
-        <span style={{ flex: 1 }} />
-        <a
-          className="studio-top-bar-link"
-          href={GITHUB_REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={STUDIO_TOP_LINK}
+        <span className="studio-header-title">3D Box Studio</span>
+        <div className="studio-header-desktop-links">
+          <a
+            className="studio-top-bar-link"
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={STUDIO_TOP_LINK}
+          >
+            <IconGitHubMark />
+            GitHub
+          </a>
+          <span className="studio-header-dot" aria-hidden>
+            ·
+          </span>
+          <a
+            className="studio-top-bar-link"
+            href={BUYMEACOFFEE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={STUDIO_TOP_LINK}
+          >
+            <IconBuyMeACoffeeMark />
+            Buy me a coffee
+          </a>
+        </div>
+        <button
+          type="button"
+          className={`studio-header-menu-btn${headerMenuOpen ? " is-open" : ""}`}
+          aria-expanded={headerMenuOpen}
+          aria-controls="studio-header-mobile-panel"
+          aria-label={headerMenuOpen ? "Close menu" : "Open menu"}
+          onClick={() => setHeaderMenuOpen((o) => !o)}
         >
-          <IconGitHubMark />
-          GitHub
-        </a>
-        <span style={{ color: "var(--panel-border)", userSelect: "none" }} aria-hidden>
-          ·
-        </span>
-        <a
-          className="studio-top-bar-link"
-          href={BUYMEACOFFEE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={STUDIO_TOP_LINK}
+          <span className="studio-header-menu-bars" aria-hidden>
+            <span />
+            <span />
+            <span />
+          </span>
+        </button>
+        <button
+          type="button"
+          className={`studio-header-scrim${headerMenuOpen ? " is-open" : ""}`}
+          tabIndex={-1}
+          aria-label="Close menu"
+          onClick={closeHeaderMenu}
+        />
+        <div
+          id="studio-header-mobile-panel"
+          className={`studio-header-mobile-panel${headerMenuOpen ? " is-open" : ""}`}
         >
-          <IconBuyMeACoffeeMark />
-          Buy me a coffee
-        </a>
+          <a
+            className="studio-top-bar-link"
+            href={GITHUB_REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={STUDIO_TOP_LINK}
+            onClick={closeHeaderMenu}
+          >
+            <IconGitHubMark />
+            GitHub
+          </a>
+          <a
+            className="studio-top-bar-link"
+            href={BUYMEACOFFEE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={STUDIO_TOP_LINK}
+            onClick={closeHeaderMenu}
+          >
+            <IconBuyMeACoffeeMark />
+            Buy me a coffee
+          </a>
+        </div>
       </header>
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         <BoxDesigner />
