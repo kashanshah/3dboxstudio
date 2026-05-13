@@ -288,7 +288,7 @@ export function PackagingBox({
           </group>
         </>
       ) : opening === "lid_from_back" ? (
-        <group position={[0, h / 2, -d / 2]} rotation={[angle, 0, 0]}>
+        <group position={[0, h / 2, -d / 2]} rotation={[-angle, 0, 0]}>
           <group position={[0, 0, d / 2]}>
             <FacePlane
               url={topWhole}
