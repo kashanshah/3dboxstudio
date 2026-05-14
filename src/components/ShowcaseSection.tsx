@@ -1,6 +1,6 @@
-import { Fancybox } from "@fancyapps/ui";
-import "@fancyapps/ui/dist/fancybox/fancybox.css";
+import { loadFancybox } from "../lib/loadFancybox";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import LazyShowcaseVideo from "./LazyShowcaseVideo";
 import LandingStudioCta from "./LandingStudioCta";
 import { GITHUB_REPO_URL } from "../siteMeta";
 
@@ -100,7 +100,7 @@ export default function ShowcaseSection() {
 
   useEffect(() => {
     return () => {
-      Fancybox.destroy();
+      void loadFancybox().then((Fancybox) => Fancybox.destroy());
     };
   }, []);
 
@@ -126,10 +126,12 @@ export default function ShowcaseSection() {
         caption: it.caption ?? it.alt ?? "",
       }));
       if (slides.length === 0) return;
-      Fancybox.show(slides, {
-        startIndex,
-        closeExisting: true,
-        theme: "auto",
+      void loadFancybox().then((Fancybox) => {
+        Fancybox.show(slides, {
+          startIndex,
+          closeExisting: true,
+          theme: "auto",
+        });
       });
     },
     [filtered]
@@ -206,14 +208,9 @@ export default function ShowcaseSection() {
                 <div className="landing-showcase-tile-media-wrap">
                   {item.type === "video" ? (
                     <>
-                      <video
-                        className="landing-showcase-tile-video"
+                      <LazyShowcaseVideo
                         src={item.src}
-                        controls
-                        playsInline
-                        loop
-                        preload={i === 0 ? "metadata" : "none"}
-                        aria-label={item.alt ?? "Showcase video"}
+                        ariaLabel={item.alt ?? "Showcase video"}
                       />
                       <button
                         type="button"

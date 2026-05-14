@@ -1,5 +1,5 @@
-import { Fancybox } from "@fancyapps/ui";
-import "@fancyapps/ui/dist/fancybox/fancybox.css";
+import { loadFancybox } from "../lib/loadFancybox";
+import LandingHeroVideo from "../components/LandingHeroVideo";
 import {
   useCallback,
   useEffect,
@@ -309,11 +309,13 @@ export default function LandingPage() {
       caption: shot.caption,
       alt: shot.alt,
     }));
-    Fancybox.show(slides, {
-      startIndex,
-      closeExisting: true,
-      theme: "auto",
-      placeFocusBack: true,
+    void loadFancybox().then((Fancybox) => {
+      Fancybox.show(slides, {
+        startIndex,
+        closeExisting: true,
+        theme: "auto",
+        placeFocusBack: true,
+      });
     });
   }, []);
 
@@ -359,20 +361,37 @@ export default function LandingPage() {
   useLayoutEffect(() => {
     const el = navBarRef.current;
     if (!el) return;
-    const measure = () => setNavBarHeight(el.offsetHeight);
+    const measure = () => {
+      const nextHeight = el.offsetHeight;
+      setNavBarHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+    };
     measure();
-    const ro = new ResizeObserver(measure);
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(measure);
+    });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
+    let affixed = window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX;
+    setNavAffixed(affixed);
+    let frame = 0;
     const onScroll = () => {
-      setNavAffixed(window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX);
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const nextAffixed = window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX;
+        if (nextAffixed === affixed) return;
+        affixed = nextAffixed;
+        setNavAffixed(nextAffixed);
+      });
     };
-    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -519,18 +538,12 @@ export default function LandingPage() {
                   <span className="landing-hero-badge">WebGL live</span>
                   <div className="landing-hero-visual-ring" aria-hidden />
                   <div className="landing-hero-visual-inner">
-                    <video
-                      className="landing-hero-visual-video"
+                    <LandingHeroVideo
                       src={HERO_PREVIEW.video}
                       poster={HERO_PREVIEW.src}
                       width={HERO_PREVIEW.width}
                       height={HERO_PREVIEW.height}
-                      muted
-                      loop
-                      autoPlay
-                      playsInline
-                      aria-label={HERO_PREVIEW.alt}
-                      preload="metadata"
+                      alt={HERO_PREVIEW.alt}
                     />
                   </div>
                 </figure>
@@ -764,6 +777,7 @@ export default function LandingPage() {
                         width={shot.width}
                         height={shot.height}
                         loading="lazy"
+                        decoding="async"
                         alt={shot.alt}
                       />
                     </BrowserShell>

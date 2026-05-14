@@ -178,6 +178,7 @@ export function buildLandingHeadHtml(origin: string): string {
   ];
   if (origin) {
     tags.push(
+      `<link rel="preload" as="image" href="${escapeHtml(`${origin}/images/hero-img.webp`)}" fetchpriority="high" />`,
       `<meta property="og:title" content="${escapeHtml(LANDING_TITLE)}" />`,
       `<meta property="og:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
       `<meta property="og:type" content="website" />`,
