@@ -42,11 +42,7 @@ export async function runRoutePrerender(config: PrerenderConfig): Promise<void> 
   const origin = getBuildOrigin(loadEnv("production", process.cwd(), ""));
 
   await build({
-    build: {
-      ssr: path.resolve("src/entry-server.tsx"),
-      outDir: serverOutDir,
-      emptyOutDir: true,
-    },
+    configFile: path.resolve("vite.ssr.config.ts"),
   });
 
   const serverEntry = path.join(serverOutDir, "entry-server.js");
@@ -65,3 +61,6 @@ export async function runRoutePrerender(config: PrerenderConfig): Promise<void> 
 
   await fs.rm(serverOutDir, { recursive: true, force: true });
 }
+
+const { prerenderConfig } = await import("../prerender.config");
+await runRoutePrerender(prerenderConfig);
