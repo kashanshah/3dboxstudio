@@ -18,7 +18,7 @@ type LandingHeadOptions = {
 
 function resolveOgImageVersion(version?: string): string {
   if (version?.trim()) return version.trim();
-  const fromEnv = import.meta.env.VITE_OG_IMAGE_VERSION as string | undefined;
+  const fromEnv = import.meta.env?.VITE_OG_IMAGE_VERSION as string | undefined;
   return fromEnv?.trim() || "1";
 }
 
