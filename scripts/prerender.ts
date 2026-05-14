@@ -39,7 +39,12 @@ export async function runRoutePrerender(config: PrerenderConfig): Promise<void> 
 
   const templatePath = path.join(distDir, "index.html");
   const template = await fs.readFile(templatePath, "utf8");
-  const origin = getBuildOrigin(loadEnv("production", process.cwd(), ""));
+  const env = loadEnv("production", process.cwd(), "");
+  const origin = getBuildOrigin(env);
+  const headOptions = {
+    ogImageVersion: env.VITE_OG_IMAGE_VERSION,
+    updatedTime: new Date().toISOString(),
+  };
 
   await build({
     configFile: path.resolve("vite.ssr.config.ts"),
@@ -50,12 +55,17 @@ export async function runRoutePrerender(config: PrerenderConfig): Promise<void> 
 
   for (const route of config.prerender) {
     const appHtml = renderPrerenderRoute(route);
-    const html = applyRouteHeadToHtml(injectAppHtml(template, appHtml), route, origin);
+    const html = applyRouteHeadToHtml(
+      injectAppHtml(template, appHtml),
+      route,
+      origin,
+      headOptions,
+    );
     await writeRouteHtml(routeToOutputPath(route), html);
   }
 
   for (const route of config.clientOnly) {
-    const html = applyRouteHeadToHtml(template, route, origin);
+    const html = applyRouteHeadToHtml(template, route, origin, headOptions);
     await writeRouteHtml(routeToOutputPath(route), html);
   }
 

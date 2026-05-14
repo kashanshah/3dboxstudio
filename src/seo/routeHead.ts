@@ -1,10 +1,19 @@
 import { buildLandingHeadHtml } from "./landingHead";
 import { buildStudioHeadHtml } from "./studioHead";
 
-export function buildRouteHeadHtml(route: string, origin: string): string {
+export type RouteHeadOptions = {
+  ogImageVersion?: string;
+  updatedTime?: string;
+};
+
+export function buildRouteHeadHtml(
+  route: string,
+  origin: string,
+  options?: RouteHeadOptions,
+): string {
   switch (route) {
     case "/":
-      return buildLandingHeadHtml(origin);
+      return buildLandingHeadHtml(origin, options);
     case "/studio":
       return buildStudioHeadHtml(origin);
     default:
@@ -12,8 +21,20 @@ export function buildRouteHeadHtml(route: string, origin: string): string {
   }
 }
 
-export function applyRouteHeadToHtml(html: string, route: string, origin: string): string {
-  const headMarkup = buildRouteHeadHtml(route, origin);
+function stripExistingSocialMeta(html: string): string {
+  return html
+    .replace(/\s*<meta[^>]+property="og:[^"]*"[^>]*>\s*/gi, "")
+    .replace(/\s*<meta[^>]+name="twitter:[^"]*"[^>]*>\s*/gi, "")
+    .replace(/\s*<link[^>]+rel="canonical"[^>]*>\s*/gi, "");
+}
+
+export function applyRouteHeadToHtml(
+  html: string,
+  route: string,
+  origin: string,
+  options?: RouteHeadOptions,
+): string {
+  const headMarkup = buildRouteHeadHtml(route, origin, options);
   const withoutTitle = html.replace(/<title>[\s\S]*?<\/title>\s*/i, "");
   const withoutDescription = withoutTitle.replace(
     /<meta\s+name="description"[^>]*>\s*/i,
@@ -23,5 +44,6 @@ export function applyRouteHeadToHtml(html: string, route: string, origin: string
     /<meta\s+name="theme-color"[^>]*>\s*/i,
     "",
   );
-  return withoutThemeColor.replace("</head>", `    ${headMarkup}\n  </head>`);
+  const withoutSocial = stripExistingSocialMeta(withoutThemeColor);
+  return withoutSocial.replace("</head>", `    ${headMarkup}\n  </head>`);
 }

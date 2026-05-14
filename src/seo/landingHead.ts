@@ -9,6 +9,49 @@ export const LANDING_OG_IMAGE_WIDTH = 1402;
 export const LANDING_OG_IMAGE_HEIGHT = 1122;
 export const LANDING_OG_IMAGE_ALT =
   "Stylized 3D packaging box with studio lighting—representative of the interactive simulator";
+export const LANDING_OG_IMAGE_TYPE = "image/jpeg";
+
+type LandingHeadOptions = {
+  ogImageVersion?: string;
+  updatedTime?: string;
+};
+
+function resolveOgImageVersion(version?: string): string {
+  if (version?.trim()) return version.trim();
+  const fromEnv = import.meta.env.VITE_OG_IMAGE_VERSION as string | undefined;
+  return fromEnv?.trim() || "1";
+}
+
+export function getLandingOgImageUrl(origin: string, version?: string): string {
+  const url = new URL(LANDING_OG_IMAGE_PATH, `${origin.replace(/\/$/, "")}/`);
+  url.searchParams.set("v", resolveOgImageVersion(version));
+  return url.toString();
+}
+
+function applyLandingSocialMeta(
+  doc: Document,
+  origin: string,
+  options?: LandingHeadOptions,
+): void {
+  const imageUrl = getLandingOgImageUrl(origin, options?.ogImageVersion);
+  setMeta(doc, "og:title", doc.title, "property");
+  setMeta(doc, "og:description", LANDING_DESCRIPTION, "property");
+  setMeta(doc, "og:type", "website", "property");
+  setMeta(doc, "og:url", `${origin}/`, "property");
+  setMeta(doc, "og:image", imageUrl, "property");
+  setMeta(doc, "og:image:secure_url", imageUrl, "property");
+  setMeta(doc, "og:image:type", LANDING_OG_IMAGE_TYPE, "property");
+  setMeta(doc, "og:image:width", String(LANDING_OG_IMAGE_WIDTH), "property");
+  setMeta(doc, "og:image:height", String(LANDING_OG_IMAGE_HEIGHT), "property");
+  setMeta(doc, "og:image:alt", LANDING_OG_IMAGE_ALT, "property");
+  if (options?.updatedTime) {
+    setMeta(doc, "og:updated_time", options.updatedTime, "property");
+  }
+  setMeta(doc, "twitter:card", "summary_large_image");
+  setMeta(doc, "twitter:title", doc.title);
+  setMeta(doc, "twitter:description", LANDING_DESCRIPTION);
+  setMeta(doc, "twitter:image", imageUrl);
+}
 
 export function buildLandingJsonLd(origin: string) {
   return {
@@ -119,7 +162,11 @@ function setMeta(
   el.setAttribute("data-route-seo", "1");
 }
 
-export function applyLandingRouteSeo(doc: Document, origin: string): () => void {
+export function applyLandingRouteSeo(
+  doc: Document,
+  origin: string,
+  options?: LandingHeadOptions,
+): () => void {
   doc.title = LANDING_TITLE;
   setMeta(doc, "description", LANDING_DESCRIPTION);
   const themeMeta = doc.querySelector('meta[name="theme-color"]');
@@ -129,18 +176,7 @@ export function applyLandingRouteSeo(doc: Document, origin: string): () => void 
     themeMeta.setAttribute("data-landing-theme", "1");
   }
   if (origin) {
-    setMeta(doc, "og:title", doc.title, "property");
-    setMeta(doc, "og:description", LANDING_DESCRIPTION, "property");
-    setMeta(doc, "og:type", "website", "property");
-    setMeta(doc, "og:url", `${origin}/`, "property");
-    setMeta(doc, "og:image", `${origin}${LANDING_OG_IMAGE_PATH}`, "property");
-    setMeta(doc, "og:image:width", String(LANDING_OG_IMAGE_WIDTH), "property");
-    setMeta(doc, "og:image:height", String(LANDING_OG_IMAGE_HEIGHT), "property");
-    setMeta(doc, "og:image:alt", LANDING_OG_IMAGE_ALT, "property");
-    setMeta(doc, "twitter:card", "summary_large_image");
-    setMeta(doc, "twitter:title", doc.title);
-    setMeta(doc, "twitter:description", LANDING_DESCRIPTION);
-    setMeta(doc, "twitter:image", `${origin}${LANDING_OG_IMAGE_PATH}`);
+    applyLandingSocialMeta(doc, origin, options);
     let link = doc.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!link) {
       link = doc.createElement("link");
@@ -179,27 +215,37 @@ export function applyLandingRouteSeo(doc: Document, origin: string): () => void 
   };
 }
 
-export function buildLandingHeadHtml(origin: string): string {
+export function buildLandingHeadHtml(origin: string, options?: LandingHeadOptions): string {
   const tags = [
     `<title>${escapeHtml(LANDING_TITLE)}</title>`,
     `<meta name="description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
     `<meta name="theme-color" content="#e8edf4" />`,
   ];
   if (origin) {
+    const imageUrl = escapeHtml(getLandingOgImageUrl(origin, options?.ogImageVersion));
     tags.push(
       `<link rel="preload" as="image" href="${escapeHtml(`${origin}/images/hero-img.webp`)}" fetchpriority="high" />`,
       `<meta property="og:title" content="${escapeHtml(LANDING_TITLE)}" />`,
       `<meta property="og:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
       `<meta property="og:type" content="website" />`,
       `<meta property="og:url" content="${escapeHtml(`${origin}/`)}" />`,
-      `<meta property="og:image" content="${escapeHtml(`${origin}${LANDING_OG_IMAGE_PATH}`)}" />`,
+      `<meta property="og:image" content="${imageUrl}" />`,
+      `<meta property="og:image:secure_url" content="${imageUrl}" />`,
+      `<meta property="og:image:type" content="${LANDING_OG_IMAGE_TYPE}" />`,
       `<meta property="og:image:width" content="${LANDING_OG_IMAGE_WIDTH}" />`,
       `<meta property="og:image:height" content="${LANDING_OG_IMAGE_HEIGHT}" />`,
       `<meta property="og:image:alt" content="${escapeHtml(LANDING_OG_IMAGE_ALT)}" />`,
+    );
+    if (options?.updatedTime) {
+      tags.push(
+        `<meta property="og:updated_time" content="${escapeHtml(options.updatedTime)}" />`,
+      );
+    }
+    tags.push(
       `<meta name="twitter:card" content="summary_large_image" />`,
       `<meta name="twitter:title" content="${escapeHtml(LANDING_TITLE)}" />`,
       `<meta name="twitter:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
-      `<meta name="twitter:image" content="${escapeHtml(`${origin}${LANDING_OG_IMAGE_PATH}`)}" />`,
+      `<meta name="twitter:image" content="${imageUrl}" />`,
       `<link rel="canonical" href="${escapeHtml(`${origin}/`)}" />`,
     );
   }
