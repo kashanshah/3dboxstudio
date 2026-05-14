@@ -142,11 +142,20 @@ export function applyLandingRouteSeo(doc: Document, origin: string): () => void 
     link.setAttribute("data-route-seo", "1");
   }
 
-  const script = doc.createElement("script");
+  const jsonLd = JSON.stringify(buildLandingJsonLd(origin));
+  const jsonLdScripts = doc.querySelectorAll<HTMLScriptElement>(
+    'script[type="application/ld+json"]',
+  );
+  const script = jsonLdScripts[0] ?? doc.createElement("script");
   script.type = "application/ld+json";
   script.setAttribute("data-route-seo", "1");
-  script.textContent = JSON.stringify(buildLandingJsonLd(origin));
-  doc.head.appendChild(script);
+  script.textContent = jsonLd;
+  if (!script.isConnected) {
+    doc.head.appendChild(script);
+  }
+  for (let i = 1; i < jsonLdScripts.length; i += 1) {
+    jsonLdScripts[i].remove();
+  }
 
   return () => {
     doc.querySelectorAll("[data-route-seo]").forEach((node) => node.remove());
@@ -182,7 +191,7 @@ export function buildLandingHeadHtml(origin: string): string {
     );
   }
   tags.push(
-    `<script type="application/ld+json">${JSON.stringify(buildLandingJsonLd(origin))}</script>`,
+    `<script type="application/ld+json" data-route-seo="1">${JSON.stringify(buildLandingJsonLd(origin))}</script>`,
   );
   return tags.join("\n    ");
 }
