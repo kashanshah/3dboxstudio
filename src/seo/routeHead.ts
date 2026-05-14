@@ -4,6 +4,7 @@ import { buildStudioHeadHtml } from "./studioHead";
 export type RouteHeadOptions = {
   ogImageVersion?: string;
   updatedTime?: string;
+  facebookAppId?: string;
 };
 
 export function buildRouteHeadHtml(
@@ -24,6 +25,7 @@ export function buildRouteHeadHtml(
 function stripExistingSocialMeta(html: string): string {
   return html
     .replace(/\s*<meta[^>]+property="og:[^"]*"[^>]*>\s*/gi, "")
+    .replace(/\s*<meta[^>]+property="fb:[^"]*"[^>]*>\s*/gi, "")
     .replace(/\s*<meta[^>]+name="twitter:[^"]*"[^>]*>\s*/gi, "")
     .replace(/\s*<link[^>]+rel="canonical"[^>]*>\s*/gi, "");
 }

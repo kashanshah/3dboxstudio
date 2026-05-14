@@ -44,6 +44,7 @@ export async function runRoutePrerender(config: PrerenderConfig): Promise<void> 
   const headOptions = {
     ogImageVersion: env.VITE_OG_IMAGE_VERSION,
     updatedTime: new Date().toISOString(),
+    facebookAppId: env.VITE_FACEBOOK_APP_ID,
   };
 
   await build({

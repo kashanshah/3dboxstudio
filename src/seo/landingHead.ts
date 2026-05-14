@@ -14,7 +14,14 @@ export const LANDING_OG_IMAGE_TYPE = "image/jpeg";
 type LandingHeadOptions = {
   ogImageVersion?: string;
   updatedTime?: string;
+  facebookAppId?: string;
 };
+
+function resolveFacebookAppId(appId?: string): string | undefined {
+  const value = appId ?? (import.meta.env?.VITE_FACEBOOK_APP_ID as string | undefined);
+  const trimmed = value?.trim();
+  return trimmed || undefined;
+}
 
 function resolveOgImageVersion(version?: string): string {
   if (version?.trim()) return version.trim();
@@ -46,6 +53,10 @@ function applyLandingSocialMeta(
   setMeta(doc, "og:image:alt", LANDING_OG_IMAGE_ALT, "property");
   if (options?.updatedTime) {
     setMeta(doc, "og:updated_time", options.updatedTime, "property");
+  }
+  const facebookAppId = resolveFacebookAppId(options?.facebookAppId);
+  if (facebookAppId) {
+    setMeta(doc, "fb:app_id", facebookAppId, "property");
   }
   setMeta(doc, "twitter:card", "summary_large_image");
   setMeta(doc, "twitter:title", doc.title);
@@ -240,6 +251,10 @@ export function buildLandingHeadHtml(origin: string, options?: LandingHeadOption
       tags.push(
         `<meta property="og:updated_time" content="${escapeHtml(options.updatedTime)}" />`,
       );
+    }
+    const facebookAppId = resolveFacebookAppId(options?.facebookAppId);
+    if (facebookAppId) {
+      tags.push(`<meta property="fb:app_id" content="${escapeHtml(facebookAppId)}" />`);
     }
     tags.push(
       `<meta name="twitter:card" content="summary_large_image" />`,
