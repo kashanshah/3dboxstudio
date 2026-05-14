@@ -5,6 +5,10 @@ export const LANDING_DESCRIPTION =
   "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
 
 export const LANDING_OG_IMAGE_PATH = "/images/featured-image.jpg";
+export const LANDING_OG_IMAGE_WIDTH = 1402;
+export const LANDING_OG_IMAGE_HEIGHT = 1122;
+export const LANDING_OG_IMAGE_ALT =
+  "Stylized 3D packaging box with studio lighting—representative of the interactive simulator";
 
 export function buildLandingJsonLd(origin: string) {
   return {
@@ -130,6 +134,9 @@ export function applyLandingRouteSeo(doc: Document, origin: string): () => void 
     setMeta(doc, "og:type", "website", "property");
     setMeta(doc, "og:url", `${origin}/`, "property");
     setMeta(doc, "og:image", `${origin}${LANDING_OG_IMAGE_PATH}`, "property");
+    setMeta(doc, "og:image:width", String(LANDING_OG_IMAGE_WIDTH), "property");
+    setMeta(doc, "og:image:height", String(LANDING_OG_IMAGE_HEIGHT), "property");
+    setMeta(doc, "og:image:alt", LANDING_OG_IMAGE_ALT, "property");
     setMeta(doc, "twitter:card", "summary_large_image");
     setMeta(doc, "twitter:title", doc.title);
     setMeta(doc, "twitter:description", LANDING_DESCRIPTION);
@@ -186,6 +193,9 @@ export function buildLandingHeadHtml(origin: string): string {
       `<meta property="og:type" content="website" />`,
       `<meta property="og:url" content="${escapeHtml(`${origin}/`)}" />`,
       `<meta property="og:image" content="${escapeHtml(`${origin}${LANDING_OG_IMAGE_PATH}`)}" />`,
+      `<meta property="og:image:width" content="${LANDING_OG_IMAGE_WIDTH}" />`,
+      `<meta property="og:image:height" content="${LANDING_OG_IMAGE_HEIGHT}" />`,
+      `<meta property="og:image:alt" content="${escapeHtml(LANDING_OG_IMAGE_ALT)}" />`,
       `<meta name="twitter:card" content="summary_large_image" />`,
       `<meta name="twitter:title" content="${escapeHtml(LANDING_TITLE)}" />`,
       `<meta name="twitter:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
