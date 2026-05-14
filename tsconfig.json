@@ -17,5 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true
   },
-  "include": ["src"]
+  "include": ["src", "prerender.config.ts", "scripts", "vite.config.ts"]
 }

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import { getSiteOrigin } from "../seo/siteConfig";
+import { applyLandingRouteSeo } from "../seo/landingHead";
 import {
   BUYMEACOFFEE_URL,
   GITHUB_REPO_URL,
@@ -290,9 +291,6 @@ const HERO_PREVIEW = {
     "Stylized 3D packaging preview—representative of the interactive simulator.",
 } as const;
 
-const DESC =
-  "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
-
 /** Scroll past this many pixels before the main nav pins to the top of the viewport. */
 const LANDING_NAV_STICKY_AFTER_SCROLL_PX = 700;
 
@@ -378,156 +376,7 @@ export default function LandingPage() {
   }, []);
 
   useLayoutEffect(() => {
-    document.title =
-      "Free packaging box designer — 3D Box Studio | 3dboxstudio.com";
-    const setMeta = (
-      name: string,
-      content: string,
-      attr: "name" | "property" = "name",
-    ) => {
-      let el = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute(attr, name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", content);
-      el.setAttribute("data-route-seo", "1");
-    };
-    setMeta("description", DESC);
-    const themeMeta = document.querySelector('meta[name="theme-color"]');
-    const prevThemeColor = themeMeta?.getAttribute("content") ?? null;
-    if (themeMeta) {
-      themeMeta.setAttribute("content", "#e8edf4");
-      themeMeta.setAttribute("data-landing-theme", "1");
-    }
-    if (origin) {
-      setMeta("og:title", document.title, "property");
-      setMeta("og:description", DESC, "property");
-      setMeta("og:type", "website", "property");
-      setMeta("og:url", `${origin}/`, "property");
-      setMeta("og:image", `${origin}/landing/og-preview.svg`, "property");
-      setMeta("twitter:card", "summary_large_image");
-      setMeta("twitter:title", document.title);
-      setMeta("twitter:description", DESC);
-      setMeta("twitter:image", `${origin}/landing/og-preview.svg`);
-      let link = document.querySelector(
-        'link[rel="canonical"]',
-      ) as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "canonical";
-        document.head.appendChild(link);
-      }
-      link.href = `${origin}/`;
-      link.setAttribute("data-route-seo", "1");
-    }
-
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.setAttribute("data-route-seo", "1");
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "WebSite",
-          name: "3D Box Studio",
-          description: DESC,
-          url: origin ? `${origin}/` : "/",
-        },
-        {
-          "@type": "WebApplication",
-          name: "3D Box Studio",
-          applicationCategory: "DesignApplication",
-          operatingSystem: "Any",
-          browserRequirements: "Requires JavaScript. WebGL recommended.",
-          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-          description: DESC,
-          url: origin ? `${origin}/studio` : "/studio",
-        },
-        {
-          "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "What is a 3D box designer or packaging simulator?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "A 3D box designer lets you preview how flat packaging artwork and structural choices look on a three-dimensional carton or mailer. A packaging simulator applies realistic lighting and materials so stakeholders can review proportions, openings, and branding before print.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Is this 3D box simulator free?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Yes. The studio runs in your browser with no paywall for the core preview: dimensions, materials, openings, per-face images, lighting, PNG export, and JSON import/export for portable backups. Designs can be saved locally in your browser.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Is this a substitute for Esko, ArtiosCAD, or dedicated packaging CAD?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "No. Those platforms engineer production die-lines. This 3D packaging simulator helps you communicate look and feel, camera angles, and rough scale early. Export is a viewport PNG, not a print plate.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Does the 3D box simulator work on mobile?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "The studio is built for desktop browsers with WebGL. Phones may run it, but the control density is optimized for keyboard and mouse users.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Where is my data stored?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Optional local browser storage keeps your fields and encoded images on-device. There is no account-backed cloud sync in this open tool.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Will on-screen colors match my print run?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Screen previews are RGB and depend on your display calibration. This tool is for structural and graphic composition—not ink drawdowns or press proofs. Always validate color with your printer's proofing process.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Can I export or import my 3D box design as JSON?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Yes. In the studio you can download a v1 JSON file that contains dimensions, materials, openings, viewport options, per-face rotations, and images as base64. Import that file on another machine or browser to restore the same preview. This is separate from automatic localStorage save.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "How do I use my own marketing screenshots?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Export PNGs from the studio, then replace files under public/landing/ or update image paths in the landing page component for marketing and SEO-rich visuals.",
-              },
-            },
-          ],
-        },
-      ],
-    };
-    script.textContent = JSON.stringify(jsonLd);
-    document.head.appendChild(script);
-
-    return () => {
-      document.querySelectorAll("[data-route-seo]").forEach((n) => n.remove());
-      if (themeMeta?.hasAttribute("data-landing-theme")) {
-        themeMeta.removeAttribute("data-landing-theme");
-        if (prevThemeColor !== null)
-          themeMeta.setAttribute("content", prevThemeColor);
-        else themeMeta.setAttribute("content", "#0c0e12");
-      }
-    };
+    return applyLandingRouteSeo(document, origin);
   }, [origin]);
 
   return (

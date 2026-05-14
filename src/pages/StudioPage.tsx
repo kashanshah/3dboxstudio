@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import BoxDesigner from "../BoxDesigner";
+import { applyStudioRouteSeo } from "../seo/studioHead";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "../siteMeta";
 
 const STUDIO_TOP_LINK: CSSProperties = {
@@ -35,29 +36,11 @@ function IconBuyMeACoffeeMark({ size = 16 }: { size?: number }) {
   );
 }
 
-const STUDIO_DESC =
-  "Free packaging box designer (3D Box Studio): dimensions, materials, openings, per-face artwork, lighting, PNG export, local save. Open source (MIT).";
 
 export default function StudioPage() {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
-  useLayoutEffect(() => {
-    document.title = "Studio — Free packaging box designer | 3D Box Studio";
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`);
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute("name", name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute("content", content);
-      el.setAttribute("data-route-seo", "1");
-    };
-    setMeta("description", STUDIO_DESC);
-    return () => {
-      document.querySelectorAll("[data-route-seo]").forEach((n) => n.remove());
-    };
-  }, []);
+  useLayoutEffect(() => applyStudioRouteSeo(document), []);
 
   useEffect(() => {
     if (!headerMenuOpen) return;
