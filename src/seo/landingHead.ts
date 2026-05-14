@@ -4,6 +4,8 @@ export const LANDING_TITLE =
 export const LANDING_DESCRIPTION =
   "Free packaging box designer & 3D carton preview in your browser (3dboxstudio.com, 3D Box Studio). PBR materials, openings, per-face artwork, HDRI lighting, PNG & JSON export—no signup, saves locally. Open source (MIT).";
 
+export const LANDING_OG_IMAGE_PATH = "/images/featured-image.jpg";
+
 export function buildLandingJsonLd(origin: string) {
   return {
     "@context": "https://schema.org",
@@ -127,11 +129,11 @@ export function applyLandingRouteSeo(doc: Document, origin: string): () => void 
     setMeta(doc, "og:description", LANDING_DESCRIPTION, "property");
     setMeta(doc, "og:type", "website", "property");
     setMeta(doc, "og:url", `${origin}/`, "property");
-    setMeta(doc, "og:image", `${origin}/landing/og-preview.svg`, "property");
+    setMeta(doc, "og:image", `${origin}${LANDING_OG_IMAGE_PATH}`, "property");
     setMeta(doc, "twitter:card", "summary_large_image");
     setMeta(doc, "twitter:title", doc.title);
     setMeta(doc, "twitter:description", LANDING_DESCRIPTION);
-    setMeta(doc, "twitter:image", `${origin}/landing/og-preview.svg`);
+    setMeta(doc, "twitter:image", `${origin}${LANDING_OG_IMAGE_PATH}`);
     let link = doc.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
     if (!link) {
       link = doc.createElement("link");
@@ -183,11 +185,11 @@ export function buildLandingHeadHtml(origin: string): string {
       `<meta property="og:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
       `<meta property="og:type" content="website" />`,
       `<meta property="og:url" content="${escapeHtml(`${origin}/`)}" />`,
-      `<meta property="og:image" content="${escapeHtml(`${origin}/landing/og-preview.svg`)}" />`,
+      `<meta property="og:image" content="${escapeHtml(`${origin}${LANDING_OG_IMAGE_PATH}`)}" />`,
       `<meta name="twitter:card" content="summary_large_image" />`,
       `<meta name="twitter:title" content="${escapeHtml(LANDING_TITLE)}" />`,
       `<meta name="twitter:description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
-      `<meta name="twitter:image" content="${escapeHtml(`${origin}/landing/og-preview.svg`)}" />`,
+      `<meta name="twitter:image" content="${escapeHtml(`${origin}${LANDING_OG_IMAGE_PATH}`)}" />`,
       `<link rel="canonical" href="${escapeHtml(`${origin}/`)}" />`,
     );
   }
