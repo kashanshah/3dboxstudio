@@ -2,13 +2,7 @@
 
 import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   BUYMEACOFFEE_URL,
@@ -294,13 +288,8 @@ const HERO_PREVIEW = {
 } as const;
 
 /** Scroll past this many pixels before the main nav pins to the top of the viewport. */
-const LANDING_NAV_STICKY_AFTER_SCROLL_PX = 700;
-
 export default function LandingPage() {
   const [navOpen, setNavOpen] = useState(false);
-  const [navAffixed, setNavAffixed] = useState(false);
-  const [navBarHeight, setNavBarHeight] = useState(0);
-  const navBarRef = useRef<HTMLElement | null>(null);
   const navPanelRef = useRef<HTMLElement | null>(null);
 
   const openProductTourGallery = useCallback((startIndex: number) => {
@@ -359,42 +348,6 @@ export default function LandingPage() {
     queueMicrotask(() => first?.focus());
   }, [navOpen]);
 
-  useLayoutEffect(() => {
-    const el = navBarRef.current;
-    if (!el) return;
-    const measure = () => {
-      const nextHeight = el.offsetHeight;
-      setNavBarHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-    measure();
-    const ro = new ResizeObserver(() => {
-      requestAnimationFrame(measure);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  useEffect(() => {
-    let affixed = window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX;
-    setNavAffixed(affixed);
-    let frame = 0;
-    const onScroll = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        const nextAffixed = window.scrollY >= LANDING_NAV_STICKY_AFTER_SCROLL_PX;
-        if (nextAffixed === affixed) return;
-        affixed = nextAffixed;
-        setNavAffixed(nextAffixed);
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
-  }, []);
-
   return (
     <div className="landing-root">
       <div className="landing-bg-grid" aria-hidden />
@@ -405,16 +358,8 @@ export default function LandingPage() {
 
       <GithubLink />
 
-      {navAffixed && navBarHeight > 0 && (
-        <div
-          className="landing-nav-spacer"
-          style={{ height: navBarHeight }}
-          aria-hidden
-        />
-      )}
       <header
-        ref={navBarRef}
-        className={`landing-nav${navOpen ? " landing-nav--open" : ""}${navAffixed ? " landing-nav--affixed" : ""}`}
+        className={`landing-nav${navOpen ? " landing-nav--open" : ""}`}
       >
         <div className="landing-container landing-nav-inner">
           <Link

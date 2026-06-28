@@ -32,7 +32,7 @@ export default function ContentPageShell({
       <div className="landing-bg-orb landing-bg-orb--b" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <header className="landing-nav landing-nav--affixed">
+      <header className="landing-nav">
         <div className="landing-container landing-nav-inner">
           <Link className="landing-brand" href="/">
             <LogoMark />
@@ -61,8 +61,6 @@ export default function ContentPageShell({
           </nav>
         </div>
       </header>
-
-      {/* <div className="landing-nav-spacer" style={{ height: 72 }} aria-hidden /> */}
 
       <main className="landing-main">{children}</main>
 

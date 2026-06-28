@@ -67,7 +67,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
 
   const related = BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(
     0,
-    2,
+    3,
   );
 
   return (
@@ -114,6 +114,9 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
                       <Link href={`/blog/${item.slug}`}>{item.title}</Link>
                     </h3>
                     <p className="blog-index-desc">{item.description}</p>
+                    <Link href={`/blog/${item.slug}`} className="blog-index-link">
+                      Read article →
+                    </Link>
                   </li>
                 ))}
               </ul>
