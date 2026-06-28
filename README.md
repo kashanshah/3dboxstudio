@@ -12,8 +12,8 @@ The project is also **open source** under the MIT License—issues and PRs welco
 
 ## Stack
 
+- [Next.js](https://nextjs.org/) (App Router, static generation + SSR)
 - [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vitejs.dev/)
 - [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/getting-started/introduction) + [Drei](https://github.com/pmndrs/drei) + [three.js](https://threejs.org/)
 
 ## Development
@@ -23,18 +23,20 @@ npm install
 npm run dev
 ```
 
+Open [http://localhost:3000](http://localhost:3000).
+
 Build for production:
 
 ```bash
 npm run build
-npm run preview   # optional local preview of dist/
+npm start   # production server
 ```
 
 ## Environment
 
 Create a `.env` file (see `.env.example`) and set:
 
-- **`VITE_SITE_ORIGIN`** — Full origin of your deployment, **no trailing slash**, e.g. `https://3dboxstudio.com`. Used for canonical URLs, Open Graph, and JSON-LD on the landing page.
+- **`NEXT_PUBLIC_SITE_ORIGIN`** — Full origin of your deployment, **no trailing slash**, e.g. `https://www.3dboxstudio.com`. Used for canonical URLs, Open Graph, JSON-LD, and the sitemap.
 
 ## License & contributing
 
@@ -42,7 +44,7 @@ Licensed under the [MIT License](./LICENSE). Issues and pull requests are welcom
 
 ## Support the project
 
-If this tool saves you time, you can help fund hosting and continued development via [**Buy Me a Coffee**](https://buymeacoffee.com/kashanshah). A floating widget is also included on the site (script in `index.html`).
+If this tool saves you time, you can help fund hosting and continued development via [**Buy Me a Coffee**](https://buymeacoffee.com/kashanshah). A floating widget is included on the site.
 
 ## Credits
 

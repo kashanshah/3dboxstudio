@@ -1,16 +1,15 @@
+"use client";
+
 import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
-import { Link } from "react-router-dom";
-import { getSiteOrigin } from "../seo/siteConfig";
-import { applyLandingRouteSeo } from "../seo/landingHead";
+import Link from "next/link";
 import {
   BUYMEACOFFEE_URL,
   GITHUB_REPO_URL,
@@ -19,6 +18,9 @@ import {
 } from "../siteMeta";
 import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";
+import FaqList from "../components/FaqList";
+import { BLOG_POSTS } from "../content/blogPosts";
+import { FAQ_ITEMS } from "../content/faq";
 import "../landing.css";
 import GithubLink from "../components/GithubLink";
 
@@ -295,7 +297,6 @@ const HERO_PREVIEW = {
 const LANDING_NAV_STICKY_AFTER_SCROLL_PX = 700;
 
 export default function LandingPage() {
-  const origin = useMemo(() => getSiteOrigin(), []);
   const [navOpen, setNavOpen] = useState(false);
   const [navAffixed, setNavAffixed] = useState(false);
   const [navBarHeight, setNavBarHeight] = useState(0);
@@ -394,10 +395,6 @@ export default function LandingPage() {
     };
   }, []);
 
-  useLayoutEffect(() => {
-    return applyLandingRouteSeo(document, origin);
-  }, [origin]);
-
   return (
     <div className="landing-root">
       <div className="landing-bg-grid" aria-hidden />
@@ -422,7 +419,7 @@ export default function LandingPage() {
         <div className="landing-container landing-nav-inner">
           <Link
             className="landing-brand"
-            to="/"
+            href="/"
             onClick={() => setNavOpen(false)}
           >
             <LogoMark />
@@ -458,9 +455,12 @@ export default function LandingPage() {
             <a href="#showcase" onClick={() => setNavOpen(false)}>
               Showcase
             </a>
-            <a href="#faq" onClick={() => setNavOpen(false)}>
+            <Link href="/faq" onClick={() => setNavOpen(false)}>
               FAQ
-            </a>
+            </Link>
+            <Link href="/blog" onClick={() => setNavOpen(false)}>
+              Blog
+            </Link>
             <a
               href={GITHUB_REPO_URL}
               target="_blank"
@@ -470,7 +470,7 @@ export default function LandingPage() {
               GitHub
             </a>
             <Link
-              to="/studio"
+              href="/studio"
               className="btn btn-primary landing-nav-cta"
               onClick={() => setNavOpen(false)}
             >
@@ -511,7 +511,7 @@ export default function LandingPage() {
                   </p>
                   <div className="landing-hero-ctas">
                     <Link
-                      to="/studio"
+                      href="/studio"
                       className="btn btn-primary landing-btn-hero-primary"
                     >
                       <span>Launch 3D studio</span>
@@ -758,7 +758,7 @@ export default function LandingPage() {
               workflows. Click any shot to open a full-size lightbox (same
               viewer as the portfolio—arrow keys to browse, Escape to close).
               Replace images with real captures from{" "}
-              <Link to="/studio">your live studio</Link> for even stronger
+              <Link href="/studio">your live studio</Link> for even stronger
               social proof and SEO image search coverage.
             </p>
             <div className="landing-screens">
@@ -843,6 +843,48 @@ export default function LandingPage() {
         </section>
 
         <section
+          className="landing-section landing-section--blog gradient-section"
+          id="guides"
+          aria-labelledby="guides-heading"
+        >
+          <div className="landing-container">
+            <div className="landing-section-head">
+              <span className="landing-section-index" aria-hidden>
+                05
+              </span>
+              <div className="landing-section-head-copy">
+                <p className="landing-eyebrow landing-eyebrow--section">
+                  Guides
+                </p>
+                <h2 id="guides-heading" className="landing-display">
+                  Learn 3D box design & simulation
+                </h2>
+              </div>
+            </div>
+            <p className="landing-section-intro">
+              Practical articles on 3D box makers, packaging simulators, and
+              browser-based carton mockups for designers and brand teams.
+            </p>
+            <ul className="blog-index-list blog-index-list--landing">
+              {BLOG_POSTS.slice(0, 3).map((post) => (
+                <li key={post.slug} className="blog-index-card">
+                  <h3 className="blog-index-title">
+                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                  </h3>
+                  <p className="blog-index-desc">{post.description}</p>
+                  <Link href={`/blog/${post.slug}`} className="blog-index-link">
+                    Read guide →
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="content-page-more">
+              <Link href="/blog">View all packaging guides →</Link>
+            </p>
+          </div>
+        </section>
+
+        <section
           className="landing-section landing-section--faq gradient-section"
           id="faq"
           aria-labelledby="faq-heading"
@@ -850,7 +892,7 @@ export default function LandingPage() {
           <div className="landing-container">
             <div className="landing-section-head">
               <span className="landing-section-index" aria-hidden>
-                05
+                06
               </span>
               <div className="landing-section-head-copy">
                 <p className="landing-eyebrow landing-eyebrow--section">
@@ -863,78 +905,14 @@ export default function LandingPage() {
             </div>
             <p className="landing-section-intro">
               Straight answers for teams evaluating a browser-based 3D box
-              designer versus desktop packaging engineering software.
+              designer, box maker, or packaging simulator versus desktop CAD.
             </p>
-            <div className="landing-faq">
-              <details open>
-                <summary>
-                  What is a 3D box designer or packaging simulator?
-                </summary>
-                <p>
-                  It is a tool that shows your box as a three-dimensional object
-                  so you can judge proportions, graphics, and opening behavior.
-                  This project focuses on fast visualization—not die-line CAD,
-                  knife validation, or print trapping.
-                </p>
-              </details>
-              <details>
-                <summary>
-                  Is this a substitute for Esko, ArtiosCAD, or dedicated
-                  packaging CAD?
-                </summary>
-                <p>
-                  No. Those platforms engineer production die-lines. Our 3D
-                  packaging simulator helps you communicate look & feel, camera
-                  angles, and rough scale early. Export is a viewport PNG, not a
-                  print plate.
-                </p>
-              </details>
-              <details>
-                <summary>Does the 3D box simulator work on mobile?</summary>
-                <p>
-                  The studio is built for desktop browsers with WebGL. Phones
-                  may run it, but the control density is optimized for keyboard
-                  and mouse users.
-                </p>
-              </details>
-              <details>
-                <summary>Where is my data stored?</summary>
-                <p>
-                  By default, optional local browser storage keeps your fields
-                  and encoded images on-device. There is no account-backed cloud
-                  sync in this open tool.
-                </p>
-              </details>
-              <details>
-                <summary>Will on-screen colors match my print run?</summary>
-                <p>
-                  Screen previews are RGB and depend on your display
-                  calibration. This 3D packaging simulator is for structural and
-                  graphic composition—not ink drawdowns or press proofs. Always
-                  validate color with your printer&apos;s proofing process.
-                </p>
-              </details>
-              <details>
-                <summary>Can I export or import my design as JSON?</summary>
-                <p>
-                  Yes. In the studio, use <strong>Export JSON</strong> to
-                  download a portable file (version 1) with your full setup
-                  including embedded images. Use <strong>Import JSON</strong> to
-                  load that file and replace the current scene—handy for
-                  backups, sharing with a colleague, or switching computers
-                  without relying on browser sync.
-                </p>
-              </details>
-              <details>
-                <summary>How do I use my own marketing screenshots?</summary>
-                <p>
-                  Export PNGs from the studio, then replace the files in{" "}
-                  <code>public/landing/</code> or update the image paths in{" "}
-                  <code>src/pages/LandingPage.tsx</code> so search and social
-                  previews show your real product shots.
-                </p>
-              </details>
-            </div>
+            <FaqList items={FAQ_ITEMS.slice(0, 7)} openFirst />
+            <p className="content-page-more landing-faq-more">
+              <Link href="/faq">
+                Browse all {FAQ_ITEMS.length} questions with search & filters →
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -951,7 +929,7 @@ export default function LandingPage() {
                   artwork until the packaging story clicks.
                 </p>
                 <Link
-                  to="/studio"
+                  href="/studio"
                   className="btn btn-primary landing-btn-hero-primary"
                 >
                   <span>Start the 3D packaging simulator</span>
@@ -973,13 +951,12 @@ export default function LandingPage() {
               Related topics
             </h2>
             <p className="landing-kw">
-              <strong>Popular searches:</strong> 3D box designer, 3D packaging
-              simulator, carton 3D preview, folding box visualizer, mailer box
-              mockup, structural packaging preview, online box configurator,
-              dieline visualization (flat artwork to 3D preview), PBR packaging
-              render, shipping box designer tool, product box 3D online,
-              corrugated box simulator, retail carton preview, CPG packaging
-              review, print-ready proof companion (preview only).
+              <strong>Popular searches:</strong> 3D box studio, 3D box designer,
+              3D box maker, 3D box design maker, 3D box simulation, 3D packaging
+              simulator, free box designer online, carton 3D preview, folding box
+              visualizer, mailer box mockup, structural packaging preview, online
+              box configurator, PBR packaging render, corrugated box simulator,
+              retail carton preview, CPG packaging review.
             </p>
           </div>
         </section>
@@ -991,7 +968,15 @@ export default function LandingPage() {
               <span>3D Box Studio</span>
             </div>
             <p className="landing-footer-links">
-              <Link to="/studio">Studio</Link>
+              <Link href="/studio">Studio</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
+              <Link href="/blog">Blog</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
+              <Link href="/faq">FAQ</Link>
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>
@@ -1026,21 +1011,13 @@ export default function LandingPage() {
               </a>
             </p>
             <p className="landing-footer-tag">
-              Free packaging box designer · {SITE_DOMAIN} · 3D preview in your
-              browser · open source (MIT).
+              Free 3D box designer & maker · {SITE_DOMAIN} · 3D box simulation
+              in your browser · open source (MIT).
             </p>
-            {origin ? (
-              <p className="landing-footer-tip">
-                Canonical: <span className="landing-mono">{origin}</span>
-              </p>
-            ) : (
-              <p className="landing-footer-tip">
-                Set <span className="landing-mono">VITE_SITE_ORIGIN</span> in{" "}
-                <code>.env</code> (e.g.{" "}
-                <span className="landing-mono">{SITE_ORIGIN_PUBLIC}</span>) for
-                canonical + Open Graph.
-              </p>
-            )}
+            <p className="landing-footer-tip">
+              Canonical:{" "}
+              <span className="landing-mono">{SITE_ORIGIN_PUBLIC}</span>
+            </p>
           </div>
         </div>
       </footer>

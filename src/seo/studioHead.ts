@@ -1,24 +1,44 @@
-export const STUDIO_TITLE = "Studio — Free packaging box designer | 3D Box Studio";
+import {
+  applySocialMeta,
+  buildSocialMetaTags,
+  cleanupRouteSeo,
+  escapeHtml,
+  setCanonical,
+  setMeta,
+} from "./metaUtils";
+import {
+  getLandingOgImageUrl,
+  LANDING_OG_IMAGE_ALT,
+  LANDING_OG_IMAGE_HEIGHT,
+  LANDING_OG_IMAGE_TYPE,
+  LANDING_OG_IMAGE_WIDTH,
+} from "./landingHead";
+
+export const STUDIO_TITLE =
+  "3D Box Maker Studio — Free Online Box Designer | 3D Box Studio";
 
 export const STUDIO_DESCRIPTION =
-  "Free packaging box designer (3D Box Studio): dimensions, materials, openings, per-face artwork, lighting, PNG export, local save. Open source (MIT).";
+  "Free 3D box maker and design studio in your browser. Set dimensions, materials, openings, and per-face artwork; export PNG snapshots and JSON backups. No signup—open source (MIT).";
 
-function setMeta(doc: Document, name: string, content: string) {
-  let el = doc.querySelector(`meta[name="${name}"]`);
-  if (!el) {
-    el = doc.createElement("meta");
-    el.setAttribute("name", name);
-    doc.head.appendChild(el);
-  }
-  el.setAttribute("content", content);
-  el.setAttribute("data-route-seo", "1");
-}
-
-export function applyStudioRouteSeo(doc: Document): () => void {
+export function applyStudioRouteSeo(doc: Document, origin?: string): () => void {
   doc.title = STUDIO_TITLE;
   setMeta(doc, "description", STUDIO_DESCRIPTION);
+  if (origin) {
+    const url = `${origin}/studio`;
+    applySocialMeta(doc, {
+      title: STUDIO_TITLE,
+      description: STUDIO_DESCRIPTION,
+      url,
+      imageUrl: getLandingOgImageUrl(origin),
+      imageAlt: LANDING_OG_IMAGE_ALT,
+      imageWidth: LANDING_OG_IMAGE_WIDTH,
+      imageHeight: LANDING_OG_IMAGE_HEIGHT,
+      imageType: LANDING_OG_IMAGE_TYPE,
+    });
+    setCanonical(doc, url);
+  }
   return () => {
-    doc.querySelectorAll("[data-route-seo]").forEach((node) => node.remove());
+    cleanupRouteSeo(doc);
   };
 }
 
@@ -29,15 +49,20 @@ export function buildStudioHeadHtml(origin: string): string {
     `<meta name="theme-color" content="#0c0e12" />`,
   ];
   if (origin) {
-    tags.push(`<link rel="canonical" href="${escapeHtml(`${origin}/studio`)}" />`);
+    const url = `${origin}/studio`;
+    tags.push(
+      ...buildSocialMetaTags({
+        title: STUDIO_TITLE,
+        description: STUDIO_DESCRIPTION,
+        url,
+        imageUrl: getLandingOgImageUrl(origin),
+        imageAlt: LANDING_OG_IMAGE_ALT,
+        imageWidth: LANDING_OG_IMAGE_WIDTH,
+        imageHeight: LANDING_OG_IMAGE_HEIGHT,
+        imageType: LANDING_OG_IMAGE_TYPE,
+      }),
+      `<link rel="canonical" href="${escapeHtml(url)}" />`,
+    );
   }
   return tags.join("\n    ");
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
 }

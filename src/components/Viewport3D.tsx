@@ -1,3 +1,5 @@
+"use client";
+
 import { Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { Canvas, type RootState, useThree } from "@react-three/fiber";
 import {

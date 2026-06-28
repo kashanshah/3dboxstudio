@@ -1,3 +1,6 @@
+"use client";
+
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
 import { loadFancybox } from "../lib/loadFancybox";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import LazyShowcaseVideo from "./LazyShowcaseVideo";

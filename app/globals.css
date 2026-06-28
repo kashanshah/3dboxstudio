@@ -9,8 +9,8 @@
   --accent-dim: #2563a8;
   --success: #34c759;
   --radius: 10px;
-  --font: "DM Sans", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --font: var(--font-dm-sans), system-ui, sans-serif;
+  --mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 }
 
 *,
@@ -20,9 +20,8 @@
 }
 
 html,
-body,
-#root {
-  height: 100%;
+body {
+  min-height: 100%;
   margin: 0;
 }
 
@@ -241,7 +240,6 @@ label {
   color: var(--text);
 }
 
-/* —— Studio header (responsive) —— */
 .studio-header {
   flex-shrink: 0;
   display: flex;

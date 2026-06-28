@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
-import { Link } from "react-router-dom";
+"use client";
+
+import { useEffect, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import BoxDesigner from "../BoxDesigner";
-import { applyStudioRouteSeo } from "../seo/studioHead";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "../siteMeta";
 
 const STUDIO_TOP_LINK: CSSProperties = {
@@ -39,8 +40,6 @@ function IconBuyMeACoffeeMark({ size = 16 }: { size?: number }) {
 
 export default function StudioPage() {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-
-  useLayoutEffect(() => applyStudioRouteSeo(document), []);
 
   useEffect(() => {
     if (!headerMenuOpen) return;
@@ -80,7 +79,7 @@ export default function StudioPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", minHeight: 480 }}>
       <header className="studio-header">
-        <Link className="studio-header-home" to="/" onClick={closeHeaderMenu}>
+        <Link className="studio-header-home" href="/" onClick={closeHeaderMenu}>
           ← Home
         </Link>
         <span className="studio-header-sep" aria-hidden>
