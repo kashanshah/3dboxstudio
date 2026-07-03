@@ -20,6 +20,10 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
+import StudioStartDialog from "./components/studio/StudioStartDialog";
+import StudioProjectsModal from "./components/studio/StudioProjectsModal";
+import AuthModal from "./components/auth/AuthModal";
+import { useAuth } from "./components/auth/AuthProvider";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
@@ -132,8 +136,20 @@ export default function BoxDesigner({
   initialPreviewToken?: string | null;
   viewOnly?: boolean;
 }) {
-  const shareIdFromUrl = viewOnly ? null : initialShareId;
-  const previewTokenFromUrl = viewOnly ? initialPreviewToken : null;
+  // The studio route may hand us a share id in view-only mode (non-owner opening an
+  // editor link), so keep the id even when viewOnly; the preview route uses the token.
+  const shareIdFromUrl = initialShareId;
+  const previewTokenFromUrl = initialPreviewToken;
+
+  const auth = useAuth();
+  const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
+    open: false,
+    mode: "signin",
+  });
+  const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [startDialogOpen, setStartDialogOpen] = useState(
+    () => !initialShareId && !initialPreviewToken && !viewOnly
+  );
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
@@ -312,6 +328,9 @@ export default function BoxDesigner({
     return captureCanvasOgBlob(s.gl.domElement);
   }, []);
 
+  const openSignIn = useCallback(() => setAuthModal({ open: true, mode: "signin" }), []);
+  const openSignUp = useCallback(() => setAuthModal({ open: true, mode: "signup" }), []);
+
   const doc = useStudioDocument({
     buildPersistState,
     applyPersistedState,
@@ -319,7 +338,35 @@ export default function BoxDesigner({
     sessionReady,
     viewOnly,
     capturePreviewImage,
+    authUser: auth.user,
+    onRequireSignIn: openSignIn,
   });
+
+  const openProjects = useCallback(() => {
+    if (!auth.user) {
+      openSignIn();
+      return;
+    }
+    setProjectsModalOpen(true);
+  }, [auth.user, openSignIn]);
+
+  const handleOpenProject = useCallback(
+    (id: string) => {
+      setProjectsModalOpen(false);
+      setStartDialogOpen(false);
+      void doc.openProject(id);
+    },
+    [doc]
+  );
+
+  const handleSignOut = useCallback(() => {
+    void auth.signOut();
+  }, [auth]);
+
+  const resendVerification = useCallback(async () => {
+    const result = await auth.resendVerification();
+    doc.showStatus(result.ok ? "Verification email sent. Check your inbox." : result.error, 6000);
+  }, [auth, doc]);
 
   useEffect(() => {
     if (!shareIdFromUrl) return;
@@ -453,6 +500,7 @@ export default function BoxDesigner({
         documentTitle={doc.documentTitle}
         cloudBusy={doc.cloudBusy}
         viewOnly={doc.viewOnly}
+        user={auth.user}
         onOpenModal={doc.setModal}
         onOpenHelpModal={setHelpModal}
         onSave={() => void doc.saveCloud()}
@@ -463,10 +511,24 @@ export default function BoxDesigner({
         onSharePreview={doc.openSharePreviewModal}
         onCopyPreviewLink={() => void doc.copyPreviewLink()}
         onNew={doc.requestNew}
+        onSignIn={openSignIn}
+        onSignUp={openSignUp}
+        onSignOut={handleSignOut}
+        onOpenProjects={openProjects}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
           View-only preview — explore the design and export PNGs. Editing is not available from this link.
+        </div>
+      )}
+      {!doc.viewOnly && auth.user && !auth.user.emailVerified && (
+        <div className="studio-verify-banner" role="status">
+          <span>
+            Verify your email (<strong>{auth.user.email}</strong>) to save and share your projects.
+          </span>
+          <button type="button" className="studio-verify-resend" onClick={() => void resendVerification()}>
+            Resend email
+          </button>
         </div>
       )}
       {doc.statusMessage && (
@@ -1017,6 +1079,32 @@ export default function BoxDesigner({
       </div>
       <StudioFileModals doc={doc} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
+      <StudioStartDialog
+        open={startDialogOpen && !viewOnly}
+        user={auth.user}
+        onClose={() => setStartDialogOpen(false)}
+        onCreateNew={() => setStartDialogOpen(false)}
+        onOpenProject={() => {
+          setStartDialogOpen(false);
+          openProjects();
+        }}
+        onImport={() => {
+          setStartDialogOpen(false);
+          doc.setModal("import");
+        }}
+      />
+      <StudioProjectsModal
+        open={projectsModalOpen}
+        onClose={() => setProjectsModalOpen(false)}
+        onOpenProject={handleOpenProject}
+        onStatus={doc.showStatus}
+      />
+      <AuthModal
+        open={authModal.open}
+        initialMode={authModal.mode}
+        onClose={() => setAuthModal((s) => ({ ...s, open: false }))}
+        onSuccess={() => auth.refresh()}
+      />
     </div>
   );
 }

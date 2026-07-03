@@ -8,13 +8,13 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PUT(req: Request, context: RouteContext) {
   try {
-    await assertCanCreateShare(req);
+    const userId = await assertCanCreateShare(req);
     const { id } = await context.params;
     const width = Number(req.headers.get("X-Share-Og-Image-Width"));
     const height = Number(req.headers.get("X-Share-Og-Image-Height"));
     const buffer = Buffer.from(await req.arrayBuffer());
 
-    const result = await updateShareOgImage(id, buffer, width, height);
+    const result = await updateShareOgImage(id, buffer, width, height, userId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

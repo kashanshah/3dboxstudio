@@ -91,3 +91,46 @@ console.log("OK: shared_designs.updated_at column is ready.");
 
 await sql`UPDATE shared_designs SET updated_at = created_at WHERE updated_at IS NULL`;
 console.log("OK: backfilled updated_at from created_at where needed.");
+
+// --- User accounts -------------------------------------------------------
+
+await sql`
+  CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    password_hash TEXT NOT NULL,
+    email_verified_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+console.log("OK: users table is ready.");
+
+await sql`
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions (expires_at)`;
+console.log("OK: sessions table is ready.");
+
+await sql`
+  CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verification_tokens (user_id)`;
+console.log("OK: email_verification_tokens table is ready.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`;
+await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id)`;
+console.log("OK: shared_designs.user_id column is ready.");

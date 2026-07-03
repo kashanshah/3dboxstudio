@@ -6,8 +6,9 @@ import type { StudioFileModal } from "@/hooks/useStudioDocument";
 import type { StudioHelpModal } from "./StudioHelpModals";
 import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "@/siteMeta";
+import type { AuthUser } from "@/lib/authTypes";
 
-type OpenMenu = "brand" | "file" | "help" | null;
+type OpenMenu = "brand" | "file" | "help" | "account" | null;
 
 type StudioMenuBarProps = {
   documentTitle: string;
@@ -15,6 +16,7 @@ type StudioMenuBarProps = {
   viewOnly: boolean;
   canRename: boolean;
   canSharePreview: boolean;
+  user: AuthUser | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
@@ -23,6 +25,10 @@ type StudioMenuBarProps = {
   onSharePreview: () => void;
   onCopyPreviewLink: () => void;
   onNew: () => void;
+  onSignIn: () => void;
+  onSignUp: () => void;
+  onSignOut: () => void;
+  onOpenProjects: () => void;
 };
 
 function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObject<HTMLElement | null>) {
@@ -42,6 +48,7 @@ export default function StudioMenuBar({
   viewOnly,
   canRename,
   canSharePreview,
+  user,
   onOpenModal,
   onOpenHelpModal,
   onSave,
@@ -50,15 +57,21 @@ export default function StudioMenuBar({
   onSharePreview,
   onCopyPreviewLink,
   onNew,
+  onSignIn,
+  onSignUp,
+  onSignOut,
+  onOpenProjects,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   useCloseOnOutsideClick(openMenu === "brand", () => setOpenMenu(null), brandRef);
   useCloseOnOutsideClick(openMenu === "file", () => setOpenMenu(null), fileRef);
   useCloseOnOutsideClick(openMenu === "help", () => setOpenMenu(null), helpRef);
+  useCloseOnOutsideClick(openMenu === "account", () => setOpenMenu(null), accountRef);
 
   const closeMenus = () => setOpenMenu(null);
 
@@ -71,6 +84,13 @@ export default function StudioMenuBar({
     closeMenus();
     action();
   };
+
+  const pickAccount = (action: () => void) => {
+    closeMenus();
+    action();
+  };
+
+  const accountInitial = user ? (user.name?.trim()?.[0] ?? user.email[0] ?? "?").toUpperCase() : null;
 
   return (
     <div className="studio-menu-bar">
@@ -144,6 +164,9 @@ export default function StudioMenuBar({
             <div className="studio-menu-dropdown" role="menu">
               <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
                 <span>New</span>
+              </button>
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onOpenProjects)}>
+                <span>My Projects…</span>
               </button>
               <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
                 <span>Open…</span>
@@ -262,6 +285,64 @@ export default function StudioMenuBar({
           >
             <IconRename />
           </button>
+        )}
+      </div>
+
+      <div className="studio-menu-item studio-menu-account-item" ref={accountRef}>
+        {user ? (
+          <>
+            <button
+              type="button"
+              className={`studio-menu-trigger studio-menu-account-trigger${openMenu === "account" ? " is-open" : ""}`}
+              aria-expanded={openMenu === "account"}
+              aria-haspopup="menu"
+              onClick={() => setOpenMenu((m) => (m === "account" ? null : "account"))}
+              title={user.email}
+            >
+              <span className="studio-account-avatar" aria-hidden>
+                {accountInitial}
+              </span>
+            </button>
+            {openMenu === "account" && (
+              <div className="studio-menu-dropdown studio-menu-dropdown--right" role="menu">
+                <div className="studio-menu-account-header">
+                  <span className="studio-menu-account-name">{user.name || "Signed in"}</span>
+                  <span className="studio-menu-account-email">{user.email}</span>
+                  {!user.emailVerified && <span className="studio-menu-account-unverified">Email not verified</span>}
+                </div>
+                <div className="studio-menu-sep" role="separator" />
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onOpenProjects)}>
+                  <span>My Projects…</span>
+                </button>
+                <div className="studio-menu-sep" role="separator" />
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignOut)}>
+                  <span>Sign out</span>
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className={`studio-menu-trigger studio-menu-account-trigger${openMenu === "account" ? " is-open" : ""}`}
+              aria-expanded={openMenu === "account"}
+              aria-haspopup="menu"
+              onClick={() => setOpenMenu((m) => (m === "account" ? null : "account"))}
+            >
+              Sign in
+            </button>
+            {openMenu === "account" && (
+              <div className="studio-menu-dropdown studio-menu-dropdown--right" role="menu">
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignIn)}>
+                  <span>Sign in</span>
+                </button>
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignUp)}>
+                  <span>Create account</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

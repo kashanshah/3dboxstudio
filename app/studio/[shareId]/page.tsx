@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { createShareMetadata } from "@/lib/seo/metadata";
 import { isShareToken } from "@/lib/shareUrl";
-import { getShareSeoMeta } from "@/server/shareService";
+import { getShareOwnerId, getShareSeoMeta } from "@/server/shareService";
+import { getCurrentUser } from "@/server/auth/session";
 import StudioClient from "@/components/StudioClient";
 
 type PageProps = {
@@ -19,5 +20,12 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function StudioShareRoute({ params }: PageProps) {
   const { shareId } = await params;
   if (!isShareToken(shareId)) notFound();
-  return <StudioClient initialShareId={shareId} />;
+
+  // Only the verified owner can edit; everyone else opens the project read-only.
+  const [ownerId, user] = await Promise.all([getShareOwnerId(shareId), getCurrentUser()]);
+  if (ownerId === undefined) notFound();
+
+  const isOwner = Boolean(user?.emailVerified && ownerId && user.id === ownerId);
+
+  return <StudioClient initialShareId={shareId} viewOnly={!isOwner} />;
 }
