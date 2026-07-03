@@ -46,6 +46,7 @@ export default function AccountSettingsModal({
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resendBusy, setResendBusy] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +59,7 @@ export default function AccountSettingsModal({
     setConfirmPassword("");
     setError(null);
     setSuccess(null);
+    setShowEmailForm(false);
   }, [open, initialTab, user?.name]);
 
   const memberSince = useMemo(() => formatMemberSince(user?.createdAt ?? ""), [user?.createdAt]);
@@ -142,6 +144,7 @@ export default function AccountSettingsModal({
     setEmailPassword("");
     setSuccess("Email updated. Check your inbox to verify the new address.");
     onStatus?.("Email updated. Check your inbox to verify the new address.");
+    setShowEmailForm(false);
   };
 
   if (!user) return null;
@@ -163,6 +166,7 @@ export default function AccountSettingsModal({
                 setTab(item.id);
                 setError(null);
                 setSuccess(null);
+                setShowEmailForm(false);
               }}
             >
               <span className="studio-settings-tab-label">{item.label}</span>
@@ -208,57 +212,80 @@ export default function AccountSettingsModal({
 
               <div className="studio-settings-divider" aria-hidden />
 
-              <h4 className="studio-settings-subsection-title">Change email</h4>
-              <p className="studio-dialog-hint studio-settings-section-lead">
-                Enter a new address and your current password. We&apos;ll send a verification link to the new email.
-              </p>
+              {showEmailForm ? (
+                <>
+                  <h4 className="studio-settings-subsection-title">Change email</h4>
+                  <p className="studio-dialog-hint studio-settings-section-lead">
+                    Enter a new address and your current password. We&apos;ll send a verification link to the new email.
+                  </p>
 
-              <label className="studio-dialog-label" htmlFor="settings-new-email">
-                New email
-              </label>
-              <input
-                id="settings-new-email"
-                className="studio-dialog-input"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={newEmail}
-                onChange={(e) => {
-                  setNewEmail(e.target.value);
-                  setError(null);
-                  setSuccess(null);
-                }}
-              />
+                  <label className="studio-dialog-label" htmlFor="settings-new-email">
+                    New email
+                  </label>
+                  <input
+                    id="settings-new-email"
+                    className="studio-dialog-input"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={newEmail}
+                    onChange={(e) => {
+                      setNewEmail(e.target.value);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                  />
 
-              <label className="studio-dialog-label" htmlFor="settings-email-password">
-                Current password
-              </label>
-              <input
-                id="settings-email-password"
-                className="studio-dialog-input"
-                type="password"
-                autoComplete="current-password"
-                value={emailPassword}
-                onChange={(e) => {
-                  setEmailPassword(e.target.value);
-                  setError(null);
-                  setSuccess(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") void saveEmail();
-                }}
-              />
+                  <label className="studio-dialog-label" htmlFor="settings-email-password">
+                    Current password
+                  </label>
+                  <input
+                    id="settings-email-password"
+                    className="studio-dialog-input"
+                    type="password"
+                    autoComplete="current-password"
+                    value={emailPassword}
+                    onChange={(e) => {
+                      setEmailPassword(e.target.value);
+                      setError(null);
+                      setSuccess(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void saveEmail();
+                    }}
+                  />
 
-              <div className="studio-settings-actions">
-                <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveEmail()}>
-                  {busy ? "Updating…" : "Update email"}
-                </button>
-                {!user.emailVerified && (
-                  <button type="button" className="btn" disabled={resendBusy} onClick={() => void handleResend()}>
-                    {resendBusy ? "Sending…" : "Resend verification email"}
+                  <div className="studio-settings-actions">
+                    <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveEmail()}>
+                      {busy ? "Updating…" : "Update email"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setShowEmailForm(false);
+                        setNewEmail("");
+                        setEmailPassword("");
+                        setError(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="studio-settings-actions">
+                  <button type="button" className="btn" onClick={() => setShowEmailForm(true)}>
+                    Update email
                   </button>
-                )}
-              </div>
+                  {!user.emailVerified && (
+                    <button type="button" className="btn" disabled={resendBusy} onClick={() => void handleResend()}>
+                      {resendBusy ? "Sending…" : "Resend verification email"}
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="studio-settings-divider" aria-hidden />
 
