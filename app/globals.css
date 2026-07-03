@@ -539,8 +539,16 @@ label {
   background: var(--panel-border);
 }
 
-.studio-doc-title {
+.studio-doc-title-wrap {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: min(320px, 45vw);
+}
+
+.studio-doc-title {
   padding: 0 8px;
   font-size: 0.72rem;
   color: var(--muted);
@@ -548,7 +556,32 @@ label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: min(280px, 40vw);
+  min-width: 0;
+}
+
+.studio-doc-rename-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.studio-doc-rename-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.studio-doc-rename-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .studio-status-banner {
@@ -558,6 +591,81 @@ label {
   color: #cbd5e1;
   background: rgba(59, 130, 246, 0.12);
   border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.studio-preview-banner {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  background: rgba(124, 58, 237, 0.14);
+  border-bottom: 1px solid rgba(167, 139, 250, 0.28);
+}
+
+.studio-preview-banner a {
+  color: #c4b5fd;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.studio-menu-preview-badge {
+  align-self: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ddd6fe;
+  background: rgba(124, 58, 237, 0.2);
+  border: 1px solid rgba(167, 139, 250, 0.35);
+}
+
+.studio-menu-editor-link {
+  align-self: center;
+  margin-left: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #c4b5fd;
+  text-decoration: none;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.studio-menu-editor-link:hover {
+  background: rgba(124, 58, 237, 0.22);
+  color: #ede9fe;
+}
+
+.studio-preview-summary {
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.studio-preview-summary div {
+  display: grid;
+  gap: 2px;
+}
+
+.studio-preview-summary dt {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.studio-preview-summary dd {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.studio-share-preview-note code {
+  font-family: var(--mono);
+  font-size: 0.85em;
 }
 
 .studio-dialog-overlay {

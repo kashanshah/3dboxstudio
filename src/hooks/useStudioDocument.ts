@@ -8,7 +8,7 @@ import {
   serializeDesign,
   type BoxDesignerPersistedState,
 } from "@/boxDesignPersistence";
-import { parseShareIdFromInput, studioSharePath } from "@/lib/shareUrl";
+import { parseShareIdFromInput, studioPreviewUrl, studioSharePath, studioShareUrl } from "@/lib/shareUrl";
 import {
   addRecentDesign,
   clearRecentDesigns,
@@ -19,9 +19,9 @@ import {
 } from "@/lib/recentDesigns";
 import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/shareName";
 
-export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "export" | "import" | "new" | null;
+export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "share-preview" | "export" | "import" | "new" | null;
 
-type ShareApiResult = { id: string; url: string; name?: string | null };
+type ShareApiResult = { id: string; url: string; previewUrl?: string; name?: string | null };
 type ShareApiError = { error: string };
 
 function readApiError(data: unknown, fallback: string): string {
@@ -56,6 +56,7 @@ type UseStudioDocumentOptions = {
   applyPersistedState: (state: BoxDesignerPersistedState) => void;
   initialShareId: string | null;
   sessionReady: boolean;
+  viewOnly?: boolean;
 };
 
 export function useStudioDocument({
@@ -63,6 +64,7 @@ export function useStudioDocument({
   applyPersistedState,
   initialShareId,
   sessionReady,
+  viewOnly = false,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activeShareName, setActiveShareName] = useState<string | null>(null);
@@ -71,6 +73,7 @@ export function useStudioDocument({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [cloudBusy, setCloudBusy] = useState(false);
   const [saveAsLink, setSaveAsLink] = useState<string | null>(null);
+  const [saveAsPreviewLink, setSaveAsPreviewLink] = useState<string | null>(null);
   const [saveAsName, setSaveAsName] = useState("");
   const [saveAsNameError, setSaveAsNameError] = useState<string | null>(null);
   const [renameInput, setRenameInput] = useState("");
@@ -92,20 +95,23 @@ export function useStudioDocument({
     window.setTimeout(() => setStatusMessage(null), ms);
   }, []);
 
-  const syncUrlToShare = useCallback((id: string | null) => {
-    if (id) {
-      window.history.replaceState(null, "", studioSharePath(id));
-    } else {
-      window.history.replaceState(null, "", "/studio");
-    }
-  }, []);
+  const syncUrlToShare = useCallback(
+    (id: string | null) => {
+      if (id) {
+        window.history.replaceState(null, "", studioSharePath(id, { view: viewOnly }));
+      } else {
+        window.history.replaceState(null, "/studio");
+      }
+    },
+    [viewOnly]
+  );
 
   useEffect(() => {
     if (initialShareId) setActiveShareId(initialShareId);
   }, [initialShareId]);
 
   useEffect(() => {
-    if (!sessionReady) return;
+    if (!sessionReady || viewOnly) return;
     if (!bootstrapDone.current) {
       bootstrapDone.current = true;
       return;
@@ -115,7 +121,7 @@ export function useStudioDocument({
       return;
     }
     setIsDirty(true);
-  }, [sessionReady, buildPersistState]);
+  }, [sessionReady, buildPersistState, viewOnly]);
 
   const refreshRecentDesigns = useCallback(() => {
     setRecentDesigns(readRecentDesigns());
@@ -134,18 +140,75 @@ export function useStudioDocument({
   }, [modal, refreshRecentDesigns]);
 
   const openSaveAsModal = useCallback(() => {
+    if (viewOnly) return;
     setSaveAsLink(null);
+    setSaveAsPreviewLink(null);
     setSaveAsName(activeShareName ?? "");
     setSaveAsNameError(null);
     setModal("save-as");
-  }, [activeShareName]);
+  }, [activeShareName, viewOnly]);
 
   const openRenameModal = useCallback(() => {
-    if (!activeShareId) return;
+    if (viewOnly || !activeShareId) return;
     setRenameInput(activeShareName ?? "");
     setRenameError(null);
     setModal("rename");
-  }, [activeShareId, activeShareName]);
+  }, [activeShareId, activeShareName, viewOnly]);
+
+  const openSharePreviewModal = useCallback(() => {
+    if (!activeShareId) return;
+    setModal("share-preview");
+  }, [activeShareId]);
+
+  const getPreviewLink = useCallback(
+    (shareId?: string | null) => {
+      const id = shareId ?? activeShareId;
+      if (!id) return null;
+      return studioPreviewUrl(id);
+    },
+    [activeShareId]
+  );
+
+  const getEditorLink = useCallback(
+    (shareId?: string | null) => {
+      const id = shareId ?? activeShareId;
+      if (!id) return null;
+      return studioShareUrl(id);
+    },
+    [activeShareId]
+  );
+
+  const copyPreviewLink = useCallback(
+    async (shareId?: string | null) => {
+      const url = getPreviewLink(shareId);
+      if (!url) return false;
+      try {
+        await navigator.clipboard.writeText(url);
+        showStatus("View-only preview link copied.");
+        return true;
+      } catch {
+        showStatus("Could not copy preview link.", 5000);
+        return false;
+      }
+    },
+    [getPreviewLink, showStatus]
+  );
+
+  const copyEditorLink = useCallback(
+    async (shareId?: string | null) => {
+      const url = getEditorLink(shareId);
+      if (!url) return false;
+      try {
+        await navigator.clipboard.writeText(url);
+        showStatus("Editor link copied.");
+        return true;
+      } catch {
+        showStatus("Could not copy editor link.", 5000);
+        return false;
+      }
+    },
+    [getEditorLink, showStatus]
+  );
 
   const loadShareById = useCallback(
     async (shareId: string, source: "opened" | "saved" = "opened"): Promise<boolean> => {
@@ -169,6 +232,7 @@ export function useStudioDocument({
   );
 
   const saveCloud = useCallback(async () => {
+    if (viewOnly) return;
     if (!activeShareId) {
       openSaveAsModal();
       return;
@@ -193,9 +257,10 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, activeShareName, buildPersistState, showStatus, rememberRecent, openSaveAsModal]);
+  }, [activeShareId, activeShareName, buildPersistState, showStatus, rememberRecent, openSaveAsModal, viewOnly]);
 
   const saveCloudAs = useCallback(async () => {
+    if (viewOnly) return;
     const nameError = shareNameError(saveAsName);
     if (nameError) {
       setSaveAsNameError(nameError);
@@ -218,12 +283,13 @@ export function useStudioDocument({
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not create share link."));
-      const { id, url, name } = parseShareResult(data);
+      const { id, url, name, previewUrl } = parseShareResult(data);
       const resolvedName = normalizeShareName(name ?? normalizedName);
       setActiveShareId(id);
       setActiveShareName(resolvedName);
       syncUrlToShare(id);
       setSaveAsLink(url);
+      setSaveAsPreviewLink(previewUrl ?? studioPreviewUrl(id));
       setIsDirty(false);
       rememberRecent(id, "saved", url, resolvedName);
       try {
@@ -237,10 +303,10 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [buildPersistState, saveAsName, showStatus, syncUrlToShare, rememberRecent]);
+  }, [buildPersistState, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly]);
 
   const renameCloudShare = useCallback(async () => {
-    if (!activeShareId) return;
+    if (viewOnly || !activeShareId) return;
 
     const nameError = shareNameError(renameInput);
     if (nameError) {
@@ -338,6 +404,7 @@ export function useStudioDocument({
 
   const importJsonFile = useCallback(
     async (file: File) => {
+      if (viewOnly) return;
       let text: string;
       try {
         text = await file.text();
@@ -358,10 +425,11 @@ export function useStudioDocument({
       setModal(null);
       showStatus(`Imported “${file.name}”.`);
     },
-    [applyPersistedState, showStatus, syncUrlToShare]
+    [applyPersistedState, showStatus, syncUrlToShare, viewOnly]
   );
 
   const newDocument = useCallback(() => {
+    if (viewOnly) return;
     applyPersistedState(defaultBoxDesignerState());
     setActiveShareId(null);
     setActiveShareName(null);
@@ -369,19 +437,23 @@ export function useStudioDocument({
     setIsDirty(false);
     setModal(null);
     showStatus("New design started.");
-  }, [applyPersistedState, showStatus, syncUrlToShare]);
+  }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly]);
 
   const requestNew = useCallback(() => {
+    if (viewOnly) return;
     if (isDirty) {
       setModal("new");
       return;
     }
     newDocument();
-  }, [isDirty, newDocument]);
+  }, [isDirty, newDocument, viewOnly]);
 
-  const documentTitle = `${displayShareLabel(activeShareName, activeShareId)}${isDirty ? " •" : ""}`;
+  const documentTitle = viewOnly
+    ? `${displayShareLabel(activeShareName, activeShareId)} · Preview`
+    : `${displayShareLabel(activeShareName, activeShareId)}${isDirty ? " •" : ""}`;
 
   useEffect(() => {
+    if (viewOnly) return;
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
@@ -400,11 +472,12 @@ export function useStudioDocument({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [saveCloud, openSaveAsModal]);
+  }, [saveCloud, openSaveAsModal, viewOnly]);
 
   return {
     activeShareId,
     activeShareName,
+    viewOnly,
     isDirty,
     modal,
     setModal,
@@ -412,6 +485,8 @@ export function useStudioDocument({
     cloudBusy,
     saveAsLink,
     setSaveAsLink,
+    saveAsPreviewLink,
+    setSaveAsPreviewLink,
     saveAsName,
     setSaveAsName,
     saveAsNameError,
@@ -430,7 +505,12 @@ export function useStudioDocument({
     saveCloudAs,
     openSaveAsModal,
     openRenameModal,
+    openSharePreviewModal,
     renameCloudShare,
+    getPreviewLink,
+    getEditorLink,
+    copyPreviewLink,
+    copyEditorLink,
     openFromInput,
     loadShareById,
     openRecentDesign,

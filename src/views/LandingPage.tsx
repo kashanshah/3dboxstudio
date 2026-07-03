@@ -147,6 +147,19 @@ function IconSave() {
   );
 }
 
+function IconPreviewLink() {
+  return (
+    <svg className="landing-card-svg" viewBox="0 0 24 24" aria-hidden>
+      <path
+        fill="currentColor"
+        d="M12 5C7 5 2.73 8.11 1 12c1.73 3.89 6 7 11 7s9.27-3.11 11-7c-1.73-3.89-6-7-11-7zm0 11.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"
+        opacity=".9"
+      />
+      <circle cx="12" cy="12" r="2.25" fill="currentColor" />
+    </svg>
+  );
+}
+
 function IconJson() {
   return (
     <svg
@@ -473,6 +486,7 @@ export default function LandingPage() {
                     <li>Free packaging designer</li>
                     <li>No signup</li>
                     <li>Cloud save &amp; share</li>
+                    <li>View-only client links</li>
                     <li>Export PNG</li>
                     <li>JSON import/export</li>
                     <li>Open source (MIT)</li>
@@ -511,7 +525,7 @@ export default function LandingPage() {
                 <div className="landing-proof-divider" aria-hidden />
                 <div className="landing-proof-item">
                   <strong>Cloud share links</strong>
-                  <span>Save &amp; reopen full designs</span>
+                  <span>Save, edit &amp; send previews</span>
                 </div>
               </div>
             </div>
@@ -627,8 +641,20 @@ export default function LandingPage() {
                   <h3>Cloud save &amp; share links</h3>
                 </div>
                 <p>
-                  Use <strong>File → Save</strong> or <strong>Save As</strong> to upload your design and get a
-                  shareable link. Reopen it anytime or send it to clients and teammates—artwork and settings included.
+                  Use <strong>File → Save</strong> or <strong>Save As</strong> to upload your design. Get an editor link for
+                  yourself and a separate <strong>view-only preview link</strong> for clients—artwork and settings included.
+                </p>
+              </article>
+              <article className="landing-card">
+                <div className="landing-card-top">
+                  <span className="landing-card-icon" aria-hidden>
+                    <IconPreviewLink />
+                  </span>
+                  <h3>View-only client previews</h3>
+                </div>
+                <p>
+                  Share a presentation link that opens the studio in read-only mode. Clients can orbit, zoom, adjust lighting,
+                  and export PNGs—without changing dimensions, artwork, or saving over your work.
                 </p>
               </article>
               <article className="landing-card">
@@ -784,8 +810,8 @@ export default function LandingPage() {
               <div className="landing-step">
                 <h3>Save &amp; share</h3>
                 <p>
-                  Use File → Save As to upload and get a share link, or export a PNG for decks and RFQs. Open a link
-                  later to pick up exactly where you left off.
+                  Use File → Save As for editor and view-only preview links, or export a PNG for decks and RFQs. Send clients the
+                  preview link for approvals; keep the editor link for yourself.
                 </p>
               </div>
             </div>

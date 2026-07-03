@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { StudioFileModal } from "@/hooks/useStudioDocument";
 import type { StudioHelpModal } from "./StudioHelpModals";
-import { IconExternalLink } from "./StudioIcons";
+import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "@/siteMeta";
 
 type OpenMenu = "file" | "help" | null;
@@ -11,12 +11,17 @@ type OpenMenu = "file" | "help" | null;
 type StudioMenuBarProps = {
   documentTitle: string;
   cloudBusy: boolean;
+  viewOnly: boolean;
   canRename: boolean;
+  canSharePreview: boolean;
+  editorHref: string | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
   onSaveAs: () => void;
   onRename: () => void;
+  onSharePreview: () => void;
+  onCopyPreviewLink: () => void;
   onNew: () => void;
 };
 
@@ -34,12 +39,17 @@ function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObje
 export default function StudioMenuBar({
   documentTitle,
   cloudBusy,
+  viewOnly,
   canRename,
+  canSharePreview,
+  editorHref,
   onOpenModal,
   onOpenHelpModal,
   onSave,
   onSaveAs,
   onRename,
+  onSharePreview,
+  onCopyPreviewLink,
   onNew,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
@@ -63,68 +73,91 @@ export default function StudioMenuBar({
 
   return (
     <div className="studio-menu-bar">
-      <div className="studio-menu-item" ref={fileRef}>
-        <button
-          type="button"
-          className={`studio-menu-trigger${openMenu === "file" ? " is-open" : ""}`}
-          aria-expanded={openMenu === "file"}
-          aria-haspopup="menu"
-          onClick={() => setOpenMenu((m) => (m === "file" ? null : "file"))}
-        >
-          File
-        </button>
-        {openMenu === "file" && (
-          <div className="studio-menu-dropdown" role="menu">
-            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
-              <span>New</span>
-            </button>
-            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
-              <span>Open…</span>
-              <kbd>⌘O</kbd>
-            </button>
-            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
-              <span>View Recent</span>
-            </button>
-            <div className="studio-menu-sep" role="separator" />
-            <button
-              type="button"
-              className="studio-menu-action"
-              role="menuitem"
-              disabled={cloudBusy}
-              onClick={() => pickFile(onSave)}
-            >
-              <span>{cloudBusy ? "Saving…" : "Save"}</span>
-              <kbd>⌘S</kbd>
-            </button>
-            <button
-              type="button"
-              className="studio-menu-action"
-              role="menuitem"
-              disabled={cloudBusy}
-              onClick={() => pickFile(onSaveAs)}
-            >
-              <span>Save As…</span>
-              <kbd>⇧⌘S</kbd>
-            </button>
-            <button
-              type="button"
-              className="studio-menu-action"
-              role="menuitem"
-              disabled={cloudBusy || !canRename}
-              onClick={() => pickFile(onRename)}
-            >
-              <span>Rename…</span>
-            </button>
-            <div className="studio-menu-sep" role="separator" />
-            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>
-              <span>Import JSON…</span>
-            </button>
-            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("export"))}>
-              <span>Export JSON…</span>
-            </button>
-          </div>
-        )}
-      </div>
+      {!viewOnly && (
+        <div className="studio-menu-item" ref={fileRef}>
+          <button
+            type="button"
+            className={`studio-menu-trigger${openMenu === "file" ? " is-open" : ""}`}
+            aria-expanded={openMenu === "file"}
+            aria-haspopup="menu"
+            onClick={() => setOpenMenu((m) => (m === "file" ? null : "file"))}
+          >
+            File
+          </button>
+          {openMenu === "file" && (
+            <div className="studio-menu-dropdown" role="menu">
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
+                <span>New</span>
+              </button>
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
+                <span>Open…</span>
+                <kbd>⌘O</kbd>
+              </button>
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
+                <span>View Recent</span>
+              </button>
+              <div className="studio-menu-sep" role="separator" />
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={cloudBusy}
+                onClick={() => pickFile(onSave)}
+              >
+                <span>{cloudBusy ? "Saving…" : "Save"}</span>
+                <kbd>⌘S</kbd>
+              </button>
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={cloudBusy}
+                onClick={() => pickFile(onSaveAs)}
+              >
+                <span>Save As…</span>
+                <kbd>⇧⌘S</kbd>
+              </button>
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={cloudBusy || !canRename}
+                onClick={() => pickFile(onRename)}
+              >
+                <span>Rename…</span>
+              </button>
+              <div className="studio-menu-sep" role="separator" />
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={!canSharePreview}
+                onClick={() => pickFile(onSharePreview)}
+              >
+                <span>Share Preview Link…</span>
+              </button>
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={!canSharePreview}
+                onClick={() => pickFile(onCopyPreviewLink)}
+              >
+                <span>Copy Preview Link</span>
+              </button>
+              <div className="studio-menu-sep" role="separator" />
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>
+                <span>Import JSON…</span>
+              </button>
+              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("export"))}>
+                <span>Export JSON…</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {viewOnly && <span className="studio-menu-preview-badge">View-only preview</span>}
 
       <div className="studio-menu-item" ref={helpRef}>
         <button
@@ -181,7 +214,29 @@ export default function StudioMenuBar({
         )}
       </div>
 
-      <div className="studio-doc-title">{documentTitle}</div>
+      {viewOnly && editorHref && (
+        <a className="studio-menu-editor-link" href={editorHref}>
+          Open in editor
+        </a>
+      )}
+
+      <div className="studio-doc-title-wrap">
+        <div className="studio-doc-title" title={documentTitle}>
+          {documentTitle}
+        </div>
+        {!viewOnly && canRename && (
+          <button
+            type="button"
+            className="studio-doc-rename-btn"
+            onClick={onRename}
+            disabled={cloudBusy}
+            aria-label="Rename design"
+            title="Rename design"
+          >
+            <IconRename />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

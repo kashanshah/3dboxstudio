@@ -35,7 +35,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "getting-started",
     question: "Is 3D Box Studio a free 3D box maker?",
     answer:
-      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, cloud save & share links, PNG export, or JSON import/export. No account required to start designing.",
+      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, cloud save, view-only client preview links, PNG export, or JSON import/export. No account required to start designing.",
   },
   {
     id: "3d-box-simulation-use",
@@ -77,7 +77,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "export",
     question: "How do cloud save and share links work?",
     answer:
-      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. Share links include artwork and all studio settings.",
+      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a view-only URL (ends with view=1). Editor links open the full studio; preview links hide editing controls.",
+  },
+  {
+    id: "view-only-preview",
+    category: "export",
+    question: "Can I send a view-only preview link to clients?",
+    answer:
+      "Yes. After you save a design to the cloud, use File → Share Preview Link or Copy Preview Link. The preview URL opens the studio in read-only mode: clients can orbit, zoom, adjust lighting, animate openings, and export PNGs, but cannot change dimensions, artwork, or save over your design. Keep the editor link private if you do not want others to edit.",
   },
   {
     id: "color-accuracy",
@@ -98,7 +105,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "export",
     question: "What file formats can I export?",
     answer:
-      "You can save designs to the cloud with share links (File → Save / Save As), export a PNG snapshot of the 3D viewport for presentations and marketing, record a short MP4 video of the viewport, and download or import a full setup as JSON. There is no DXF, PDF die-line, or GLB export—the focus is fast visual preview.",
+      "You can save designs to the cloud with editor and view-only preview links (File → Save / Save As), export a PNG snapshot of the 3D viewport for presentations and marketing, record a short MP4 video of the viewport, and download or import a full setup as JSON. There is no DXF, PDF die-line, or GLB export—the focus is fast visual preview.",
   },
   {
     id: "box-types",

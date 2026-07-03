@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS shared_designs (
   view_count INTEGER NOT NULL DEFAULT 0
 );
 
--- If the table already exists without name, run:
+-- If the table already exists without name, run: npm run db:migrate
+-- Or in Neon SQL Editor:
 -- ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS name TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_shared_designs_expires_at ON shared_designs (expires_at);

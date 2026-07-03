@@ -35,9 +35,20 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
     if (!doc.saveAsLink) return;
     try {
       await navigator.clipboard.writeText(doc.saveAsLink);
-      doc.showStatus("Link copied to clipboard.");
+      doc.showStatus("Editor link copied to clipboard.");
     } catch {
       doc.showStatus("Could not copy link.");
+    }
+  }, [doc]);
+
+  const copySaveAsPreviewLink = useCallback(async () => {
+    const url = doc.saveAsPreviewLink ?? doc.getPreviewLink();
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      doc.showStatus("Preview link copied to clipboard.");
+    } catch {
+      doc.showStatus("Could not copy preview link.");
     }
   }, [doc]);
 
@@ -165,6 +176,7 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
         onClose={() => {
           doc.setModal(null);
           doc.setSaveAsLink(null);
+          doc.setSaveAsPreviewLink(null);
         }}
         footer={
           doc.saveAsLink ? (
@@ -172,8 +184,11 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
               <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
                 Close
               </button>
+              <button type="button" className="btn btn-ghost" onClick={() => void copySaveAsPreviewLink()}>
+                Copy preview link
+              </button>
               <button type="button" className="btn btn-primary" onClick={() => void copySaveAsLink()}>
-                Copy link
+                Copy editor link
               </button>
             </>
           ) : (
@@ -192,12 +207,23 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
           <>
             <p className="studio-dialog-lead">
               {doc.activeShareName
-                ? `“${doc.activeShareName}” was uploaded and a new share link was created.`
-                : "Your design was uploaded and a new share link was created."}
+                ? `“${doc.activeShareName}” was uploaded. Copy an editor link for yourself or a view-only preview link for clients.`
+                : "Your design was uploaded. Copy an editor link for yourself or a view-only preview link for clients."}
             </p>
-            <label className="studio-dialog-label">Share link</label>
+            <label className="studio-dialog-label">Editor link</label>
             <input className="studio-dialog-input" type="text" readOnly value={doc.saveAsLink} onFocus={(e) => e.target.select()} />
-            <p className="studio-dialog-hint">Anyone with this link can view the design. Use File → Save to update this link later.</p>
+            <p className="studio-dialog-hint">Full studio access — you can edit and save changes with File → Save (⌘S).</p>
+            <label className="studio-dialog-label">View-only preview link</label>
+            <input
+              className="studio-dialog-input"
+              type="text"
+              readOnly
+              value={doc.saveAsPreviewLink ?? doc.getPreviewLink() ?? ""}
+              onFocus={(e) => e.target.select()}
+            />
+            <p className="studio-dialog-hint">
+              Clients can orbit, zoom, and export PNGs but cannot change dimensions, artwork, or save over your design.
+            </p>
           </>
         ) : (
           <>
@@ -231,6 +257,50 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
             <p className="studio-dialog-hint">Use Save (⌘S) later to update an existing link without creating a new one.</p>
           </>
         )}
+      </StudioDialog>
+
+      <StudioDialog
+        title="Share Preview Link"
+        open={doc.modal === "share-preview"}
+        onClose={() => doc.setModal(null)}
+        width={520}
+        footer={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
+              Close
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={() => void doc.copyEditorLink()}>
+              Copy editor link
+            </button>
+            <button type="button" className="btn btn-primary" onClick={() => void doc.copyPreviewLink()}>
+              Copy preview link
+            </button>
+          </>
+        }
+      >
+        <p className="studio-dialog-lead">
+          Send clients a view-only link for presentations and approvals. They can explore the 3D box, adjust lighting, and
+          export PNGs — without editing your design.
+        </p>
+        <label className="studio-dialog-label">View-only preview link</label>
+        <input
+          className="studio-dialog-input"
+          type="text"
+          readOnly
+          value={doc.getPreviewLink() ?? ""}
+          onFocus={(e) => e.target.select()}
+        />
+        <p className="studio-dialog-hint studio-share-preview-note">
+          Preview links end with <code>&view=1</code>. Keep the editor link private if you do not want others to change the design.
+        </p>
+        <label className="studio-dialog-label">Editor link</label>
+        <input
+          className="studio-dialog-input"
+          type="text"
+          readOnly
+          value={doc.getEditorLink() ?? ""}
+          onFocus={(e) => e.target.select()}
+        />
       </StudioDialog>
 
       <StudioDialog

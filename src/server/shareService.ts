@@ -79,7 +79,7 @@ export async function createShare(
   designJson: string,
   createdBy: string | null,
   name?: string | null
-): Promise<{ id: string; url: string; name: string | null }> {
+): Promise<{ id: string; url: string; previewUrl: string; name: string | null }> {
   const parsed = await parseAndValidateDesignJson(designJson);
   const id = createShareId();
   const images = await uploadDesignImages(id, parsed);
@@ -102,10 +102,12 @@ export async function createShare(
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
-  return { id, url: `${origin}/studio?share=${id}`, name: shareName };
+  const url = `${origin}/studio?share=${id}`;
+  const previewUrl = `${url}&view=1`;
+  return { id, url, previewUrl, name: shareName };
 }
 
-export async function updateShare(id: string, designJson: string): Promise<{ id: string; url: string; name: string | null }> {
+export async function updateShare(id: string, designJson: string): Promise<{ id: string; url: string; previewUrl: string; name: string | null }> {
   if (!/^[0-9A-Za-z]{10,24}$/.test(id)) {
     throw new ShareError("Invalid share id.", 400);
   }
@@ -139,7 +141,9 @@ export async function updateShare(id: string, designJson: string): Promise<{ id:
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
-  return { id, url: `${origin}/studio?share=${id}`, name: existing[0].name ?? null };
+  const url = `${origin}/studio?share=${id}`;
+  const previewUrl = `${url}&view=1`;
+  return { id, url, previewUrl, name: existing[0].name ?? null };
 }
 
 export async function renameShare(id: string, name: string | null): Promise<{ id: string; name: string | null }> {

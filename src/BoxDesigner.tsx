@@ -21,6 +21,7 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import { useStudioDocument } from "./hooks/useStudioDocument";
+import { isViewOnlyParam, studioEditorPath } from "./lib/shareUrl";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { useFaceObjectUrls } from "./hooks/useTextures";
@@ -105,6 +106,7 @@ function PanelCollapse({ title, children }: { title: string; children: ReactNode
 export default function BoxDesigner() {
   const searchParams = useSearchParams();
   const shareIdFromUrl = searchParams.get("share");
+  const viewOnly = isViewOnlyParam(searchParams.get("view"));
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
@@ -247,6 +249,7 @@ export default function BoxDesigner() {
     applyPersistedState,
     initialShareId: shareIdFromUrl,
     sessionReady,
+    viewOnly,
   });
 
   useEffect(() => {
@@ -257,7 +260,9 @@ export default function BoxDesigner() {
     void (async () => {
       try {
         await doc.loadShareById(shareIdFromUrl);
-        if (!cancelled) doc.showStatus("Opened shared design from link.");
+        if (!cancelled) {
+          doc.showStatus(viewOnly ? "View-only preview opened." : "Opened shared design from link.");
+        }
       } catch {
         if (!cancelled) doc.showStatus("Could not load shared design.", 5000);
       } finally {
@@ -271,7 +276,7 @@ export default function BoxDesigner() {
     return () => {
       cancelled = true;
     };
-  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean]);
+  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean, viewOnly]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomFraction(Math.min(1, Math.max(0, t)));
@@ -348,20 +353,41 @@ export default function BoxDesigner() {
   }, [startViewportRecording, getPreviewCanvas]);
 
   const dimHint = `Scene units: centimeters (converted from ${unit})`;
+  const openingLabel = openingOptions.find((o) => o.value === opening)?.label ?? opening;
+  const editorHref =
+    doc.activeShareId ?? shareIdFromUrl
+      ? studioEditorPath((doc.activeShareId ?? shareIdFromUrl)!)
+      : null;
 
   return (
     <div className="studio-workspace">
       <StudioMenuBar
         documentTitle={doc.documentTitle}
         cloudBusy={doc.cloudBusy}
+        viewOnly={doc.viewOnly}
         onOpenModal={doc.setModal}
         onOpenHelpModal={setHelpModal}
         onSave={() => void doc.saveCloud()}
         onSaveAs={doc.openSaveAsModal}
         onRename={doc.openRenameModal}
         canRename={Boolean(doc.activeShareId)}
+        canSharePreview={Boolean(doc.activeShareId)}
+        onSharePreview={doc.openSharePreviewModal}
+        onCopyPreviewLink={() => void doc.copyPreviewLink()}
+        editorHref={editorHref}
         onNew={doc.requestNew}
       />
+      {doc.viewOnly && (
+        <div className="studio-preview-banner" role="status">
+          View-only preview — clients can explore and export PNGs but cannot edit or save changes.
+          {editorHref && (
+            <>
+              {" "}
+              <a href={editorHref}>Open in editor</a>
+            </>
+          )}
+        </div>
+      )}
       {doc.statusMessage && (
         <div className="studio-status-banner" role="status">
           {doc.statusMessage}
@@ -501,20 +527,60 @@ export default function BoxDesigner() {
         <header style={{ marginBottom: "1.25rem" }}>
           <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
           <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>
-            Dimensions, materials, openings, and per-face artwork. Use <strong>File</strong> for open, save, and import/export.
+            {viewOnly
+              ? "Client preview mode — orbit the box, adjust lighting, and export PNGs or a short video."
+              : "Dimensions, materials, openings, and per-face artwork. Use File for open, save, and import/export."}
           </p>
-          <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: "var(--muted)" }}>
-            {doc.activeShareId ? (
-              <>
-                Cloud share · <span className="dim-badge">{doc.activeShareId}</span>
-                {doc.isDirty ? " · unsaved changes" : " · saved"}
-              </>
-            ) : (
-              <>Use File → Save or Save As to upload this design and get a share link.</>
-            )}
-          </p>
+          {!viewOnly && (
+            <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: "var(--muted)" }}>
+              {doc.activeShareId ? (
+                <>
+                  Cloud share · <span className="dim-badge">{doc.activeShareId}</span>
+                  {doc.isDirty ? " · unsaved changes" : " · saved"}
+                </>
+              ) : (
+                <>Use File → Save or Save As to upload this design and get share links.</>
+              )}
+            </p>
+          )}
         </header>
 
+        {viewOnly ? (
+          <>
+          <PanelCollapse title="Design summary">
+            <dl className="studio-preview-summary">
+              <div>
+                <dt>Name</dt>
+                <dd>{doc.activeShareName ?? "Untitled design"}</dd>
+              </div>
+              <div>
+                <dt>Dimensions</dt>
+                <dd>
+                  {dims.width} × {dims.height} × {dims.length} {unit}
+                </dd>
+              </div>
+              <div>
+                <dt>Material</dt>
+                <dd>{preset.label}</dd>
+              </div>
+              <div>
+                <dt>Opening</dt>
+                <dd>{openingLabel}</dd>
+              </div>
+            </dl>
+          </PanelCollapse>
+          {opening !== "closed" && (
+            <PanelCollapse title="Presentation">
+              <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+                Drag the slider to show how the box opens — useful for client walkthroughs.
+              </p>
+              <label>Open amount ({Math.round(openT * 100)}%)</label>
+              <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => commitOpenT(Number(e.target.value))} />
+            </PanelCollapse>
+          )}
+          </>
+        ) : (
+          <>
         <PanelCollapse title="Outer dimensions">
           <div style={{ marginBottom: "0.65rem" }}>
             <label>Unit</label>
@@ -664,6 +730,8 @@ export default function BoxDesigner() {
             </button>
           </div>
         </PanelCollapse>
+          </>
+        )}
 
         <PanelCollapse title="Viewport capture">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
