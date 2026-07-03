@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import StudioDialog from "./StudioDialog";
+import type { AuthUser } from "@/lib/authTypes";
 
 type ProjectSummary = {
   id: string;
@@ -12,9 +12,10 @@ type ProjectSummary = {
   thumbnailUrl: string | null;
 };
 
-type StudioProjectsModalProps = {
+type StudioProjectsPanelProps = {
   open: boolean;
-  onClose: () => void;
+  user: AuthUser | null;
+  onSignIn: () => void;
   onOpenProject: (id: string) => void;
   onStatus: (message: string) => void;
 };
@@ -25,13 +26,20 @@ function formatUpdated(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default function StudioProjectsModal({ open, onClose, onOpenProject, onStatus }: StudioProjectsModalProps) {
+export default function StudioProjectsPanel({
+  open,
+  user,
+  onSignIn,
+  onOpenProject,
+  onStatus,
+}: StudioProjectsPanelProps) {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     setError(null);
     try {
@@ -53,11 +61,16 @@ export default function StudioProjectsModal({ open, onClose, onOpenProject, onSt
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (open) void load();
-  }, [open, load]);
+    if (open && user) void load();
+    if (!open) {
+      setProjects([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [open, user, load]);
 
   const renameProject = useCallback(
     async (project: ProjectSummary) => {
@@ -105,74 +118,83 @@ export default function StudioProjectsModal({ open, onClose, onOpenProject, onSt
     [onStatus]
   );
 
-  return (
-    <StudioDialog
-      title="My Projects"
-      open={open}
-      onClose={onClose}
-      width={560}
-      footer={
-        <button type="button" className="btn btn-primary" onClick={onClose}>
-          Close
-        </button>
-      }
-    >
-      {loading ? (
-        <p className="studio-dialog-hint">Loading your projects…</p>
-      ) : error ? (
-        <p className="studio-dialog-error" role="alert">
-          {error}
-        </p>
-      ) : projects.length === 0 ? (
+  if (!user) {
+    return (
+      <div className="studio-open-projects-guest">
         <p className="studio-dialog-hint">
-          You haven't saved any projects yet. Design a box, then use <strong>File → Save As</strong> to store it here.
+          Sign in to browse projects saved to your account.
         </p>
-      ) : (
-        <ul className="studio-projects-list">
-          {projects.map((project) => (
-            <li key={project.id} className="studio-projects-item">
-              <div className="studio-projects-thumb" aria-hidden>
-                {project.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={project.thumbnailUrl} alt="" loading="lazy" />
-                ) : (
-                  <span className="studio-projects-thumb-empty">3D</span>
-                )}
-              </div>
-              <div className="studio-projects-main">
-                <span className="studio-projects-name">{project.name ?? "Untitled design"}</span>
-                <span className="studio-projects-meta">Updated {formatUpdated(project.updatedAt)}</span>
-              </div>
-              <div className="studio-projects-actions">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={busyId === project.id}
-                  onClick={() => onOpenProject(project.id)}
-                >
-                  Open
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  disabled={busyId === project.id}
-                  onClick={() => void renameProject(project)}
-                >
-                  Rename
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-ghost studio-projects-delete"
-                  disabled={busyId === project.id}
-                  onClick={() => void deleteProject(project)}
-                >
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </StudioDialog>
+        <button type="button" className="btn" onClick={onSignIn}>
+          Sign in
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <p className="studio-dialog-hint">Loading your projects…</p>;
+  }
+
+  if (error) {
+    return (
+      <p className="studio-dialog-error" role="alert">
+        {error}
+      </p>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <p className="studio-dialog-hint">
+        You haven&apos;t saved any projects yet. Design a box, then use <strong>File → Save As</strong> to store it here.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="studio-projects-list">
+      {projects.map((project) => (
+        <li key={project.id} className="studio-projects-item">
+          <div className="studio-projects-thumb" aria-hidden>
+            {project.thumbnailUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={project.thumbnailUrl} alt="" loading="lazy" />
+            ) : (
+              <span className="studio-projects-thumb-empty">3D</span>
+            )}
+          </div>
+          <div className="studio-projects-main">
+            <span className="studio-projects-name">{project.name ?? "Untitled design"}</span>
+            <span className="studio-projects-meta">Updated {formatUpdated(project.updatedAt)}</span>
+          </div>
+          <div className="studio-projects-actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={busyId === project.id}
+              onClick={() => onOpenProject(project.id)}
+            >
+              Open
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={busyId === project.id}
+              onClick={() => void renameProject(project)}
+            >
+              Rename
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost studio-projects-delete"
+              disabled={busyId === project.id}
+              onClick={() => void deleteProject(project)}
+            >
+              Delete
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

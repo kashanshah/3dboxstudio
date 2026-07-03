@@ -182,9 +182,6 @@ export default function StudioMenuBar({
               <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
                 <span>New</span>
               </button>
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onOpenProjects)}>
-                <span>My Projects…</span>
-              </button>
               <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
                 <span>Open…</span>
                 <kbd>⌘O</kbd>
