@@ -19,6 +19,7 @@ import {
 } from "@/lib/recentDesigns";
 import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/shareName";
 import { uploadShareOgImageToCloud, type ShareOgImageBlob } from "@/lib/shareOgImage";
+import type { AuthUser } from "@/lib/authTypes";
 
 export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "share-preview" | "export" | "import" | "new" | null;
 
@@ -79,6 +80,8 @@ type UseStudioDocumentOptions = {
   sessionReady: boolean;
   viewOnly?: boolean;
   capturePreviewImage?: () => Promise<ShareOgImageBlob | null>;
+  authUser?: AuthUser | null;
+  onRequireSignIn?: () => void;
 };
 
 async function uploadOgPreviewIfPresent(
@@ -99,6 +102,8 @@ export function useStudioDocument({
   sessionReady,
   viewOnly = false,
   capturePreviewImage,
+  authUser = null,
+  onRequireSignIn,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
@@ -131,6 +136,20 @@ export function useStudioDocument({
     setStatusMessage(message);
     window.setTimeout(() => setStatusMessage(null), ms);
   }, []);
+
+  // Cloud save/share is limited to signed-in, verified users. Returns false (and nudges
+  // the user toward sign-in / verification) when access should be blocked.
+  const ensureCloudAccess = useCallback((): boolean => {
+    if (!authUser) {
+      onRequireSignIn?.();
+      return false;
+    }
+    if (!authUser.emailVerified) {
+      showStatus("Verify your email to save and share. Use the banner above to resend the link.", 6000);
+      return false;
+    }
+    return true;
+  }, [authUser, onRequireSignIn, showStatus]);
 
   const syncUrlToShare = useCallback((id: string | null) => {
     if (id) {
@@ -179,12 +198,13 @@ export function useStudioDocument({
 
   const openSaveAsModal = useCallback(() => {
     if (viewOnly) return;
+    if (!ensureCloudAccess()) return;
     setSaveAsLink(null);
     setSaveAsPreviewLink(null);
     setSaveAsName(activeShareName ?? "");
     setSaveAsNameError(null);
     setModal("save-as");
-  }, [activeShareName, viewOnly]);
+  }, [activeShareName, viewOnly, ensureCloudAccess]);
 
   const openRenameModal = useCallback(() => {
     if (viewOnly || !activeShareId) return;
@@ -288,6 +308,7 @@ export function useStudioDocument({
 
   const saveCloud = useCallback(async () => {
     if (viewOnly) return;
+    if (!ensureCloudAccess()) return;
     if (!activeShareId) {
       openSaveAsModal();
       return;
@@ -327,10 +348,11 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly]);
+  }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess]);
 
   const saveCloudAs = useCallback(async () => {
     if (viewOnly) return;
+    if (!ensureCloudAccess()) return;
     const nameError = shareNameError(saveAsName);
     if (nameError) {
       setSaveAsNameError(nameError);
@@ -392,10 +414,11 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly]);
+  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess]);
 
   const renameCloudShare = useCallback(async () => {
     if (viewOnly || !activeShareId) return;
+    if (!ensureCloudAccess()) return;
 
     const nameError = shareNameError(renameInput);
     if (nameError) {
@@ -427,7 +450,24 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, renameInput, showStatus, refreshRecentDesigns]);
+  }, [activeShareId, renameInput, showStatus, refreshRecentDesigns, ensureCloudAccess, viewOnly]);
+
+  const openProject = useCallback(
+    async (shareId: string) => {
+      setModal(null);
+      setCloudBusy(true);
+      try {
+        await loadShareById(shareId, "opened");
+        markClean();
+        showStatus("Project opened.");
+      } catch (e) {
+        showStatus(e instanceof Error ? e.message : "Could not open project.", 5000);
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    [loadShareById, markClean, showStatus]
+  );
 
   const openFromInput = useCallback(async () => {
     const shareId = parseShareIdFromInput(openInput);
@@ -608,6 +648,7 @@ export function useStudioDocument({
     copyPreviewLink,
     copyEditorLink,
     openFromInput,
+    openProject,
     loadShareById,
     loadShareByPreviewToken,
     openRecentDesign,

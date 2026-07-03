@@ -190,6 +190,83 @@ function buildEditorPayload(
   };
 }
 
+function assertOwner(ownerId: string | null, userId: string): void {
+  if (!ownerId || ownerId !== userId) {
+    throw new ShareError("You don't have permission to modify this project.", 403);
+  }
+}
+
+export type ProjectSummary = {
+  id: string;
+  previewToken: string;
+  name: string | null;
+  updatedAt: string;
+  createdAt: string;
+  thumbnailUrl: string | null;
+};
+
+export async function listUserProjects(userId: string): Promise<ProjectSummary[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT id, preview_token, name, og_image_key, created_at, updated_at
+    FROM shared_designs
+    WHERE user_id = ${userId}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    ORDER BY updated_at DESC
+    LIMIT 200
+  `) as {
+    id: string;
+    preview_token: string;
+    name: string | null;
+    og_image_key: string | null;
+    created_at: string;
+    updated_at: string;
+  }[];
+
+  return rows.map((row) => {
+    const cacheVersion = toShareCacheVersion(row.updated_at);
+    return {
+      id: row.id,
+      previewToken: row.preview_token,
+      name: row.name ?? null,
+      updatedAt: row.updated_at,
+      createdAt: row.created_at,
+      thumbnailUrl: buildOgImagePublicUrl(row.og_image_key, cacheVersion),
+    };
+  });
+}
+
+/** Returns the owner user id for a project, or undefined if it does not exist / expired. */
+export async function getShareOwnerId(id: string): Promise<string | null | undefined> {
+  if (!SHARE_TOKEN_RE.test(id)) return undefined;
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT user_id FROM shared_designs
+    WHERE id = ${id}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    LIMIT 1
+  `) as { user_id: string | null }[];
+  if (rows.length === 0) return undefined;
+  return rows[0].user_id;
+}
+
+export async function deleteShare(id: string, userId: string): Promise<void> {
+  if (!SHARE_TOKEN_RE.test(id)) {
+    throw new ShareError("Invalid project id.", 400);
+  }
+  const sql = getSql();
+  const existing = (await sql`
+    SELECT user_id FROM shared_designs WHERE id = ${id} LIMIT 1
+  `) as { user_id: string | null }[];
+
+  if (existing.length === 0) {
+    throw new ShareError("Project not found.", 404);
+  }
+  assertOwner(existing[0].user_id, userId);
+
+  await sql`DELETE FROM shared_designs WHERE id = ${id}`;
+}
+
 export async function createShare(
   designJson: string,
   createdBy: string | null,
@@ -206,6 +283,9 @@ export async function createShare(
   const ttlDays = shareTtlDays();
   const sql = getSql();
 
+  // Signed-in projects are permanent; any legacy anonymous share keeps the TTL.
+  const expiresAt = createdBy ? null : new Date(Date.now() + ttlDays * 86_400_000).toISOString();
+
   const rows = (await sql`
     INSERT INTO shared_designs (
       id,
@@ -215,6 +295,7 @@ export async function createShare(
       images,
       expires_at,
       created_by,
+      user_id,
       og_image_key,
       og_image_width,
       og_image_height
@@ -225,7 +306,8 @@ export async function createShare(
       ${shareName},
       ${JSON.stringify(config)}::jsonb,
       ${JSON.stringify(images)}::jsonb,
-      NOW() + (${ttlDays} * INTERVAL '1 day'),
+      ${expiresAt},
+      ${createdBy},
       ${createdBy},
       ${ogMeta.og_image_key},
       ${ogMeta.og_image_width},
@@ -245,6 +327,7 @@ export async function createShare(
 export async function updateShare(
   id: string,
   designJson: string,
+  userId: string,
   ogImage?: ShareOgImageInput | null
 ): Promise<ShareLinks> {
   if (!SHARE_TOKEN_RE.test(id)) {
@@ -255,27 +338,26 @@ export async function updateShare(
   const sql = getSql();
 
   const existing = (await sql`
-    SELECT id, preview_token, name FROM shared_designs
+    SELECT id, preview_token, name, user_id FROM shared_designs
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as { id: string; preview_token: string; name: string | null }[];
+  `) as { id: string; preview_token: string; name: string | null; user_id: string | null }[];
 
   if (!existing[0]?.preview_token) {
-    throw new ShareError("Share not found or expired.", 404);
+    throw new ShareError("Project not found.", 404);
   }
+  assertOwner(existing[0].user_id, userId);
 
   const images = await uploadDesignImages(id, parsed);
   const config = stripImages(parsed);
   const ogMeta = ogImage ? await saveOgImage(id, ogImage) : null;
-  const ttlDays = shareTtlDays();
 
   const updatedRows = (await sql`
     UPDATE shared_designs
     SET
       config = ${JSON.stringify(config)}::jsonb,
       images = ${JSON.stringify(images)}::jsonb,
-      expires_at = NOW() + (${ttlDays} * INTERVAL '1 day'),
       og_image_key = COALESCE(${ogMeta?.og_image_key ?? null}, og_image_key),
       og_image_width = COALESCE(${ogMeta?.og_image_width ?? null}, og_image_width),
       og_image_height = COALESCE(${ogMeta?.og_image_height ?? null}, og_image_height),
@@ -294,7 +376,8 @@ export async function updateShare(
 
 export async function renameShare(
   id: string,
-  name: string | null
+  name: string | null,
+  userId: string
 ): Promise<{ id: string; name: string | null; updatedAt: string }> {
   if (!SHARE_TOKEN_RE.test(id)) {
     throw new ShareError("Invalid share id.", 400);
@@ -302,6 +385,17 @@ export async function renameShare(
 
   const shareName = normalizeShareName(name);
   const sql = getSql();
+
+  const existing = (await sql`
+    SELECT user_id FROM shared_designs
+    WHERE id = ${id}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    LIMIT 1
+  `) as { user_id: string | null }[];
+  if (existing.length === 0) {
+    throw new ShareError("Project not found.", 404);
+  }
+  assertOwner(existing[0].user_id, userId);
 
   const rows = (await sql`
     UPDATE shared_designs
@@ -322,7 +416,8 @@ export async function updateShareOgImage(
   shareId: string,
   pngBuffer: Buffer,
   width: number,
-  height: number
+  height: number,
+  userId: string
 ): Promise<{ ogImageUrl: string; width: number; height: number; updatedAt: string }> {
   if (!SHARE_TOKEN_RE.test(shareId)) {
     throw new ShareError("Invalid share id.", 400);
@@ -339,15 +434,16 @@ export async function updateShareOgImage(
 
   const sql = getSql();
   const existing = (await sql`
-    SELECT id FROM shared_designs
+    SELECT id, user_id FROM shared_designs
     WHERE id = ${shareId}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as { id: string }[];
+  `) as { id: string; user_id: string | null }[];
 
   if (!existing[0]) {
     throw new ShareError("Share not found or expired.", 404);
   }
+  assertOwner(existing[0].user_id, userId);
 
   const uploaded = await uploadShareOgImage(shareId, pngBuffer);
   const imageWidth = Math.round(width);

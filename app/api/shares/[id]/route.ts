@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
-import { ShareError, getShare, renameShare, updateShare } from "@/server/shareService";
+import { ShareError, deleteShare, getShare, renameShare, updateShare } from "@/server/shareService";
 import { parseShareSaveRequest } from "@/server/shareSaveRequest";
 
 export const runtime = "nodejs";
@@ -9,14 +9,14 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PUT(req: Request, context: RouteContext) {
   try {
-    await assertCanCreateShare(req);
+    const userId = await assertCanCreateShare(req);
     const { id } = await context.params;
     const rawBody = await req.text();
     if (!rawBody.trim()) {
       return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
     }
     const { designJson } = parseShareSaveRequest(req, rawBody);
-    const result = await updateShare(id, designJson);
+    const result = await updateShare(id, designJson, userId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {
@@ -33,13 +33,13 @@ export async function PUT(req: Request, context: RouteContext) {
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    await assertCanCreateShare(req);
+    const userId = await assertCanCreateShare(req);
     const { id } = await context.params;
     const body: unknown = await req.json().catch(() => null);
     if (typeof body !== "object" || body === null || !("name" in body) || typeof (body as { name: unknown }).name !== "string") {
       return NextResponse.json({ error: "Expected JSON body with a name field." }, { status: 400 });
     }
-    const result = await renameShare(id, (body as { name: string }).name);
+    const result = await renameShare(id, (body as { name: string }).name, userId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {
@@ -51,6 +51,21 @@ export async function PATCH(req: Request, context: RouteContext) {
         ? "Share is not configured on this server."
         : "Could not rename share.";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request, context: RouteContext) {
+  try {
+    const userId = await assertCanCreateShare(req);
+    const { id } = await context.params;
+    await deleteShare(id, userId);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof ShareError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    console.error("DELETE /api/shares/[id] failed:", e);
+    return NextResponse.json({ error: "Could not delete project." }, { status: 500 });
   }
 }
 
