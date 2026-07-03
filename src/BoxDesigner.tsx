@@ -123,6 +123,25 @@ function IconTimes() {
   );
 }
 
+function IconPanelToggle() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      aria-hidden
+      stroke="currentColor"
+      fill="none"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="15" y1="4" x2="15" y2="20" />
+    </svg>
+  );
+}
+
 function PanelCollapse({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
@@ -160,6 +179,9 @@ export default function BoxDesigner({
   const [startDialogOpen, setStartDialogOpen] = useState(
     () => !initialShareId && !initialPreviewToken && !viewOnly
   );
+  // Desktop-only drawer for the configuration panel. Shown by default in the
+  // editor, hidden by default on view-only preview links. (No effect on mobile.)
+  const [sidebarOpen, setSidebarOpen] = useState(!viewOnly);
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
@@ -561,7 +583,7 @@ export default function BoxDesigner({
           {doc.statusMessage}
         </div>
       )}
-      <div className="box-designer-root">
+      <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}>
       <div
         style={{
           position: "relative",
@@ -569,6 +591,16 @@ export default function BoxDesigner({
           background: "linear-gradient(165deg, #0a0d14 0%, #0c1018 45%, #0a0c10 100%)",
         }}
       >
+        <button
+          type="button"
+          className="studio-panel-toggle"
+          aria-expanded={sidebarOpen}
+          aria-label={sidebarOpen ? "Hide configuration panel" : "Show configuration panel"}
+          title={sidebarOpen ? "Hide panel" : "Show panel"}
+          onClick={() => setSidebarOpen((v) => !v)}
+        >
+          <IconPanelToggle />
+        </button>
         <Viewport3D
           width={sceneDims.width}
           height={sceneDims.height}
@@ -683,14 +715,7 @@ export default function BoxDesigner({
         )}
       </div>
 
-      <aside
-        style={{
-          overflowY: "auto",
-          padding: "1.1rem 1.15rem 2rem",
-          background: "var(--panel)",
-          borderLeft: "1px solid var(--panel-border)",
-        }}
-      >
+      <aside className="studio-config-panel">
         <header style={{ marginBottom: "1.25rem" }}>
           <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
           <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>

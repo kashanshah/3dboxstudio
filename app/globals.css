@@ -217,10 +217,77 @@ label {
   min-height: 0;
 }
 
+.studio-config-panel {
+  overflow-y: auto;
+  padding: 1.1rem 1.15rem 2rem;
+  background: var(--panel);
+  border-left: 1px solid var(--panel-border);
+  min-width: 0;
+}
+
+/* Configuration panel as a collapsible drawer (desktop only). */
+.studio-panel-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: rgba(12, 14, 18, 0.72);
+  color: var(--muted);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.studio-panel-toggle:hover {
+  color: var(--text);
+  border-color: rgba(59, 130, 246, 0.55);
+  background: rgba(18, 22, 30, 0.85);
+}
+
+.studio-panel-toggle[aria-expanded="true"] {
+  color: var(--text);
+}
+
+@media (min-width: 961px) {
+  .box-designer-root {
+    transition: grid-template-columns 0.26s ease;
+  }
+
+  .studio-config-panel {
+    transition: opacity 0.2s ease, padding 0.26s ease, border-left-width 0.26s ease;
+  }
+
+  .box-designer-root.sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr) 0;
+  }
+
+  .box-designer-root.sidebar-collapsed > .studio-config-panel {
+    overflow: hidden;
+    padding-left: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
 @media (max-width: 960px) {
   .box-designer-root {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(280px, 75vh) minmax(0, 1fr);
+  }
+
+  /* Mobile keeps the stacked layout; the drawer toggle does not apply. */
+  .studio-panel-toggle {
+    display: none;
   }
 }
 
