@@ -20,6 +20,8 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   resendVerification: () => Promise<AuthActionResult>;
   forgotPassword: (email: string) => Promise<AuthActionResult>;
+  updateProfile: (name: string) => Promise<AuthActionResult>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<AuthActionResult>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -35,6 +37,7 @@ function readUser(data: unknown): AuthUser | null {
     email: u.email,
     name: typeof u.name === "string" ? u.name : null,
     emailVerified: Boolean(u.emailVerified),
+    createdAt: typeof u.createdAt === "string" ? u.createdAt : "",
   };
 }
 
@@ -146,9 +149,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateProfile = useCallback<AuthContextValue["updateProfile"]>(async (name) => {
+    try {
+      const res = await fetch("/api/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, error: readError(data, "Could not update your profile.") };
+      const nextUser = readUser(data);
+      if (nextUser) setUser(nextUser);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Please try again." };
+    }
+  }, []);
+
+  const changePassword = useCallback<AuthContextValue["changePassword"]>(async (currentPassword, newPassword) => {
+    try {
+      const res = await fetch("/api/auth/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, error: readError(data, "Could not change your password.") };
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Please try again." };
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, refresh, signIn, signUp, signOut, resendVerification, forgotPassword }}
+      value={{
+        user,
+        loading,
+        refresh,
+        signIn,
+        signUp,
+        signOut,
+        resendVerification,
+        forgotPassword,
+        updateProfile,
+        changePassword,
+      }}
     >
       {children}
     </AuthContext.Provider>

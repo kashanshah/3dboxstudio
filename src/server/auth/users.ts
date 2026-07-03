@@ -18,6 +18,7 @@ export type PublicUser = {
   email: string;
   name: string | null;
   emailVerified: boolean;
+  createdAt: string;
 };
 
 export function toPublicUser(row: UserRow): PublicUser {
@@ -26,6 +27,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     email: row.email,
     name: row.name,
     emailVerified: Boolean(row.email_verified_at),
+    createdAt: row.created_at,
   };
 }
 
@@ -74,6 +76,28 @@ export async function markEmailVerified(userId: string): Promise<void> {
     SET email_verified_at = COALESCE(email_verified_at, NOW())
     WHERE id = ${userId}
   `;
+}
+
+export async function updateUserName(userId: string, name: string | null): Promise<UserRow | null> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE users
+    SET name = ${name}
+    WHERE id = ${userId}
+    RETURNING id, email, name, password_hash, email_verified_at, created_at
+  `) as UserRow[];
+  return rows[0] ?? null;
+}
+
+export async function updateUserPassword(userId: string, passwordHash: string): Promise<boolean> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE users
+    SET password_hash = ${passwordHash}
+    WHERE id = ${userId}
+    RETURNING id
+  `) as { id: string }[];
+  return rows.length > 0;
 }
 
 export async function updatePassword(userId: string, password: string): Promise<void> {

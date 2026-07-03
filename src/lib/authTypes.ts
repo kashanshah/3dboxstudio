@@ -4,6 +4,7 @@ export type AuthUser = {
   email: string;
   name: string | null;
   emailVerified: boolean;
+  createdAt: string;
 };
 
 export type AuthActionResult = { ok: true } | { ok: false; error: string };
