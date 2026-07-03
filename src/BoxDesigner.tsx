@@ -22,7 +22,6 @@ import StudioHelpModals, { type StudioHelpModal } from "./components/studio/Stud
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
-import StudioProjectsModal from "./components/studio/StudioProjectsModal";
 import AuthModal from "./components/auth/AuthModal";
 import AccountSettingsModal, { type AccountSettingsTab } from "./components/auth/AccountSettingsModal";
 import { useAuth } from "./components/auth/AuthProvider";
@@ -157,7 +156,6 @@ export default function BoxDesigner({
     open: false,
     mode: "signin",
   });
-  const [projectsModalOpen, setProjectsModalOpen] = useState(false);
   const [accountSettings, setAccountSettings] = useState<{ open: boolean; tab: AccountSettingsTab }>({
     open: false,
     tab: "account",
@@ -359,12 +357,9 @@ export default function BoxDesigner({
   });
 
   const openProjects = useCallback(() => {
-    if (!auth.user) {
-      openSignIn();
-      return;
-    }
-    setProjectsModalOpen(true);
-  }, [auth.user, openSignIn]);
+    doc.setOpenError(null);
+    doc.setModal("open");
+  }, [doc]);
 
   const openAccountSettings = useCallback(
     (tab: AccountSettingsTab = "account") => {
@@ -375,15 +370,6 @@ export default function BoxDesigner({
       setAccountSettings({ open: true, tab });
     },
     [auth.user, openSignIn]
-  );
-
-  const handleOpenProject = useCallback(
-    (id: string) => {
-      setProjectsModalOpen(false);
-      setStartDialogOpen(false);
-      void doc.openProject(id);
-    },
-    [doc]
   );
 
   const handleSignOut = useCallback(() => {
@@ -1125,7 +1111,7 @@ export default function BoxDesigner({
         </PanelCollapse>
       </aside>
       </div>
-      <StudioFileModals doc={doc} />
+      <StudioFileModals doc={doc} authUser={auth.user} onSignIn={openSignIn} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
       <StudioDialog
         title="Apply image to all faces?"
@@ -1168,12 +1154,6 @@ export default function BoxDesigner({
           setStartDialogOpen(false);
           doc.setModal("import");
         }}
-      />
-      <StudioProjectsModal
-        open={projectsModalOpen}
-        onClose={() => setProjectsModalOpen(false)}
-        onOpenProject={handleOpenProject}
-        onStatus={doc.showStatus}
       />
       <AuthModal
         open={authModal.open}

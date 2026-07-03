@@ -1312,6 +1312,26 @@ label {
   line-height: 1.35;
 }
 
+.studio-open-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.studio-open-section-title {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.studio-open-projects-guest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
 .studio-projects-list {
   list-style: none;
   margin: 0;
@@ -1319,7 +1339,7 @@ label {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 55vh;
+  max-height: 240px;
   overflow-y: auto;
 }
 

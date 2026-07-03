@@ -2,14 +2,18 @@
 
 import { useCallback, useState, type ChangeEvent, type DragEvent } from "react";
 import StudioDialog from "./StudioDialog";
+import StudioProjectsPanel from "./StudioProjectsPanel";
 import type { useStudioDocument } from "@/hooks/useStudioDocument";
+import type { AuthUser } from "@/lib/authTypes";
 import { formatRecentTimestamp } from "@/lib/recentDesigns";
 
 type StudioFileModalsProps = {
   doc: ReturnType<typeof useStudioDocument>;
+  authUser: AuthUser | null;
+  onSignIn: () => void;
 };
 
-export default function StudioFileModals({ doc }: StudioFileModalsProps) {
+export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFileModalsProps) {
   const [dragOver, setDragOver] = useState(false);
 
   const onImportChange = useCallback(
@@ -64,22 +68,23 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
       />
 
       <StudioDialog
-        title="Open Design"
+        title="Open"
         open={doc.modal === "open"}
         onClose={() => doc.setModal(null)}
+        width={560}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
               Cancel
             </button>
             <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.openFromInput()}>
-              {doc.cloudBusy ? "Opening…" : "Open"}
+              {doc.cloudBusy ? "Opening…" : "Open from link"}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Paste a share link or ID from a previously saved cloud design.
+          Paste a share link or ID, or open a project from your account.
         </p>
         <label className="studio-dialog-label" htmlFor="studio-open-input">
           Share link or ID
@@ -104,6 +109,17 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
             {doc.openError}
           </p>
         )}
+
+        <div className="studio-open-section">
+          <h3 className="studio-open-section-title">My projects</h3>
+          <StudioProjectsPanel
+            open={doc.modal === "open"}
+            user={authUser}
+            onSignIn={onSignIn}
+            onOpenProject={(id) => void doc.openProject(id)}
+            onStatus={(message) => doc.showStatus(message)}
+          />
+        </div>
       </StudioDialog>
 
       <StudioDialog
