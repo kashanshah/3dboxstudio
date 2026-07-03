@@ -64,6 +64,23 @@ export async function uploadShareFaceImage(
   return { s3Key: key, url: publicUrlForKey(key) };
 }
 
+export async function uploadShareOgImage(
+  shareId: string,
+  pngBuffer: Buffer
+): Promise<{ s3Key: string; url: string }> {
+  const key = `${sharePrefix()}${shareId}/og-preview.png`;
+  await getS3Client().send(
+    new PutObjectCommand({
+      Bucket: requireEnv("AWS_S3_BUCKET"),
+      Key: key,
+      Body: pngBuffer,
+      ContentType: "image/png",
+      CacheControl: "public, max-age=86400",
+    })
+  );
+  return { s3Key: key, url: publicUrlForKey(key) };
+}
+
 export async function getShareObject(key: string): Promise<{ body: Uint8Array; contentType: string }> {
   const res = await getS3Client().send(
     new GetObjectCommand({

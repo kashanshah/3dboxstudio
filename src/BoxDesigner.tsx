@@ -11,7 +11,6 @@ import {
   type SyntheticEvent,
 } from "react";
 import { flushSync } from "react-dom";
-import { useSearchParams } from "next/navigation";
 import type { RootState } from "@react-three/fiber";
 import {
   type BoxDesignerPersistedState,
@@ -21,7 +20,6 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import { useStudioDocument } from "./hooks/useStudioDocument";
-import { isShareToken } from "./lib/shareUrl";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
@@ -113,11 +111,17 @@ function PanelCollapse({ title, children }: { title: string; children: ReactNode
   );
 }
 
-export default function BoxDesigner() {
-  const searchParams = useSearchParams();
-  const previewTokenFromUrl = searchParams.get("preview");
-  const viewOnly = isShareToken(previewTokenFromUrl);
-  const shareIdFromUrl = viewOnly ? null : searchParams.get("share");
+export default function BoxDesigner({
+  initialShareId = null,
+  initialPreviewToken = null,
+  viewOnly = false,
+}: {
+  initialShareId?: string | null;
+  initialPreviewToken?: string | null;
+  viewOnly?: boolean;
+}) {
+  const shareIdFromUrl = viewOnly ? null : initialShareId;
+  const previewTokenFromUrl = viewOnly ? initialPreviewToken : null;
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
@@ -265,12 +269,28 @@ export default function BoxDesigner() {
     setEnvPreset(restored.envPreset);
   }, []);
 
+  const capturePreviewImage = useCallback(async () => {
+    const s = r3fRef.current;
+    if (!s?.gl || !s.camera) return null;
+    s.gl.render(s.scene, s.camera);
+    const canvas = s.gl.domElement;
+    const dataUrl = canvas.toDataURL("image/png");
+    const base64Png = dataUrl.split(",")[1];
+    if (!base64Png) return null;
+    return {
+      base64Png,
+      width: canvas.width,
+      height: canvas.height,
+    };
+  }, []);
+
   const doc = useStudioDocument({
     buildPersistState,
     applyPersistedState,
     initialShareId: shareIdFromUrl,
     sessionReady,
     viewOnly,
+    capturePreviewImage,
   });
 
   useEffect(() => {

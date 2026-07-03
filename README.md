@@ -40,7 +40,7 @@ Create a `.env` file (see `.env.example`) and set:
 - **`DATABASE_URL`** — Neon Postgres pooled connection string (server-only). Run `db/schema.sql` once against your database.
 - **`AWS_*`** — S3 credentials and bucket for share image uploads (server-only). Shared face images are stored under `AWS_S3_SHARE_PREFIX` (default `shares/`).
 
-Share links are created from **File → Save** or **Save As** in the studio. Designs upload to S3; config is stored in Neon Postgres. Viewing a share at `/studio?share=…` is public; restricting share creation to registered users can be added later in `src/server/shareAuth.ts`.
+Share links are created from **File → Save** or **Save As** in the studio. Designs upload to S3; config is stored in Neon Postgres. Viewing a share at `/studio/{id}` is public; restricting share creation to registered users can be added later in `src/server/shareAuth.ts`.
 
 ## License & contributing
 

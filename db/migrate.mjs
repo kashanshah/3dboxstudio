@@ -76,3 +76,12 @@ if (missing.length > 0) {
 } else {
   console.log("OK: all shares already have preview_token.");
 }
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS og_image_key TEXT`;
+console.log("OK: shared_designs.og_image_key column is ready.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS og_image_width INTEGER`;
+console.log("OK: shared_designs.og_image_width column is ready.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS og_image_height INTEGER`;
+console.log("OK: shared_designs.og_image_height column is ready.");

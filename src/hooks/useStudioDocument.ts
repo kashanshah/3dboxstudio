@@ -63,7 +63,32 @@ type UseStudioDocumentOptions = {
   initialShareId: string | null;
   sessionReady: boolean;
   viewOnly?: boolean;
+  capturePreviewImage?: () => Promise<{
+    base64Png: string;
+    width: number;
+    height: number;
+  } | null>;
 };
+
+async function buildSaveHeaders(
+  base: Record<string, string>,
+  capturePreviewImage?: UseStudioDocumentOptions["capturePreviewImage"]
+): Promise<Record<string, string>> {
+  const headers = { ...base };
+  if (!capturePreviewImage) return headers;
+
+  try {
+    const preview = await capturePreviewImage();
+    if (!preview) return headers;
+    headers["X-Share-Og-Image"] = preview.base64Png;
+    headers["X-Share-Og-Image-Width"] = String(preview.width);
+    headers["X-Share-Og-Image-Height"] = String(preview.height);
+  } catch {
+    /* preview capture is best-effort */
+  }
+
+  return headers;
+}
 
 export function useStudioDocument({
   buildPersistState,
@@ -71,6 +96,7 @@ export function useStudioDocument({
   initialShareId,
   sessionReady,
   viewOnly = false,
+  capturePreviewImage,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
@@ -264,9 +290,10 @@ export function useStudioDocument({
     setCloudBusy(true);
     try {
       const json = await serializeDesign(buildPersistState());
+      const headers = await buildSaveHeaders({ "Content-Type": "application/json" }, capturePreviewImage);
       const res = await fetch(`/api/shares/${encodeURIComponent(activeShareId)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: json,
       });
       const data: unknown = await res.json().catch(() => null);
@@ -282,7 +309,7 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, activeShareName, buildPersistState, showStatus, rememberRecent, openSaveAsModal, viewOnly]);
+  }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly]);
 
   const saveCloudAs = useCallback(async () => {
     if (viewOnly) return;
@@ -298,7 +325,7 @@ export function useStudioDocument({
     setSaveAsLink(null);
     try {
       const json = await serializeDesign(buildPersistState());
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers = await buildSaveHeaders({ "Content-Type": "application/json" }, capturePreviewImage);
       if (normalizedName) headers["X-Share-Name"] = normalizedName;
 
       const res = await fetch("/api/shares", {
@@ -329,7 +356,7 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [buildPersistState, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly]);
+  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly]);
 
   const renameCloudShare = useCallback(async () => {
     if (viewOnly || !activeShareId) return;

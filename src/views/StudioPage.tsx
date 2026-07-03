@@ -38,7 +38,15 @@ function IconBuyMeACoffeeMark({ size = 16 }: { size?: number }) {
 }
 
 
-export default function StudioPage() {
+export default function StudioPage({
+  initialShareId = null,
+  initialPreviewToken = null,
+  viewOnly = false,
+}: {
+  initialShareId?: string | null;
+  initialPreviewToken?: string | null;
+  viewOnly?: boolean;
+}) {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -169,7 +177,11 @@ export default function StudioPage() {
         </div>
       </header>
       <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <BoxDesigner />
+        <BoxDesigner
+          initialShareId={initialShareId}
+          initialPreviewToken={initialPreviewToken}
+          viewOnly={viewOnly}
+        />
       </div>
     </div>
   );

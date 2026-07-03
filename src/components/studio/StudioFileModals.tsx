@@ -88,7 +88,7 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
           id="studio-open-input"
           className="studio-dialog-input"
           type="text"
-          placeholder="https://3dboxstudio.com/studio?share=…"
+          placeholder="https://3dboxstudio.com/studio/…"
           value={doc.openInput}
           onChange={(e) => {
             doc.setOpenInput(e.target.value);
@@ -291,7 +291,7 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
           onFocus={(e) => e.target.select()}
         />
         <p className="studio-dialog-hint studio-share-preview-note">
-          Preview links use a separate token (<code>?preview=…</code>) and do not reveal the editor share id. Keep your
+          Preview links use a separate token (<code>/preview/…</code>) and do not reveal the editor share id. Keep your
           editor link private.
         </p>
         <label className="studio-dialog-label">Editor link</label>

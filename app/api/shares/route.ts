@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
-import { ShareError, createShare } from "@/server/shareService";
+import { ShareError, createShare, parseShareOgImageInput } from "@/server/shareService";
 
 export const runtime = "nodejs";
 
@@ -13,7 +13,8 @@ export async function POST(req: Request) {
     }
 
     const name = req.headers.get("X-Share-Name");
-    const result = await createShare(designJson, createdBy, name);
+    const ogImage = parseShareOgImageInput(req);
+    const result = await createShare(designJson, createdBy, name, ogImage);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

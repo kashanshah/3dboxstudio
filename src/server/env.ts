@@ -23,3 +23,6 @@ export function shareMaxPayloadBytes(): number {
 
 /** Max decoded bytes per face image (~2 MB). */
 export const SHARE_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+/** Max decoded bytes for the saved viewport OG preview (~2 MB). */
+export const SHARE_MAX_OG_IMAGE_BYTES = 2 * 1024 * 1024;
