@@ -34,9 +34,11 @@ export default function AccountSettingsModal({
   onClose,
   onStatus,
 }: AccountSettingsModalProps) {
-  const { user, updateProfile, changePassword, resendVerification } = useAuth();
+  const { user, updateProfile, updateEmail, changePassword, resendVerification } = useAuth();
   const [tab, setTab] = useState<AccountSettingsTab>(initialTab);
   const [name, setName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,6 +51,8 @@ export default function AccountSettingsModal({
     if (!open) return;
     setTab(initialTab);
     setName(user?.name ?? "");
+    setNewEmail("");
+    setEmailPassword("");
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -57,8 +61,6 @@ export default function AccountSettingsModal({
   }, [open, initialTab, user?.name]);
 
   const memberSince = useMemo(() => formatMemberSince(user?.createdAt ?? ""), [user?.createdAt]);
-
-  if (!user) return null;
 
   const saveProfile = async () => {
     setError(null);
@@ -117,6 +119,33 @@ export default function AccountSettingsModal({
     onStatus?.("Verification email sent. Check your inbox.");
   };
 
+  const saveEmail = async () => {
+    setError(null);
+    setSuccess(null);
+    const trimmedEmail = newEmail.trim();
+    if (!trimmedEmail) {
+      setError("Enter a new email address.");
+      return;
+    }
+    if (!emailPassword) {
+      setError("Enter your current password to confirm this change.");
+      return;
+    }
+    setBusy(true);
+    const result = await updateEmail(trimmedEmail, emailPassword);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    setNewEmail("");
+    setEmailPassword("");
+    setSuccess("Email updated. Check your inbox to verify the new address.");
+    onStatus?.("Email updated. Check your inbox to verify the new address.");
+  };
+
+  if (!user) return null;
+
   return (
     <StudioDialog title="Account settings" open={open} onClose={onClose} width={680}>
       <div className="studio-settings-layout">
@@ -156,7 +185,7 @@ export default function AccountSettingsModal({
               </p>
 
               <div className="studio-settings-field">
-                <span className="studio-settings-field-label">Email</span>
+                <span className="studio-settings-field-label">Current email</span>
                 <span className="studio-settings-field-value">{user.email}</span>
               </div>
 
@@ -177,6 +206,62 @@ export default function AccountSettingsModal({
                 </p>
               )}
 
+              <div className="studio-settings-divider" aria-hidden />
+
+              <h4 className="studio-settings-subsection-title">Change email</h4>
+              <p className="studio-dialog-hint studio-settings-section-lead">
+                Enter a new address and your current password. We&apos;ll send a verification link to the new email.
+              </p>
+
+              <label className="studio-dialog-label" htmlFor="settings-new-email">
+                New email
+              </label>
+              <input
+                id="settings-new-email"
+                className="studio-dialog-input"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={newEmail}
+                onChange={(e) => {
+                  setNewEmail(e.target.value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+              />
+
+              <label className="studio-dialog-label" htmlFor="settings-email-password">
+                Current password
+              </label>
+              <input
+                id="settings-email-password"
+                className="studio-dialog-input"
+                type="password"
+                autoComplete="current-password"
+                value={emailPassword}
+                onChange={(e) => {
+                  setEmailPassword(e.target.value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void saveEmail();
+                }}
+              />
+
+              <div className="studio-settings-actions">
+                <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveEmail()}>
+                  {busy ? "Updating…" : "Update email"}
+                </button>
+                {!user.emailVerified && (
+                  <button type="button" className="btn" disabled={resendBusy} onClick={() => void handleResend()}>
+                    {resendBusy ? "Sending…" : "Resend verification email"}
+                  </button>
+                )}
+              </div>
+
+              <div className="studio-settings-divider" aria-hidden />
+
               <div className="studio-settings-field">
                 <span className="studio-settings-field-label">Member since</span>
                 <span className="studio-settings-field-value">{memberSince}</span>
@@ -185,14 +270,6 @@ export default function AccountSettingsModal({
               <div className="studio-settings-field">
                 <span className="studio-settings-field-label">Account ID</span>
                 <span className="studio-settings-field-value studio-settings-mono">{user.id}</span>
-              </div>
-
-              <div className="studio-settings-actions">
-                {!user.emailVerified && (
-                  <button type="button" className="btn" disabled={resendBusy} onClick={() => void handleResend()}>
-                    {resendBusy ? "Sending…" : "Resend verification email"}
-                  </button>
-                )}
               </div>
             </div>
           )}

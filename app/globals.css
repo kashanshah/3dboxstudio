@@ -1296,6 +1296,18 @@ label {
   margin: 0 0 14px;
 }
 
+.studio-settings-divider {
+  height: 1px;
+  margin: 18px 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.studio-settings-subsection-title {
+  margin: 0 0 6px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
 .studio-settings-field {
   display: flex;
   flex-direction: column;

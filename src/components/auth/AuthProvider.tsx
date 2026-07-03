@@ -21,6 +21,7 @@ type AuthContextValue = {
   resendVerification: () => Promise<AuthActionResult>;
   forgotPassword: (email: string) => Promise<AuthActionResult>;
   updateProfile: (name: string) => Promise<AuthActionResult>;
+  updateEmail: (newEmail: string, currentPassword: string) => Promise<AuthActionResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthActionResult>;
 };
 
@@ -166,6 +167,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateEmail = useCallback<AuthContextValue["updateEmail"]>(async (newEmail, currentPassword) => {
+    try {
+      const res = await fetch("/api/auth/email", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEmail, currentPassword }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, error: readError(data, "Could not update your email.") };
+      const nextUser = readUser(data);
+      if (nextUser) setUser(nextUser);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Please try again." };
+    }
+  }, []);
+
   const changePassword = useCallback<AuthContextValue["changePassword"]>(async (currentPassword, newPassword) => {
     try {
       const res = await fetch("/api/auth/password", {
@@ -193,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resendVerification,
         forgotPassword,
         updateProfile,
+        updateEmail,
         changePassword,
       }}
     >
