@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import type { BlogPost } from "@/content/blogPosts";
+import type { ShareSeoMeta } from "@/server/shareService";
 import {
   BLOG_INDEX_DESCRIPTION,
   BLOG_INDEX_TITLE,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
+import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
   LANDING_DESCRIPTION,
@@ -34,9 +36,16 @@ function buildOpenGraph(
   description: string,
   path: string,
   type: "website" | "article" = "website",
+  image?: {
+    url: string;
+    width?: number | null;
+    height?: number | null;
+    alt?: string;
+    type?: string;
+  } | null,
 ): Metadata["openGraph"] {
   const origin = getSiteOrigin();
-  const imageUrl = getOgImageUrl(origin);
+  const imageUrl = image?.url ?? getOgImageUrl(origin);
   return {
     title,
     description,
@@ -45,23 +54,43 @@ function buildOpenGraph(
     images: [
       {
         url: imageUrl,
-        width: LANDING_OG_IMAGE_WIDTH,
-        height: LANDING_OG_IMAGE_HEIGHT,
-        alt: LANDING_OG_IMAGE_ALT,
-        type: LANDING_OG_IMAGE_TYPE,
+        width: image?.width ?? LANDING_OG_IMAGE_WIDTH,
+        height: image?.height ?? LANDING_OG_IMAGE_HEIGHT,
+        alt: image?.alt ?? LANDING_OG_IMAGE_ALT,
+        type: image?.type ?? LANDING_OG_IMAGE_TYPE,
       },
     ],
   };
 }
 
-function buildTwitter(title: string, description: string): Metadata["twitter"] {
+function buildTwitter(
+  title: string,
+  description: string,
+  imageUrl?: string | null,
+): Metadata["twitter"] {
   const origin = getSiteOrigin();
   return {
     card: "summary_large_image",
     title,
     description,
-    images: [getOgImageUrl(origin)],
+    images: [imageUrl ?? getOgImageUrl(origin)],
   };
+}
+
+function sharePageTitle(meta: ShareSeoMeta): string {
+  const label = displayShareLabel(meta.name, null);
+  if (meta.isPreview) {
+    return `${label} · Preview | 3D Box Studio`;
+  }
+  return `${label} | 3D Box Studio`;
+}
+
+function sharePageDescription(meta: ShareSeoMeta): string {
+  const label = displayShareLabel(meta.name, null);
+  if (meta.isPreview) {
+    return `View-only preview of “${label}” in 3D Box Studio. Explore dimensions, materials, and artwork in the browser.`;
+  }
+  return `Open “${label}” in the free 3D Box Studio editor. Adjust dimensions, materials, openings, and per-face artwork in your browser.`;
 }
 
 export function createLandingMetadata(): Metadata {
@@ -83,6 +112,28 @@ export function createStudioMetadata(): Metadata {
     alternates: { canonical: "/studio" },
     openGraph: buildOpenGraph(STUDIO_TITLE, STUDIO_DESCRIPTION, "/studio"),
     twitter: buildTwitter(STUDIO_TITLE, STUDIO_DESCRIPTION),
+  };
+}
+
+export function createShareMetadata(meta: ShareSeoMeta): Metadata {
+  const title = sharePageTitle(meta);
+  const description = sharePageDescription(meta);
+  const ogImage = meta.ogImageUrl
+    ? {
+        url: meta.ogImageUrl,
+        width: meta.ogImageWidth,
+        height: meta.ogImageHeight,
+        alt: `${displayShareLabel(meta.name, null)} preview`,
+        type: "image/png",
+      }
+    : null;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: meta.canonicalPath },
+    openGraph: buildOpenGraph(title, description, meta.canonicalPath, "website", ogImage),
+    twitter: buildTwitter(title, description, meta.ogImageUrl),
   };
 }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
-import { ShareError, getShare, renameShare, updateShare } from "@/server/shareService";
+import { ShareError, getShare, parseShareOgImageInput, renameShare, updateShare } from "@/server/shareService";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,8 @@ export async function PUT(req: Request, context: RouteContext) {
     if (!designJson.trim()) {
       return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
     }
-    const result = await updateShare(id, designJson);
+    const ogImage = parseShareOgImageInput(req);
+    const result = await updateShare(id, designJson, ogImage);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

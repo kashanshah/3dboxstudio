@@ -77,7 +77,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "export",
     question: "How do cloud save and share links work?",
     answer:
-      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>?preview=…</code>). Editor links use <code>?share=…</code> and are not exposed in preview mode.",
+      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>/preview/…</code>). Editor links use <code>/studio/…</code> and are not exposed in preview mode.",
   },
   {
     id: "view-only-preview",

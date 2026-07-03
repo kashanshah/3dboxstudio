@@ -21,7 +21,17 @@ const StudioPage = dynamic(() => import("@/views/StudioPage"), {
   ),
 });
 
-export default function StudioClient() {
+type StudioClientProps = {
+  initialShareId?: string | null;
+  initialPreviewToken?: string | null;
+  viewOnly?: boolean;
+};
+
+export default function StudioClient({
+  initialShareId = null,
+  initialPreviewToken = null,
+  viewOnly = false,
+}: StudioClientProps) {
   return (
     <Suspense
       fallback={
@@ -39,7 +49,11 @@ export default function StudioClient() {
         </div>
       }
     >
-      <StudioPage />
+      <StudioPage
+        initialShareId={initialShareId}
+        initialPreviewToken={initialPreviewToken}
+        viewOnly={viewOnly}
+      />
     </Suspense>
   );
 }
