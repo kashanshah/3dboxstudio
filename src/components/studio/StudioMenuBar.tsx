@@ -11,10 +11,12 @@ type OpenMenu = "file" | "help" | null;
 type StudioMenuBarProps = {
   documentTitle: string;
   cloudBusy: boolean;
+  canRename: boolean;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
   onSaveAs: () => void;
+  onRename: () => void;
   onNew: () => void;
 };
 
@@ -32,10 +34,12 @@ function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObje
 export default function StudioMenuBar({
   documentTitle,
   cloudBusy,
+  canRename,
   onOpenModal,
   onOpenHelpModal,
   onSave,
   onSaveAs,
+  onRename,
   onNew,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
@@ -101,6 +105,15 @@ export default function StudioMenuBar({
             >
               <span>Save As…</span>
               <kbd>⇧⌘S</kbd>
+            </button>
+            <button
+              type="button"
+              className="studio-menu-action"
+              role="menuitem"
+              disabled={cloudBusy || !canRename}
+              onClick={() => pickFile(onRename)}
+            >
+              <span>Rename…</span>
             </button>
             <div className="studio-menu-sep" role="separator" />
             <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>

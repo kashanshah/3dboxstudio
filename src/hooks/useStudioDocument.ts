@@ -14,12 +14,14 @@ import {
   clearRecentDesigns,
   readRecentDesigns,
   removeRecentDesign,
+  updateRecentDesignName,
   type RecentDesignEntry,
 } from "@/lib/recentDesigns";
+import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/shareName";
 
-export type StudioFileModal = "open" | "recent" | "save-as" | "export" | "import" | "new" | null;
+export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "export" | "import" | "new" | null;
 
-type ShareApiResult = { id: string; url: string };
+type ShareApiResult = { id: string; url: string; name?: string | null };
 type ShareApiError = { error: string };
 
 function readApiError(data: unknown, fallback: string): string {
@@ -43,6 +45,12 @@ function parseShareResult(data: unknown): ShareApiResult {
   throw new Error("Unexpected response from share API.");
 }
 
+function readShareNameFromPayload(data: unknown): string | null {
+  if (typeof data !== "object" || data === null) return null;
+  const name = (data as { shareName?: unknown }).shareName;
+  return typeof name === "string" ? normalizeShareName(name) : null;
+}
+
 type UseStudioDocumentOptions = {
   buildPersistState: () => BoxDesignerPersistedState;
   applyPersistedState: (state: BoxDesignerPersistedState) => void;
@@ -57,11 +65,16 @@ export function useStudioDocument({
   sessionReady,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
+  const [activeShareName, setActiveShareName] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [modal, setModal] = useState<StudioFileModal>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [cloudBusy, setCloudBusy] = useState(false);
   const [saveAsLink, setSaveAsLink] = useState<string | null>(null);
+  const [saveAsName, setSaveAsName] = useState("");
+  const [saveAsNameError, setSaveAsNameError] = useState<string | null>(null);
+  const [renameInput, setRenameInput] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [openInput, setOpenInput] = useState("");
   const [openError, setOpenError] = useState<string | null>(null);
   const [recentDesigns, setRecentDesigns] = useState<RecentDesignEntry[]>([]);
@@ -109,16 +122,30 @@ export function useStudioDocument({
   }, []);
 
   const rememberRecent = useCallback(
-    (id: string, source: "opened" | "saved", url?: string) => {
-      addRecentDesign({ id, url, source });
+    (id: string, source: "opened" | "saved", url?: string, name?: string | null) => {
+      addRecentDesign({ id, url, source, name: name ?? activeShareName });
       refreshRecentDesigns();
     },
-    [refreshRecentDesigns]
+    [refreshRecentDesigns, activeShareName]
   );
 
   useEffect(() => {
     if (modal === "recent") refreshRecentDesigns();
   }, [modal, refreshRecentDesigns]);
+
+  const openSaveAsModal = useCallback(() => {
+    setSaveAsLink(null);
+    setSaveAsName(activeShareName ?? "");
+    setSaveAsNameError(null);
+    setModal("save-as");
+  }, [activeShareName]);
+
+  const openRenameModal = useCallback(() => {
+    if (!activeShareId) return;
+    setRenameInput(activeShareName ?? "");
+    setRenameError(null);
+    setModal("rename");
+  }, [activeShareId, activeShareName]);
 
   const loadShareById = useCallback(
     async (shareId: string, source: "opened" | "saved" = "opened"): Promise<boolean> => {
@@ -129,11 +156,13 @@ export function useStudioDocument({
       }
       const restored = await deserializeSharedDesign(data);
       if (!restored) throw new Error("Shared design could not be restored.");
+      const shareName = readShareNameFromPayload(data);
       applyPersistedState(restored);
       setActiveShareId(shareId);
+      setActiveShareName(shareName);
       syncUrlToShare(shareId);
       setIsDirty(false);
-      rememberRecent(shareId, source);
+      rememberRecent(shareId, source, undefined, shareName);
       return true;
     },
     [applyPersistedState, syncUrlToShare, rememberRecent]
@@ -141,8 +170,7 @@ export function useStudioDocument({
 
   const saveCloud = useCallback(async () => {
     if (!activeShareId) {
-      setSaveAsLink(null);
-      setModal("save-as");
+      openSaveAsModal();
       return;
     }
     setCloudBusy(true);
@@ -155,47 +183,95 @@ export function useStudioDocument({
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
-      parseShareResult(data);
+      const result = parseShareResult(data);
+      if (result.name !== undefined) setActiveShareName(normalizeShareName(result.name));
       setIsDirty(false);
-      rememberRecent(activeShareId, "saved");
-      showStatus("Design saved to cloud.");
+      rememberRecent(activeShareId, "saved", undefined, result.name ?? activeShareName);
+      showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, buildPersistState, showStatus, rememberRecent]);
+  }, [activeShareId, activeShareName, buildPersistState, showStatus, rememberRecent, openSaveAsModal]);
 
   const saveCloudAs = useCallback(async () => {
+    const nameError = shareNameError(saveAsName);
+    if (nameError) {
+      setSaveAsNameError(nameError);
+      return;
+    }
+
+    const normalizedName = normalizeShareName(saveAsName);
+    setSaveAsNameError(null);
     setCloudBusy(true);
     setSaveAsLink(null);
     try {
       const json = await serializeDesign(buildPersistState());
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (normalizedName) headers["X-Share-Name"] = normalizedName;
+
       const res = await fetch("/api/shares", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: json,
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not create share link."));
-      const { id, url } = parseShareResult(data);
+      const { id, url, name } = parseShareResult(data);
+      const resolvedName = normalizeShareName(name ?? normalizedName);
       setActiveShareId(id);
+      setActiveShareName(resolvedName);
       syncUrlToShare(id);
       setSaveAsLink(url);
       setIsDirty(false);
-      rememberRecent(id, "saved", url);
+      rememberRecent(id, "saved", url, resolvedName);
       try {
         await navigator.clipboard.writeText(url);
-        showStatus("New share link created and copied.");
+        showStatus(resolvedName ? `“${resolvedName}” saved and link copied.` : "New share link created and copied.");
       } catch {
-        showStatus("New share link created.");
+        showStatus(resolvedName ? `“${resolvedName}” saved to cloud.` : "New share link created.");
       }
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not create share link.", 6000);
     } finally {
       setCloudBusy(false);
     }
-  }, [buildPersistState, showStatus, syncUrlToShare, rememberRecent]);
+  }, [buildPersistState, saveAsName, showStatus, syncUrlToShare, rememberRecent]);
+
+  const renameCloudShare = useCallback(async () => {
+    if (!activeShareId) return;
+
+    const nameError = shareNameError(renameInput);
+    if (nameError) {
+      setRenameError(nameError);
+      return;
+    }
+
+    const normalizedName = normalizeShareName(renameInput);
+    setRenameError(null);
+    setCloudBusy(true);
+    try {
+      const res = await fetch(`/api/shares/${encodeURIComponent(activeShareId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: normalizedName ?? "" }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(readApiError(data, "Could not rename design."));
+      const result = data as { name?: string | null };
+      const resolvedName = normalizeShareName(result.name ?? normalizedName);
+      setActiveShareName(resolvedName);
+      updateRecentDesignName(activeShareId, resolvedName);
+      refreshRecentDesigns();
+      setModal(null);
+      showStatus(resolvedName ? `Renamed to “${resolvedName}”.` : "Design name cleared.");
+    } catch (e) {
+      setRenameError(e instanceof Error ? e.message : "Could not rename design.");
+    } finally {
+      setCloudBusy(false);
+    }
+  }, [activeShareId, renameInput, showStatus, refreshRecentDesigns]);
 
   const openFromInput = useCallback(async () => {
     const shareId = parseShareIdFromInput(openInput);
@@ -276,6 +352,7 @@ export function useStudioDocument({
       }
       applyPersistedState(restored);
       setActiveShareId(null);
+      setActiveShareName(null);
       syncUrlToShare(null);
       setIsDirty(true);
       setModal(null);
@@ -287,6 +364,7 @@ export function useStudioDocument({
   const newDocument = useCallback(() => {
     applyPersistedState(defaultBoxDesignerState());
     setActiveShareId(null);
+    setActiveShareName(null);
     syncUrlToShare(null);
     setIsDirty(false);
     setModal(null);
@@ -301,9 +379,7 @@ export function useStudioDocument({
     newDocument();
   }, [isDirty, newDocument]);
 
-  const documentTitle = activeShareId
-    ? `Cloud · ${activeShareId.slice(0, 8)}…${isDirty ? " •" : ""}`
-    : `Untitled design${isDirty ? " •" : ""}`;
+  const documentTitle = `${displayShareLabel(activeShareName, activeShareId)}${isDirty ? " •" : ""}`;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -312,8 +388,7 @@ export function useStudioDocument({
       const key = e.key.toLowerCase();
       if (key === "s" && e.shiftKey) {
         e.preventDefault();
-        setSaveAsLink(null);
-        setModal("save-as");
+        openSaveAsModal();
       } else if (key === "s") {
         e.preventDefault();
         void saveCloud();
@@ -325,10 +400,11 @@ export function useStudioDocument({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [saveCloud]);
+  }, [saveCloud, openSaveAsModal]);
 
   return {
     activeShareId,
+    activeShareName,
     isDirty,
     modal,
     setModal,
@@ -336,6 +412,14 @@ export function useStudioDocument({
     cloudBusy,
     saveAsLink,
     setSaveAsLink,
+    saveAsName,
+    setSaveAsName,
+    saveAsNameError,
+    setSaveAsNameError,
+    renameInput,
+    setRenameInput,
+    renameError,
+    setRenameError,
     openInput,
     setOpenInput,
     openError,
@@ -344,6 +428,9 @@ export function useStudioDocument({
     documentTitle,
     saveCloud,
     saveCloudAs,
+    openSaveAsModal,
+    openRenameModal,
+    renameCloudShare,
     openFromInput,
     loadShareById,
     openRecentDesign,

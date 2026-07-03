@@ -12,7 +12,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
     }
 
-    const result = await createShare(designJson, createdBy);
+    const name = req.headers.get("X-Share-Name");
+    const result = await createShare(designJson, createdBy, name);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

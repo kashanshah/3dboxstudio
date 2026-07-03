@@ -1,6 +1,7 @@
 import type { ParsedDesignV1 } from "@/boxDesignPersistence";
 import type { FaceId } from "@/types";
 import { ALL_FACES, SPLIT_TOP_FACES } from "@/types";
+import { normalizeShareName } from "@/lib/shareName";
 import { getSql } from "./db";
 import { SHARE_MAX_IMAGE_BYTES, shareMaxPayloadBytes, shareTtlDays } from "./env";
 import { getShareObject, uploadShareFaceImage } from "./s3";
@@ -76,19 +77,22 @@ async function uploadDesignImages(
 
 export async function createShare(
   designJson: string,
-  createdBy: string | null
-): Promise<{ id: string; url: string }> {
+  createdBy: string | null,
+  name?: string | null
+): Promise<{ id: string; url: string; name: string | null }> {
   const parsed = await parseAndValidateDesignJson(designJson);
   const id = createShareId();
   const images = await uploadDesignImages(id, parsed);
   const config = stripImages(parsed);
+  const shareName = normalizeShareName(name);
   const ttlDays = shareTtlDays();
   const sql = getSql();
 
   await sql`
-    INSERT INTO shared_designs (id, config, images, expires_at, created_by)
+    INSERT INTO shared_designs (id, name, config, images, expires_at, created_by)
     VALUES (
       ${id},
+      ${shareName},
       ${JSON.stringify(config)}::jsonb,
       ${JSON.stringify(images)}::jsonb,
       NOW() + (${ttlDays} * INTERVAL '1 day'),
@@ -98,10 +102,10 @@ export async function createShare(
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
-  return { id, url: `${origin}/studio?share=${id}` };
+  return { id, url: `${origin}/studio?share=${id}`, name: shareName };
 }
 
-export async function updateShare(id: string, designJson: string): Promise<{ id: string; url: string }> {
+export async function updateShare(id: string, designJson: string): Promise<{ id: string; url: string; name: string | null }> {
   if (!/^[0-9A-Za-z]{10,24}$/.test(id)) {
     throw new ShareError("Invalid share id.", 400);
   }
@@ -110,11 +114,11 @@ export async function updateShare(id: string, designJson: string): Promise<{ id:
   const sql = getSql();
 
   const existing = (await sql`
-    SELECT id FROM shared_designs
+    SELECT id, name FROM shared_designs
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as { id: string }[];
+  `) as { id: string; name: string | null }[];
 
   if (!existing[0]) {
     throw new ShareError("Share not found or expired.", 404);
@@ -135,11 +139,35 @@ export async function updateShare(id: string, designJson: string): Promise<{ id:
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
-  return { id, url: `${origin}/studio?share=${id}` };
+  return { id, url: `${origin}/studio?share=${id}`, name: existing[0].name ?? null };
+}
+
+export async function renameShare(id: string, name: string | null): Promise<{ id: string; name: string | null }> {
+  if (!/^[0-9A-Za-z]{10,24}$/.test(id)) {
+    throw new ShareError("Invalid share id.", 400);
+  }
+
+  const shareName = normalizeShareName(name);
+  const sql = getSql();
+
+  const rows = (await sql`
+    UPDATE shared_designs
+    SET name = ${shareName}
+    WHERE id = ${id}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    RETURNING id
+  `) as { id: string }[];
+
+  if (!rows[0]) {
+    throw new ShareError("Share not found or expired.", 404);
+  }
+
+  return { id, name: shareName };
 }
 
 type ShareRow = {
   id: string;
+  name: string | null;
   config: ShareConfig;
   images: Partial<Record<FaceId, StoredShareImage>>;
   expires_at: string | null;
@@ -154,7 +182,7 @@ export async function getShare(id: string): Promise<Record<string, unknown> | nu
     SET view_count = view_count + 1
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, config, images, expires_at
+    RETURNING id, name, config, images, expires_at
   `) as ShareRow[];
 
   const row = rows[0];
@@ -173,6 +201,7 @@ export async function getShare(id: string): Promise<Record<string, unknown> | nu
 
   return {
     v: 1,
+    shareName: row.name ?? null,
     ...row.config,
     faceImages,
   };

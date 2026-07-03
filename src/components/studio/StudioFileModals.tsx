@@ -126,8 +126,10 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
             {doc.recentDesigns.map((entry) => (
               <li key={entry.id} className="studio-recent-item">
                 <div className="studio-recent-item-main">
-                  <span className="studio-recent-id">{entry.id}</span>
+                  <span className="studio-recent-name">{entry.name ?? entry.id}</span>
                   <span className="studio-recent-meta">
+                    {entry.name && <span className="studio-recent-id-inline">{entry.id}</span>}
+                    {entry.name && " · "}
                     {formatRecentTimestamp(entry.lastOpenedAt)}
                     {" · "}
                     {entry.source === "saved" ? "Saved" : "Opened"}
@@ -180,7 +182,7 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
                 Cancel
               </button>
               <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.saveCloudAs()}>
-                {doc.cloudBusy ? "Creating…" : "Create share link"}
+                {doc.cloudBusy ? "Saving…" : "Save to cloud"}
               </button>
             </>
           )
@@ -188,7 +190,11 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
       >
         {doc.saveAsLink ? (
           <>
-            <p className="studio-dialog-lead">Your design was uploaded and a new share link was created.</p>
+            <p className="studio-dialog-lead">
+              {doc.activeShareName
+                ? `“${doc.activeShareName}” was uploaded and a new share link was created.`
+                : "Your design was uploaded and a new share link was created."}
+            </p>
             <label className="studio-dialog-label">Share link</label>
             <input className="studio-dialog-input" type="text" readOnly value={doc.saveAsLink} onFocus={(e) => e.target.select()} />
             <p className="studio-dialog-hint">Anyone with this link can view the design. Use File → Save to update this link later.</p>
@@ -198,9 +204,76 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
             <p className="studio-dialog-lead">
               Upload the current design to the cloud and get a new shareable link. Images and settings are stored on AWS; config is saved in the database.
             </p>
+            <label className="studio-dialog-label" htmlFor="studio-save-as-name">
+              Design name <span className="studio-dialog-optional">(optional)</span>
+            </label>
+            <input
+              id="studio-save-as-name"
+              className="studio-dialog-input"
+              type="text"
+              placeholder="e.g. Holiday gift box"
+              value={doc.saveAsName}
+              maxLength={120}
+              onChange={(e) => {
+                doc.setSaveAsName(e.target.value);
+                doc.setSaveAsNameError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void doc.saveCloudAs();
+              }}
+              autoFocus
+            />
+            {doc.saveAsNameError && (
+              <p className="studio-dialog-error" role="alert">
+                {doc.saveAsNameError}
+              </p>
+            )}
             <p className="studio-dialog-hint">Use Save (⌘S) later to update an existing link without creating a new one.</p>
           </>
         )}
+      </StudioDialog>
+
+      <StudioDialog
+        title="Rename Design"
+        open={doc.modal === "rename"}
+        onClose={() => doc.setModal(null)}
+        footer={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.renameCloudShare()}>
+              {doc.cloudBusy ? "Saving…" : "Rename"}
+            </button>
+          </>
+        }
+      >
+        <p className="studio-dialog-lead">Change the name shown in the title bar and recent list for this cloud design.</p>
+        <label className="studio-dialog-label" htmlFor="studio-rename-input">
+          Design name
+        </label>
+        <input
+          id="studio-rename-input"
+          className="studio-dialog-input"
+          type="text"
+          placeholder="Leave blank to remove the name"
+          value={doc.renameInput}
+          maxLength={120}
+          onChange={(e) => {
+            doc.setRenameInput(e.target.value);
+            doc.setRenameError(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void doc.renameCloudShare();
+          }}
+          autoFocus
+        />
+        {doc.renameError && (
+          <p className="studio-dialog-error" role="alert">
+            {doc.renameError}
+          </p>
+        )}
+        <p className="studio-dialog-hint">The share link and ID stay the same. Only the display name changes.</p>
       </StudioDialog>
 
       <StudioDialog

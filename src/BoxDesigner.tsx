@@ -357,10 +357,9 @@ export default function BoxDesigner() {
         onOpenModal={doc.setModal}
         onOpenHelpModal={setHelpModal}
         onSave={() => void doc.saveCloud()}
-        onSaveAs={() => {
-          doc.setSaveAsLink(null);
-          doc.setModal("save-as");
-        }}
+        onSaveAs={doc.openSaveAsModal}
+        onRename={doc.openRenameModal}
+        canRename={Boolean(doc.activeShareId)}
         onNew={doc.requestNew}
       />
       {doc.statusMessage && (
