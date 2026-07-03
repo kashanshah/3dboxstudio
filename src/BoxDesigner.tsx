@@ -562,6 +562,8 @@ export default function BoxDesigner({
         onSignUp={openSignUp}
         onSignOut={handleSignOut}
         onOpenProjects={openProjects}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((v) => !v)}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">

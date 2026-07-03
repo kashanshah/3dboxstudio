@@ -712,6 +712,49 @@ label {
   background: var(--panel-border);
 }
 
+/* Nested submenu (e.g. View → Toolbars), flown out to the side like native menus. */
+.studio-menu-submenu {
+  position: relative;
+}
+
+.studio-menu-submenu-trigger::after {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg);
+  flex-shrink: 0;
+}
+
+.studio-menu-submenu-panel {
+  top: -5px;
+  left: 100%;
+  margin-left: 3px;
+  min-width: 200px;
+  display: none;
+}
+
+.studio-menu-submenu:hover > .studio-menu-submenu-panel,
+.studio-menu-submenu:focus-within > .studio-menu-submenu-panel {
+  display: block;
+}
+
+/* Checkable menu items (macOS/Windows-style checkmark on the left). */
+.studio-menu-check-item {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.studio-menu-check {
+  display: inline-flex;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
 .studio-doc-title-wrap {
   margin-left: auto;
   display: flex;

@@ -8,7 +8,7 @@ import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "@/siteMeta";
 import type { AuthUser } from "@/lib/authTypes";
 
-type OpenMenu = "brand" | "file" | "help" | "account" | null;
+type OpenMenu = "brand" | "file" | "view" | "help" | "account" | null;
 
 type StudioMenuBarProps = {
   documentTitle: string;
@@ -17,6 +17,7 @@ type StudioMenuBarProps = {
   canRename: boolean;
   canSaveCopy: boolean;
   canSharePreview: boolean;
+  sidebarOpen: boolean;
   user: AuthUser | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
@@ -31,6 +32,7 @@ type StudioMenuBarProps = {
   onSignUp: () => void;
   onSignOut: () => void;
   onOpenProjects: () => void;
+  onToggleSidebar: () => void;
 };
 
 function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObject<HTMLElement | null>) {
@@ -65,15 +67,19 @@ export default function StudioMenuBar({
   onSignUp,
   onSignOut,
   onOpenProjects,
+  sidebarOpen,
+  onToggleSidebar,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLDivElement>(null);
   const accountRef = useRef<HTMLDivElement>(null);
 
   useCloseOnOutsideClick(openMenu === "brand", () => setOpenMenu(null), brandRef);
   useCloseOnOutsideClick(openMenu === "file", () => setOpenMenu(null), fileRef);
+  useCloseOnOutsideClick(openMenu === "view", () => setOpenMenu(null), viewRef);
   useCloseOnOutsideClick(openMenu === "help", () => setOpenMenu(null), helpRef);
   useCloseOnOutsideClick(openMenu === "account", () => setOpenMenu(null), accountRef);
 
@@ -85,6 +91,11 @@ export default function StudioMenuBar({
   };
 
   const pickHelp = (action: () => void) => {
+    closeMenus();
+    action();
+  };
+
+  const pickView = (action: () => void) => {
     closeMenus();
     action();
   };
@@ -248,6 +259,45 @@ export default function StudioMenuBar({
           )}
         </div>
       )}
+
+      <div className="studio-menu-item" ref={viewRef}>
+        <button
+          type="button"
+          className={`studio-menu-trigger${openMenu === "view" ? " is-open" : ""}`}
+          aria-expanded={openMenu === "view"}
+          aria-haspopup="menu"
+          onClick={() => setOpenMenu((m) => (m === "view" ? null : "view"))}
+        >
+          View
+        </button>
+        {openMenu === "view" && (
+          <div className="studio-menu-dropdown" role="menu">
+            <div className="studio-menu-submenu">
+              <button
+                type="button"
+                className="studio-menu-action studio-menu-submenu-trigger"
+                aria-haspopup="menu"
+              >
+                <span>Toolbars</span>
+              </button>
+              <div className="studio-menu-dropdown studio-menu-submenu-panel" role="menu">
+                <button
+                  type="button"
+                  className="studio-menu-action studio-menu-check-item"
+                  role="menuitemcheckbox"
+                  aria-checked={sidebarOpen}
+                  onClick={() => pickView(onToggleSidebar)}
+                >
+                  <span className="studio-menu-check" aria-hidden>
+                    {sidebarOpen ? "✓" : ""}
+                  </span>
+                  <span>Configuration Panel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {viewOnly && <span className="studio-menu-preview-badge">View-only preview</span>}
 
