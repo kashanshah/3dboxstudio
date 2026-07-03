@@ -151,6 +151,135 @@ export function PackagingBox({
   const topUrlRight = textures.topRight ?? textures.top ?? null;
   const topWhole = textures.top ?? null;
 
+  const leftSwings = opening === "door_left" || opening === "double_doors";
+  const rightSwings = opening === "door_right" || opening === "double_doors";
+
+  const topPlane = (
+    <FacePlane
+      url={topWhole}
+      preset={preset}
+      args={[w, d]}
+      position={[0, EPS, 0]}
+      rotation={[-Math.PI / 2, 0, 0]}
+      wireframe={wireframe}
+      cleanCapture={cleanCapture}
+      textureRotationDeg={faceRotation(rr, "top")}
+    />
+  );
+
+  const renderTop = () => {
+    if (splitTop && opening === "top_split_meet_center") {
+      return splitTopHingeSide === "side_a" ? (
+        <>
+          <group position={[-w / 2, h / 2, 0]} rotation={[0, 0, angle]}>
+            <group position={[w / 4, 0, 0]}>
+              <FacePlane
+                url={topUrlLeft}
+                preset={preset}
+                args={[w / 2, d]}
+                position={[0, EPS, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                wireframe={wireframe}
+                cleanCapture={cleanCapture}
+                textureRotationDeg={faceRotation(rr, "topLeft")}
+              />
+            </group>
+          </group>
+          <group position={[w / 2, h / 2, 0]} rotation={[0, 0, -angle]}>
+            <group position={[-w / 4, 0, 0]}>
+              <FacePlane
+                url={topUrlRight}
+                preset={preset}
+                args={[w / 2, d]}
+                position={[0, EPS, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                wireframe={wireframe}
+                cleanCapture={cleanCapture}
+                textureRotationDeg={faceRotation(rr, "topRight")}
+              />
+            </group>
+          </group>
+        </>
+      ) : (
+        <>
+          <group position={[0, h / 2, -d / 2]} rotation={[-angle, 0, 0]}>
+            <group position={[0, 0, d / 4]}>
+              <FacePlane
+                url={topUrlLeft}
+                preset={preset}
+                args={[w, d / 2]}
+                position={[0, EPS, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                wireframe={wireframe}
+                cleanCapture={cleanCapture}
+                textureRotationDeg={faceRotation(rr, "topLeft")}
+              />
+            </group>
+          </group>
+          <group position={[0, h / 2, d / 2]} rotation={[angle, 0, 0]}>
+            <group position={[0, 0, -d / 4]}>
+              <FacePlane
+                url={topUrlRight}
+                preset={preset}
+                args={[w, d / 2]}
+                position={[0, EPS, 0]}
+                rotation={[-Math.PI / 2, 0, 0]}
+                wireframe={wireframe}
+                cleanCapture={cleanCapture}
+                textureRotationDeg={faceRotation(rr, "topRight")}
+              />
+            </group>
+          </group>
+        </>
+      );
+    }
+
+    if (opening === "lid_from_back") {
+      return (
+        <group position={[0, h / 2, -d / 2]} rotation={[-angle, 0, 0]}>
+          <group position={[0, 0, d / 2]}>{topPlane}</group>
+        </group>
+      );
+    }
+
+    if (opening === "lid_from_front") {
+      return (
+        <group position={[0, h / 2, d / 2]} rotation={[angle, 0, 0]}>
+          <group position={[0, 0, -d / 2]}>{topPlane}</group>
+        </group>
+      );
+    }
+
+    if (opening === "lid_from_left") {
+      return (
+        <group position={[-w / 2, h / 2, 0]} rotation={[0, 0, angle]}>
+          <group position={[w / 2, 0, 0]}>{topPlane}</group>
+        </group>
+      );
+    }
+
+    if (opening === "lid_from_right") {
+      return (
+        <group position={[w / 2, h / 2, 0]} rotation={[0, 0, -angle]}>
+          <group position={[-w / 2, 0, 0]}>{topPlane}</group>
+        </group>
+      );
+    }
+
+    return (
+      <FacePlane
+        url={topWhole}
+        preset={preset}
+        args={[w, d]}
+        position={[0, h / 2 + EPS, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        wireframe={wireframe}
+        cleanCapture={cleanCapture}
+        textureRotationDeg={faceRotation(rr, "top")}
+      />
+    );
+  };
+
   return (
     <group>
       <FacePlane
@@ -186,18 +315,35 @@ export function PackagingBox({
         textureRotationDeg={faceRotation(rr, "back")}
       />
 
-      <FacePlane
-        url={textures.right ?? null}
-        preset={preset}
-        args={[d, h]}
-        position={[w / 2 + EPS, 0, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-        wireframe={wireframe}
-        cleanCapture={cleanCapture}
-        textureRotationDeg={faceRotation(rr, "right")}
-      />
+      {rightSwings ? (
+        <group position={[w / 2, 0, d / 2]} rotation={[0, -angle, 0]}>
+          <group position={[0, 0, -d / 2]}>
+            <FacePlane
+              url={textures.right ?? null}
+              preset={preset}
+              args={[d, h]}
+              position={[EPS, 0, 0]}
+              rotation={[0, Math.PI / 2, 0]}
+              wireframe={wireframe}
+              cleanCapture={cleanCapture}
+              textureRotationDeg={faceRotation(rr, "right")}
+            />
+          </group>
+        </group>
+      ) : (
+        <FacePlane
+          url={textures.right ?? null}
+          preset={preset}
+          args={[d, h]}
+          position={[w / 2 + EPS, 0, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+          wireframe={wireframe}
+          cleanCapture={cleanCapture}
+          textureRotationDeg={faceRotation(rr, "right")}
+        />
+      )}
 
-      {opening === "door_left" ? (
+      {leftSwings ? (
         <group position={[-w / 2, 0, d / 2]} rotation={[0, angle, 0]}>
           <group position={[0, 0, -d / 2]}>
             <FacePlane
@@ -225,95 +371,7 @@ export function PackagingBox({
         />
       )}
 
-      {splitTop && opening === "top_split_meet_center" && splitTopHingeSide === "side_a" ? (
-        <>
-          <group position={[-w / 2, h / 2, 0]} rotation={[0, 0, angle]}>
-            <group position={[w / 4, 0, 0]}>
-              <FacePlane
-                url={topUrlLeft}
-                preset={preset}
-                args={[w / 2, d]}
-                position={[0, EPS, 0]}
-                rotation={[-Math.PI / 2, 0, 0]}
-                wireframe={wireframe}
-                cleanCapture={cleanCapture}
-                textureRotationDeg={faceRotation(rr, "topLeft")}
-              />
-            </group>
-          </group>
-          <group position={[w / 2, h / 2, 0]} rotation={[0, 0, -angle]}>
-            <group position={[-w / 4, 0, 0]}>
-              <FacePlane
-                url={topUrlRight}
-                preset={preset}
-                args={[w / 2, d]}
-                position={[0, EPS, 0]}
-                rotation={[-Math.PI / 2, 0, 0]}
-                wireframe={wireframe}
-                cleanCapture={cleanCapture}
-                textureRotationDeg={faceRotation(rr, "topRight")}
-              />
-            </group>
-          </group>
-        </>
-      ) : splitTop && opening === "top_split_meet_center" && splitTopHingeSide === "side_b" ? (
-        <>
-          <group position={[0, h / 2, -d / 2]} rotation={[-angle, 0, 0]}>
-            <group position={[0, 0, d / 4]}>
-              <FacePlane
-                url={topUrlLeft}
-                preset={preset}
-                args={[w, d / 2]}
-                position={[0, EPS, 0]}
-                rotation={[-Math.PI / 2, 0, 0]}
-                wireframe={wireframe}
-                cleanCapture={cleanCapture}
-                textureRotationDeg={faceRotation(rr, "topLeft")}
-              />
-            </group>
-          </group>
-          <group position={[0, h / 2, d / 2]} rotation={[angle, 0, 0]}>
-            <group position={[0, 0, -d / 4]}>
-              <FacePlane
-                url={topUrlRight}
-                preset={preset}
-                args={[w, d / 2]}
-                position={[0, EPS, 0]}
-                rotation={[-Math.PI / 2, 0, 0]}
-                wireframe={wireframe}
-                cleanCapture={cleanCapture}
-                textureRotationDeg={faceRotation(rr, "topRight")}
-              />
-            </group>
-          </group>
-        </>
-      ) : opening === "lid_from_back" ? (
-        <group position={[0, h / 2, -d / 2]} rotation={[-angle, 0, 0]}>
-          <group position={[0, 0, d / 2]}>
-            <FacePlane
-              url={topWhole}
-              preset={preset}
-              args={[w, d]}
-              position={[0, EPS, 0]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              wireframe={wireframe}
-              cleanCapture={cleanCapture}
-              textureRotationDeg={faceRotation(rr, "top")}
-            />
-          </group>
-        </group>
-      ) : (
-        <FacePlane
-          url={topWhole}
-          preset={preset}
-          args={[w, d]}
-          position={[0, h / 2 + EPS, 0]}
-          rotation={[-Math.PI / 2, 0, 0]}
-              wireframe={wireframe}
-              cleanCapture={cleanCapture}
-              textureRotationDeg={faceRotation(rr, "top")}
-        />
-      )}
+      {renderTop()}
     </group>
   );
 }

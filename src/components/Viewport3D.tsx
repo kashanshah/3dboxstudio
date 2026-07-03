@@ -17,6 +17,29 @@ import { PackagingBox } from "./PackagingBox";
 import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
 
+/** Closest / farthest the camera can orbit, as a multiple of the box's largest dimension. */
+const ORBIT_MIN_DISTANCE_FACTOR = 0.35;
+const ORBIT_MAX_DISTANCE_FACTOR = 6;
+/**
+ * Initial camera distance as a multiple of the box's largest dimension.
+ * Higher = more zoomed out on load. Must sit within the orbit min/max range above.
+ */
+const INITIAL_VIEW_DISTANCE_FACTOR = 3.6;
+/** Viewing direction (normalized below) — controls the initial orbit angle. */
+const INITIAL_VIEW_DIRECTION = new THREE.Vector3(0.85, 0.55, 0.9).normalize();
+
+/**
+ * Zoom slider value (0 = closest, 1 = farthest) that reproduces INITIAL_VIEW_DISTANCE_FACTOR.
+ * Used as the default zoom and to re-frame the box on every load, so the initial view is
+ * consistent on first paint and after a reload / share load.
+ */
+export const INITIAL_ZOOM_FRACTION = THREE.MathUtils.clamp(
+  (INITIAL_VIEW_DISTANCE_FACTOR - ORBIT_MIN_DISTANCE_FACTOR) /
+    (ORBIT_MAX_DISTANCE_FACTOR - ORBIT_MIN_DISTANCE_FACTOR),
+  0,
+  1
+);
+
 function applyOrbitZoomDistance(
   controls: OrbitControlsImpl,
   minDistance: number,
@@ -41,7 +64,15 @@ function applyOrbitZoomDistance(
   controls.update();
 }
 
-/** Keeps UI zoom slider in sync with OrbitControls and applies slider changes to the camera. */
+/**
+ * Two-way binding between the zoom slider and OrbitControls.
+ *
+ * `zoomFraction` is the single source of truth for camera distance: it drives the camera
+ * (initial framing, dimension changes, and slider input), while user scroll / drag / pinch
+ * writes the resulting distance back to the slider. Keeping the camera distance derived from
+ * `zoomFraction` (rather than reading a one-off distance on mount) makes the framing
+ * deterministic across reloads and async share loads.
+ */
 function OrbitControlsZoomSync({
   width,
   height,
@@ -56,38 +87,33 @@ function OrbitControlsZoomSync({
   onZoomFractionChange: (t: number) => void;
 }) {
   const maxDim = Math.max(width, height, length, 1);
-  const minDistance = maxDim * 0.35;
-  const maxDistance = maxDim * 6;
+  const minDistance = maxDim * ORBIT_MIN_DISTANCE_FACTOR;
+  const maxDistance = maxDim * ORBIT_MAX_DISTANCE_FACTOR;
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | undefined;
   const applyingRef = useRef(false);
-  const hasSyncedInitial = useRef(false);
 
+  // Reflect user scroll / drag / pinch back into the slider.
   useEffect(() => {
     if (!controls) return;
-    if (!hasSyncedInitial.current) {
-      hasSyncedInitial.current = true;
-      const dist = controls.getDistance();
-      const t = THREE.MathUtils.clamp((dist - minDistance) / (maxDistance - minDistance), 0, 1);
-      onZoomFractionChange(Math.round(t * 1000) / 1000);
-    }
     const onChange = () => {
       if (applyingRef.current) return;
       const dist = controls.getDistance();
       const t = THREE.MathUtils.clamp((dist - minDistance) / (maxDistance - minDistance), 0, 1);
-      const r = Math.round(t * 1000) / 1000;
-      onZoomFractionChange(r);
+      onZoomFractionChange(Math.round(t * 1000) / 1000);
     };
     controls.addEventListener("change", onChange);
     return () => controls.removeEventListener("change", onChange);
   }, [controls, minDistance, maxDistance, onZoomFractionChange]);
 
+  // Apply the slider fraction to the camera: initial framing, box-size changes, slider input.
   useLayoutEffect(() => {
-    if (!controls || !hasSyncedInitial.current) return;
+    if (!controls) return;
     applyingRef.current = true;
     applyOrbitZoomDistance(controls, minDistance, maxDistance, zoomFraction);
-    requestAnimationFrame(() => {
+    const raf = requestAnimationFrame(() => {
       applyingRef.current = false;
     });
+    return () => cancelAnimationFrame(raf);
   }, [controls, minDistance, maxDistance, zoomFraction]);
 
   return null;
@@ -153,7 +179,7 @@ function Scene({
   cleanCapture = false,
 }: Omit<Viewport3DProps, "showAxesGizmo" | "onCanvasReady">) {
   const maxDim = Math.max(width, height, length, 1);
-  const camDist = maxDim * 2.2;
+  const camPos = INITIAL_VIEW_DIRECTION.clone().multiplyScalar(maxDim * INITIAL_VIEW_DISTANCE_FACTOR);
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
 
   useLayoutEffect(() => {
@@ -170,13 +196,13 @@ function Scene({
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[camDist * 0.85, camDist * 0.55, camDist * 0.9]} fov={42} near={0.1} far={maxDim * 80} />
+      <PerspectiveCamera makeDefault position={[camPos.x, camPos.y, camPos.z]} fov={42} near={0.1} far={maxDim * 80} />
       <OrbitControls
         makeDefault
         autoRotate={autoRotate}
         autoRotateSpeed={autoRotateReverse ? -autoRotateSpeed : autoRotateSpeed}
-        minDistance={maxDim * 0.35}
-        maxDistance={maxDim * 6}
+        minDistance={maxDim * ORBIT_MIN_DISTANCE_FACTOR}
+        maxDistance={maxDim * ORBIT_MAX_DISTANCE_FACTOR}
         target={[0, height * 0.05, 0]}
         enableDamping={!snappyOrbit}
         dampingFactor={0.08}

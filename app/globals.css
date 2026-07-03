@@ -563,6 +563,19 @@ label {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.studio-menu-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+
+.studio-menu-brand-logo {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 4px rgba(61, 158, 255, 0.35));
+}
+
 .studio-menu-dropdown {
   position: absolute;
   top: calc(100% + 4px);

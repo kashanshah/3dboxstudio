@@ -2,7 +2,17 @@ import { MATERIAL_PRESETS } from "./materialPresets";
 import type { BoxDimensions, FaceId, LengthUnit, OpeningStyle, SplitTopHingeSide, TextureRotationDeg } from "./types";
 
 const LENGTH_UNITS: LengthUnit[] = ["mm", "cm", "in"];
-const OPENINGS: OpeningStyle[] = ["closed", "lid_from_back", "top_split_meet_center", "door_left"];
+const OPENINGS: OpeningStyle[] = [
+  "closed",
+  "lid_from_back",
+  "lid_from_front",
+  "lid_from_left",
+  "lid_from_right",
+  "top_split_meet_center",
+  "door_left",
+  "door_right",
+  "double_doors",
+];
 const SPLIT_HINGES: SplitTopHingeSide[] = ["side_a", "side_b"];
 const ENV_PRESETS = ["studio", "city", "warehouse", "sunset", "dawn"] as const;
 export type EnvPreset = (typeof ENV_PRESETS)[number];

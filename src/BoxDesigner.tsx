@@ -23,8 +23,9 @@ import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
-import { Viewport3D } from "./components/Viewport3D";
+import { Viewport3D, INITIAL_ZOOM_FRACTION } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
+import { BOX_TEMPLATES, getBoxTemplate } from "./boxTemplates";
 import { useFaceObjectUrls } from "./hooks/useTextures";
 import { useViewportRecording } from "./hooks/useViewportRecording";
 import type { BoxDimensions, FaceId, LengthUnit, OpeningStyle, SplitTopHingeSide, TextureRotationDeg } from "./types";
@@ -53,12 +54,21 @@ function toCm(n: number, unit: LengthUnit): number {
 const openingOptions: { value: OpeningStyle; label: string; hint: string }[] = [
   { value: "closed", label: "Closed (no motion)", hint: "Rigid box preview" },
   { value: "lid_from_back", label: "Lid from back", hint: "Single top hinged along the back edge" },
+  { value: "lid_from_front", label: "Lid from front", hint: "Single top hinged along the front edge" },
+  { value: "lid_from_left", label: "Lid from left", hint: "Single top hinged along the left edge" },
+  { value: "lid_from_right", label: "Lid from right", hint: "Single top hinged along the right edge" },
   {
     value: "top_split_meet_center",
     label: "Top center — two flaps",
     hint: "Meet in the middle; choose Side A or B for hinge edges, then upload artwork for each half.",
   },
   { value: "door_left", label: "Door opens — left", hint: "Left panel swings from the front-left edge" },
+  { value: "door_right", label: "Door opens — right", hint: "Right panel swings from the front-right edge" },
+  {
+    value: "double_doors",
+    label: "Double doors — left & right",
+    hint: "Both side panels swing open from their front edges.",
+  },
 ];
 
 const faceArtIconBtn: CSSProperties = {
@@ -126,6 +136,7 @@ export default function BoxDesigner({
   const previewTokenFromUrl = viewOnly ? initialPreviewToken : null;
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
+  const [boxTemplateId, setBoxTemplateId] = useState("custom");
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
@@ -138,7 +149,7 @@ export default function BoxDesigner({
   const [autoRotate, setAutoRotate] = useState(false);
   const [autoRotateSpeed, setAutoRotateSpeed] = useState(0.65);
   const [autoRotateReverse, setAutoRotateReverse] = useState(false);
-  const [zoomFraction, setZoomFraction] = useState(0.5);
+  const [zoomFraction, setZoomFraction] = useState(INITIAL_ZOOM_FRACTION);
   const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
   const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
@@ -189,6 +200,26 @@ export default function BoxDesigner({
     },
     [isRecordingViewport]
   );
+
+  const applyBoxTemplate = useCallback(
+    (id: string) => {
+      const template = getBoxTemplate(id);
+      if (!template) {
+        setBoxTemplateId("custom");
+        return;
+      }
+      setUnit(template.unit);
+      setDims({ ...template.dims });
+      commitOpening(template.opening);
+      setBoxTemplateId(template.id);
+    },
+    [commitOpening]
+  );
+
+  const editDims = useCallback((patch: Partial<BoxDimensions>) => {
+    setDims((d) => ({ ...d, ...patch }));
+    setBoxTemplateId("custom");
+  }, []);
 
   const textureUrls = useFaceObjectUrls(faceFiles);
 
@@ -255,6 +286,7 @@ export default function BoxDesigner({
   const applyPersistedState = useCallback((restored: BoxDesignerPersistedState) => {
     setUnit(restored.unit);
     setDims(restored.dims);
+    setBoxTemplateId("custom");
     setFaceFiles(restored.faceFiles);
     setTextureRotationDeg(restored.textureRotationDeg);
     setMaterialId(restored.materialId);
@@ -267,7 +299,9 @@ export default function BoxDesigner({
     setAutoRotate(restored.autoRotate);
     setAutoRotateSpeed(restored.autoRotateSpeed);
     setAutoRotateReverse(restored.autoRotateReverse);
-    setZoomFraction(restored.zoomFraction);
+    // Re-frame to the standard initial zoom on every load so the box is consistently framed
+    // for the restored dimensions (avoids inheriting a stale, over-zoomed saved value).
+    setZoomFraction(INITIAL_ZOOM_FRACTION);
     setEnvPreset(restored.envPreset);
   }, []);
 
@@ -629,6 +663,20 @@ export default function BoxDesigner({
           <>
         <PanelCollapse title="Outer dimensions">
           <div style={{ marginBottom: "0.65rem" }}>
+            <label>Box template</label>
+            <select value={boxTemplateId} onChange={(e) => applyBoxTemplate(e.target.value)}>
+              <option value="custom">Custom (manual)</option>
+              {BOX_TEMPLATES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
+              {getBoxTemplate(boxTemplateId)?.hint ?? "Start from a common box size, then fine-tune below."}
+            </p>
+          </div>
+          <div style={{ marginBottom: "0.65rem" }}>
             <label>Unit</label>
             <select value={unit} onChange={(e) => setUnit(e.target.value as LengthUnit)}>
               <option value="mm">Millimeters (mm)</option>
@@ -644,7 +692,7 @@ export default function BoxDesigner({
                 min={0.1}
                 step={0.1}
                 value={dims.width}
-                onChange={(e) => setDims((d) => ({ ...d, width: Number(e.target.value) || 0 }))}
+                onChange={(e) => editDims({ width: Number(e.target.value) || 0 })}
               />
             </div>
             <div>
@@ -654,7 +702,7 @@ export default function BoxDesigner({
                 min={0.1}
                 step={0.1}
                 value={dims.height}
-                onChange={(e) => setDims((d) => ({ ...d, height: Number(e.target.value) || 0 }))}
+                onChange={(e) => editDims({ height: Number(e.target.value) || 0 })}
               />
             </div>
             <div>
@@ -664,7 +712,7 @@ export default function BoxDesigner({
                 min={0.1}
                 step={0.1}
                 value={dims.length}
-                onChange={(e) => setDims((d) => ({ ...d, length: Number(e.target.value) || 0 }))}
+                onChange={(e) => editDims({ length: Number(e.target.value) || 0 })}
               />
             </div>
           </div>
