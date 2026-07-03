@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS shared_designs (
   view_count INTEGER NOT NULL DEFAULT 0,
   og_image_key TEXT,
   og_image_width INTEGER,
-  og_image_height INTEGER
+  og_image_height INTEGER,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- If the table already exists, run: npm run db:migrate
