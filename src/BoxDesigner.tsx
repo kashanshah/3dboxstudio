@@ -20,6 +20,7 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import { useStudioDocument } from "./hooks/useStudioDocument";
+import { downscaleCanvasToOgPng } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
@@ -273,15 +274,7 @@ export default function BoxDesigner({
     const s = r3fRef.current;
     if (!s?.gl || !s.camera) return null;
     s.gl.render(s.scene, s.camera);
-    const canvas = s.gl.domElement;
-    const dataUrl = canvas.toDataURL("image/png");
-    const base64Png = dataUrl.split(",")[1];
-    if (!base64Png) return null;
-    return {
-      base64Png,
-      width: canvas.width,
-      height: canvas.height,
-    };
+    return downscaleCanvasToOgPng(s.gl.domElement);
   }, []);
 
   const doc = useStudioDocument({

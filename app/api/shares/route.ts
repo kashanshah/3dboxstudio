@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
-import { ShareError, createShare, parseShareOgImageInput } from "@/server/shareService";
+import { ShareError, createShare } from "@/server/shareService";
+import { parseShareSaveRequest } from "@/server/shareSaveRequest";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
     const createdBy = await assertCanCreateShare(req);
-    const designJson = await req.text();
-    if (!designJson.trim()) {
+    const rawBody = await req.text();
+    if (!rawBody.trim()) {
       return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
     }
 
     const name = req.headers.get("X-Share-Name");
-    const ogImage = parseShareOgImageInput(req);
+    const { designJson, ogImage } = parseShareSaveRequest(req, rawBody);
     const result = await createShare(designJson, createdBy, name, ogImage);
     return NextResponse.json(result);
   } catch (e) {

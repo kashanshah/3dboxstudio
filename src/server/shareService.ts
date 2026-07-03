@@ -443,19 +443,6 @@ export async function getSharePreviewOgImage(
   }
 }
 
-export function parseShareOgImageInput(req: Request): ShareOgImageInput | null {
-  const base64Png = req.headers.get("X-Share-Og-Image")?.trim();
-  if (!base64Png) return null;
-
-  const width = Number(req.headers.get("X-Share-Og-Image-Width"));
-  const height = Number(req.headers.get("X-Share-Og-Image-Height"));
-  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-    return null;
-  }
-
-  return { base64Png, width: Math.round(width), height: Math.round(height) };
-}
-
 export async function getShare(id: string): Promise<Record<string, unknown> | null> {
   if (!SHARE_TOKEN_RE.test(id)) return null;
 

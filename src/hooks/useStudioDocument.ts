@@ -84,24 +84,29 @@ type UseStudioDocumentOptions = {
   } | null>;
 };
 
-async function buildSaveHeaders(
-  base: Record<string, string>,
+async function buildSaveRequest(
+  designJson: string,
   capturePreviewImage?: UseStudioDocumentOptions["capturePreviewImage"]
-): Promise<Record<string, string>> {
-  const headers = { ...base };
-  if (!capturePreviewImage) return headers;
+): Promise<{ headers: Record<string, string>; body: string }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  if (!capturePreviewImage) {
+    return { headers, body: designJson };
+  }
 
   try {
     const preview = await capturePreviewImage();
-    if (!preview) return headers;
-    headers["X-Share-Og-Image"] = preview.base64Png;
-    headers["X-Share-Og-Image-Width"] = String(preview.width);
-    headers["X-Share-Og-Image-Height"] = String(preview.height);
+    if (!preview) return { headers, body: designJson };
+    return {
+      headers,
+      body: JSON.stringify({
+        design: JSON.parse(designJson),
+        ogImage: preview,
+      }),
+    };
   } catch {
-    /* preview capture is best-effort */
+    return { headers, body: designJson };
   }
-
-  return headers;
 }
 
 export function useStudioDocument({
@@ -306,11 +311,11 @@ export function useStudioDocument({
     setCloudBusy(true);
     try {
       const json = await serializeDesign(buildPersistState());
-      const headers = await buildSaveHeaders({ "Content-Type": "application/json" }, capturePreviewImage);
+      const { headers, body } = await buildSaveRequest(json, capturePreviewImage);
       const res = await fetch(`/api/shares/${encodeURIComponent(activeShareId)}`, {
         method: "PUT",
         headers,
-        body: json,
+        body,
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
@@ -342,13 +347,13 @@ export function useStudioDocument({
     setSaveAsLink(null);
     try {
       const json = await serializeDesign(buildPersistState());
-      const headers = await buildSaveHeaders({ "Content-Type": "application/json" }, capturePreviewImage);
+      const { headers, body } = await buildSaveRequest(json, capturePreviewImage);
       if (normalizedName) headers["X-Share-Name"] = normalizedName;
 
       const res = await fetch("/api/shares", {
         method: "POST",
         headers,
-        body: json,
+        body,
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not create share link."));
