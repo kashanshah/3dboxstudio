@@ -1,6 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
+import { faceShortLabels } from "../types";
 import { useLoadedTexture } from "../hooks/useTextures";
 
 const EPS = 0.02;
@@ -23,8 +25,36 @@ function faceRotation(deg: Partial<Record<FaceId, number>> | undefined, id: Face
   return deg?.[id] ?? 0;
 }
 
+function FaceLabel({
+  label,
+  args,
+}: {
+  label: string;
+  args: [number, number];
+}) {
+  const fontSize = Math.min(args[0], args[1]) * 0.16;
+  return (
+    <Suspense fallback={null}>
+      <Text
+        position={[0, 0, 0.015]}
+        fontSize={fontSize}
+        color="#2c2418"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={fontSize * 0.04}
+        outlineColor="#f5f0e8"
+        maxWidth={args[0] * 0.85}
+        textAlign="center"
+      >
+        {label}
+      </Text>
+    </Suspense>
+  );
+}
+
 function FacePlane({
   url,
+  faceId,
   preset,
   args,
   position,
@@ -34,6 +64,7 @@ function FacePlane({
   cleanCapture = false,
 }: {
   url: string | null;
+  faceId: FaceId;
   preset: MaterialPreset;
   args: [number, number];
   position: [number, number, number];
@@ -107,6 +138,9 @@ function FacePlane({
           <planeGeometry args={args} />
         </mesh>
       )}
+      {!url && !wireframe && !cleanCapture && (
+        <FaceLabel label={faceShortLabels[faceId]} args={args} />
+      )}
     </group>
   );
 }
@@ -157,6 +191,7 @@ export function PackagingBox({
   const topPlane = (
     <FacePlane
       url={topWhole}
+      faceId="top"
       preset={preset}
       args={[w, d]}
       position={[0, EPS, 0]}
@@ -175,6 +210,7 @@ export function PackagingBox({
             <group position={[w / 4, 0, 0]}>
               <FacePlane
                 url={topUrlLeft}
+                faceId="topLeft"
                 preset={preset}
                 args={[w / 2, d]}
                 position={[0, EPS, 0]}
@@ -189,6 +225,7 @@ export function PackagingBox({
             <group position={[-w / 4, 0, 0]}>
               <FacePlane
                 url={topUrlRight}
+                faceId="topRight"
                 preset={preset}
                 args={[w / 2, d]}
                 position={[0, EPS, 0]}
@@ -206,6 +243,7 @@ export function PackagingBox({
             <group position={[0, 0, d / 4]}>
               <FacePlane
                 url={topUrlLeft}
+                faceId="topLeft"
                 preset={preset}
                 args={[w, d / 2]}
                 position={[0, EPS, 0]}
@@ -220,6 +258,7 @@ export function PackagingBox({
             <group position={[0, 0, -d / 4]}>
               <FacePlane
                 url={topUrlRight}
+                faceId="topRight"
                 preset={preset}
                 args={[w, d / 2]}
                 position={[0, EPS, 0]}
@@ -269,6 +308,7 @@ export function PackagingBox({
     return (
       <FacePlane
         url={topWhole}
+        faceId="top"
         preset={preset}
         args={[w, d]}
         position={[0, h / 2 + EPS, 0]}
@@ -284,6 +324,7 @@ export function PackagingBox({
     <group>
       <FacePlane
         url={textures.bottom ?? null}
+        faceId="bottom"
         preset={preset}
         args={[w, d]}
         position={[0, -h / 2 - EPS, 0]}
@@ -295,6 +336,7 @@ export function PackagingBox({
 
       <FacePlane
         url={textures.front ?? null}
+        faceId="front"
         preset={preset}
         args={[w, h]}
         position={[0, 0, d / 2 + EPS]}
@@ -306,6 +348,7 @@ export function PackagingBox({
 
       <FacePlane
         url={textures.back ?? null}
+        faceId="back"
         preset={preset}
         args={[w, h]}
         position={[0, 0, -d / 2 - EPS]}
@@ -320,6 +363,7 @@ export function PackagingBox({
           <group position={[0, 0, -d / 2]}>
             <FacePlane
               url={textures.right ?? null}
+              faceId="right"
               preset={preset}
               args={[d, h]}
               position={[EPS, 0, 0]}
@@ -333,6 +377,7 @@ export function PackagingBox({
       ) : (
         <FacePlane
           url={textures.right ?? null}
+          faceId="right"
           preset={preset}
           args={[d, h]}
           position={[w / 2 + EPS, 0, 0]}
@@ -348,6 +393,7 @@ export function PackagingBox({
           <group position={[0, 0, -d / 2]}>
             <FacePlane
               url={textures.left ?? null}
+              faceId="left"
               preset={preset}
               args={[d, h]}
               position={[-EPS, 0, 0]}
@@ -361,6 +407,7 @@ export function PackagingBox({
       ) : (
         <FacePlane
           url={textures.left ?? null}
+          faceId="left"
           preset={preset}
           args={[d, h]}
           position={[-w / 2 - EPS, 0, 0]}
