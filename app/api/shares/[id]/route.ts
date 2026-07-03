@@ -1,0 +1,48 @@
+import { NextResponse } from "next/server";
+import { assertCanCreateShare } from "@/server/shareAuth";
+import { ShareError, getShare, updateShare } from "@/server/shareService";
+
+export const runtime = "nodejs";
+
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function PUT(req: Request, context: RouteContext) {
+  try {
+    await assertCanCreateShare(req);
+    const { id } = await context.params;
+    const designJson = await req.text();
+    if (!designJson.trim()) {
+      return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
+    }
+    const result = await updateShare(id, designJson);
+    return NextResponse.json(result);
+  } catch (e) {
+    if (e instanceof ShareError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
+    console.error("PUT /api/shares/[id] failed:", e);
+    const message =
+      e instanceof Error && e.message.includes("is not configured")
+        ? "Share is not configured on this server."
+        : "Could not update share.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function GET(_req: Request, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    const payload = await getShare(id);
+    if (!payload) {
+      return NextResponse.json({ error: "Share not found or expired." }, { status: 404 });
+    }
+    return NextResponse.json(payload);
+  } catch (e) {
+    console.error("GET /api/shares/[id] failed:", e);
+    const message =
+      e instanceof Error && e.message.includes("is not configured")
+        ? "Share is not configured on this server."
+        : "Could not load shared design.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

@@ -472,8 +472,7 @@ export default function LandingPage() {
                   <ul className="landing-hero-meta" aria-label="Highlights">
                     <li>Free packaging designer</li>
                     <li>No signup</li>
-                    <li>Runs locally</li>
-                    <li>Save in-browser</li>
+                    <li>Cloud save &amp; share</li>
                     <li>Export PNG</li>
                     <li>JSON import/export</li>
                     <li>Open source (MIT)</li>
@@ -511,8 +510,8 @@ export default function LandingPage() {
                 </div>
                 <div className="landing-proof-divider" aria-hidden />
                 <div className="landing-proof-item">
-                  <strong>Portable JSON</strong>
-                  <span>Download &amp; share full designs</span>
+                  <strong>Cloud share links</strong>
+                  <span>Save &amp; reopen full designs</span>
                 </div>
               </div>
             </div>
@@ -623,16 +622,25 @@ export default function LandingPage() {
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
+                    <IconSave />
+                  </span>
+                  <h3>Cloud save &amp; share links</h3>
+                </div>
+                <p>
+                  Use <strong>File → Save</strong> or <strong>Save As</strong> to upload your design and get a
+                  shareable link. Reopen it anytime or send it to clients and teammates—artwork and settings included.
+                </p>
+              </article>
+              <article className="landing-card">
+                <div className="landing-card-top">
+                  <span className="landing-card-icon" aria-hidden>
                     <IconJson />
                   </span>
                   <h3>JSON import &amp; export</h3>
                 </div>
                 <p>
-                  Download a single <strong>v1 JSON</strong> file with
-                  dimensions, materials, openings, lighting, zoom, and per-face
-                  images (base64)—ideal for backups, handoff to teammates, or
-                  moving between machines. Import a file back into the studio to
-                  restore the full scene.
+                  Download a <strong>v1 JSON</strong> backup with dimensions, materials, openings, and embedded
+                  images—or import a file to restore the full scene offline.
                 </p>
               </article>
               <article className="landing-card">
@@ -640,13 +648,11 @@ export default function LandingPage() {
                   <span className="landing-card-icon" aria-hidden>
                     <IconSave />
                   </span>
-                  <h3>Local save &amp; PNG export</h3>
+                  <h3>PNG export</h3>
                 </div>
                 <p>
-                  Auto-save to browser storage on a short debounce, with
-                  explicit save/clear controls. Export a high-resolution{" "}
-                  <strong>PNG</strong> snapshot of the live viewport for decks,
-                  RFQs, and marketing.
+                  Export a high-resolution <strong>PNG</strong> snapshot of the live viewport for decks, RFQs, and
+                  marketing—alongside cloud share links for interactive review.
                 </p>
               </article>
               <article className="landing-card">
@@ -776,10 +782,10 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="landing-step">
-                <h3>Share & save</h3>
+                <h3>Save &amp; share</h3>
                 <p>
-                  Export a PNG for decks and RFQs, or rely on local persistence
-                  so your 3D packaging simulator session survives refresh.
+                  Use File → Save As to upload and get a share link, or export a PNG for decks and RFQs. Open a link
+                  later to pick up exactly where you left off.
                 </p>
               </div>
             </div>

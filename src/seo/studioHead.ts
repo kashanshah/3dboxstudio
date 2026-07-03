@@ -18,7 +18,7 @@ export const STUDIO_TITLE =
   "3D Box Maker Studio — Free Online Box Designer | 3D Box Studio";
 
 export const STUDIO_DESCRIPTION =
-  "Free 3D box maker and design studio in your browser. Set dimensions, materials, openings, and per-face artwork; export PNG snapshots and JSON backups. No signup—open source (MIT).";
+  "Free 3D box maker and design studio in your browser. Set dimensions, materials, openings, and per-face artwork; save to the cloud with share links; export PNG snapshots and JSON backups. No signup—open source (MIT).";
 
 export function applyStudioRouteSeo(doc: Document, origin?: string): () => void {
   doc.title = STUDIO_TITLE;

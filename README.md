@@ -6,7 +6,7 @@
 
 # 3D Box Studio
 
-**Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, and **JSON import/export** (designs with embedded images). Work is saved in **localStorage** unless you clear it.
+**Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, **cloud save & share links**, and **JSON import/export** for offline backups.
 
 The project is also **open source** under the MIT License—issues and PRs welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
 
@@ -37,6 +37,10 @@ npm start   # production server
 Create a `.env` file (see `.env.example`) and set:
 
 - **`NEXT_PUBLIC_SITE_ORIGIN`** — Full origin of your deployment, **no trailing slash**, e.g. `https://www.3dboxstudio.com`. Used for canonical URLs, Open Graph, JSON-LD, and the sitemap.
+- **`DATABASE_URL`** — Neon Postgres pooled connection string (server-only). Run `db/schema.sql` once against your database.
+- **`AWS_*`** — S3 credentials and bucket for share image uploads (server-only). Shared face images are stored under `AWS_S3_SHARE_PREFIX` (default `shares/`).
+
+Share links are created from **File → Save** or **Save As** in the studio. Designs upload to S3; config is stored in Neon Postgres. Viewing a share at `/studio?share=…` is public; restricting share creation to registered users can be added later in `src/server/shareAuth.ts`.
 
 ## License & contributing
 

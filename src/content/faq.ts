@@ -35,7 +35,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "getting-started",
     question: "Is 3D Box Studio a free 3D box maker?",
     answer:
-      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. Your work can be saved locally without creating an account.",
+      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, cloud save & share links, PNG export, or JSON import/export. No account required to start designing.",
   },
   {
     id: "3d-box-simulation-use",
@@ -70,7 +70,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "privacy",
     question: "Where is my data stored?",
     answer:
-      "Optional local browser storage keeps your fields and encoded images on-device. There is no account-backed cloud sync in this open tool.",
+      "While you work, your design stays in the browser session. When you use File → Save or Save As, images upload to AWS S3 and configuration is stored in a Postgres database. You receive a share link you can reopen or send to others. Nothing is saved to the cloud until you explicitly save.",
+  },
+  {
+    id: "cloud-share",
+    category: "export",
+    question: "How do cloud save and share links work?",
+    answer:
+      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. Share links include artwork and all studio settings.",
   },
   {
     id: "color-accuracy",
@@ -84,14 +91,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "export",
     question: "Can I export or import my 3D box design as JSON?",
     answer:
-      "Yes. In the studio you can download a v1 JSON file that contains dimensions, materials, openings, viewport options, per-face rotations, and images as base64. Import that file on another machine or browser to restore the same preview. This is separate from automatic localStorage save.",
+      "Yes. In the studio you can download a v1 JSON file that contains dimensions, materials, openings, viewport options, per-face rotations, and images as base64. Import that file on another machine or browser to restore the same preview—useful for offline backups alongside cloud share links.",
   },
   {
     id: "export-formats",
     category: "export",
     question: "What file formats can I export?",
     answer:
-      "You can export a PNG snapshot of the 3D viewport for presentations and marketing, record a short MP4 video of the viewport, and save or share your full setup as a JSON file. There is no DXF, PDF die-line, or GLB export—the focus is fast visual preview.",
+      "You can save designs to the cloud with share links (File → Save / Save As), export a PNG snapshot of the 3D viewport for presentations and marketing, record a short MP4 video of the viewport, and download or import a full setup as JSON. There is no DXF, PDF die-line, or GLB export—the focus is fast visual preview.",
   },
   {
     id: "box-types",

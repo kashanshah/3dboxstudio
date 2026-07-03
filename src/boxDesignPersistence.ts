@@ -1,10 +1,6 @@
 import { MATERIAL_PRESETS } from "./materialPresets";
 import type { BoxDimensions, FaceId, LengthUnit, OpeningStyle, SplitTopHingeSide, TextureRotationDeg } from "./types";
 
-export const BOX_DESIGN_STORAGE_KEY = "3dboxstudio:v1";
-
-const LEGACY_BOX_DESIGN_STORAGE_KEY = "3d-box-designer:v1";
-
 const LENGTH_UNITS: LengthUnit[] = ["mm", "cm", "in"];
 const OPENINGS: OpeningStyle[] = ["closed", "lid_from_back", "top_split_meet_center", "door_left"];
 const SPLIT_HINGES: SplitTopHingeSide[] = ["side_a", "side_b"];
@@ -67,10 +63,37 @@ export function defaultBoxDesignerState(): BoxDesignerPersistedState {
   };
 }
 
-interface PersistedImageEntry {
+export interface PersistedImageEntry {
   name: string;
   mime: string;
   base64: string;
+}
+
+export interface RemoteImageEntry {
+  name: string;
+  mime: string;
+  url: string;
+}
+
+/** Validated v1 design JSON (images as base64 entries). Safe for server-side parsing. */
+export interface ParsedDesignV1 {
+  v: 1;
+  unit: LengthUnit;
+  dims: BoxDimensions;
+  materialId: string;
+  opening: OpeningStyle;
+  splitTopHingeSide: SplitTopHingeSide;
+  openT: number;
+  wireframe: boolean;
+  showGrid: boolean;
+  showAxesGizmo: boolean;
+  autoRotate: boolean;
+  autoRotateSpeed: number;
+  autoRotateReverse: boolean;
+  zoomFraction: number;
+  envPreset: EnvPreset;
+  textureRotationDeg: Partial<Record<FaceId, TextureRotationDeg>>;
+  faceImages: Partial<Record<FaceId, PersistedImageEntry>>;
 }
 
 interface PersistedJsonV1 {
@@ -165,6 +188,94 @@ function parseTextureRotations(raw: unknown): Partial<Record<FaceId, TextureRota
   return out;
 }
 
+function parseFaceImages(raw: unknown): Partial<Record<FaceId, PersistedImageEntry>> {
+  if (!isRecord(raw)) return {};
+  const out: Partial<Record<FaceId, PersistedImageEntry>> = {};
+  for (const id of ALL_FACE_IDS) {
+    const entry = raw[id];
+    if (!isRecord(entry)) continue;
+    const name = typeof entry.name === "string" ? entry.name : "image";
+    const mime = typeof entry.mime === "string" ? entry.mime : "application/octet-stream";
+    const base64 = typeof entry.base64 === "string" ? entry.base64 : "";
+    if (!base64) continue;
+    out[id] = { name, mime, base64 };
+  }
+  return out;
+}
+
+function parseRemoteFaceImages(raw: unknown): Partial<Record<FaceId, RemoteImageEntry>> {
+  if (!isRecord(raw)) return {};
+  const out: Partial<Record<FaceId, RemoteImageEntry>> = {};
+  for (const id of ALL_FACE_IDS) {
+    const entry = raw[id];
+    if (!isRecord(entry)) continue;
+    const name = typeof entry.name === "string" ? entry.name : "image";
+    const mime = typeof entry.mime === "string" ? entry.mime : "application/octet-stream";
+    const url = typeof entry.url === "string" ? entry.url : "";
+    if (!url) continue;
+    out[id] = { name, mime, url };
+  }
+  return out;
+}
+
+/** Parse and validate a v1 design export JSON (works on server and client). */
+export function parseDesignJsonV1(json: string): ParsedDesignV1 | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!isRecord(parsed) || parsed.v !== 1) return null;
+
+  const base = defaultBoxDesignerState();
+  return {
+    v: 1,
+    unit: isLengthUnit(parsed.unit) ? parsed.unit : base.unit,
+    dims: clampDims(parsed.dims),
+    materialId: validateMaterialId(parsed.materialId),
+    opening: isOpeningStyle(parsed.opening) ? parsed.opening : base.opening,
+    splitTopHingeSide: isSplitTopHingeSide(parsed.splitTopHingeSide)
+      ? parsed.splitTopHingeSide
+      : base.splitTopHingeSide,
+    openT:
+      typeof parsed.openT === "number" && Number.isFinite(parsed.openT)
+        ? Math.min(1, Math.max(0, parsed.openT))
+        : base.openT,
+    wireframe: typeof parsed.wireframe === "boolean" ? parsed.wireframe : base.wireframe,
+    showGrid: typeof parsed.showGrid === "boolean" ? parsed.showGrid : base.showGrid,
+    showAxesGizmo: typeof parsed.showAxesGizmo === "boolean" ? parsed.showAxesGizmo : base.showAxesGizmo,
+    autoRotate: typeof parsed.autoRotate === "boolean" ? parsed.autoRotate : base.autoRotate,
+    autoRotateSpeed: parseAutoRotateSpeed(parsed.autoRotateSpeed),
+    autoRotateReverse:
+      typeof parsed.autoRotateReverse === "boolean" ? parsed.autoRotateReverse : base.autoRotateReverse,
+    zoomFraction: parseZoomFraction(parsed.zoomFraction),
+    envPreset: isEnvPreset(parsed.envPreset) ? parsed.envPreset : base.envPreset,
+    textureRotationDeg: parseTextureRotations(parsed.textureRotationDeg),
+    faceImages: parseFaceImages(parsed.faceImages),
+  };
+}
+
+function parsedToPersistedState(parsed: ParsedDesignV1): Omit<BoxDesignerPersistedState, "faceFiles"> {
+  return {
+    unit: parsed.unit,
+    dims: parsed.dims,
+    textureRotationDeg: parsed.textureRotationDeg,
+    materialId: parsed.materialId,
+    opening: parsed.opening,
+    splitTopHingeSide: parsed.splitTopHingeSide,
+    openT: parsed.openT,
+    wireframe: parsed.wireframe,
+    showGrid: parsed.showGrid,
+    showAxesGizmo: parsed.showAxesGizmo,
+    autoRotate: parsed.autoRotate,
+    autoRotateSpeed: parsed.autoRotateSpeed,
+    autoRotateReverse: parsed.autoRotateReverse,
+    zoomFraction: parsed.zoomFraction,
+    envPreset: parsed.envPreset,
+  };
+}
+
 function fileToPersistedEntry(file: File): Promise<PersistedImageEntry> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -199,6 +310,17 @@ async function entryToFile(entry: unknown): Promise<File | null> {
   }
 }
 
+async function remoteEntryToFile(entry: RemoteImageEntry): Promise<File | null> {
+  try {
+    const res = await fetch(entry.url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new File([blob], entry.name, { type: entry.mime || blob.type || "application/octet-stream" });
+  } catch {
+    return null;
+  }
+}
+
 export async function serializeDesign(state: BoxDesignerPersistedState): Promise<string> {
   const faceImages: Partial<Record<FaceId, PersistedImageEntry>> = {};
   for (const id of ALL_FACE_IDS) {
@@ -228,87 +350,62 @@ export async function serializeDesign(state: BoxDesignerPersistedState): Promise
 }
 
 export async function deserializeDesign(json: string): Promise<BoxDesignerPersistedState | null> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed) || parsed.v !== 1) return null;
+  const parsed = parseDesignJsonV1(json);
+  if (!parsed) return null;
 
-  const base = defaultBoxDesignerState();
   const out: BoxDesignerPersistedState = {
-    ...base,
-    unit: isLengthUnit(parsed.unit) ? parsed.unit : base.unit,
-    dims: clampDims(parsed.dims),
-    materialId: validateMaterialId(parsed.materialId),
-    opening: isOpeningStyle(parsed.opening) ? parsed.opening : base.opening,
-    splitTopHingeSide: isSplitTopHingeSide(parsed.splitTopHingeSide) ? parsed.splitTopHingeSide : base.splitTopHingeSide,
-    openT:
-      typeof parsed.openT === "number" && Number.isFinite(parsed.openT)
-        ? Math.min(1, Math.max(0, parsed.openT))
-        : base.openT,
-    wireframe: typeof parsed.wireframe === "boolean" ? parsed.wireframe : base.wireframe,
-    showGrid: typeof parsed.showGrid === "boolean" ? parsed.showGrid : base.showGrid,
-    showAxesGizmo: typeof parsed.showAxesGizmo === "boolean" ? parsed.showAxesGizmo : base.showAxesGizmo,
-    autoRotate: typeof parsed.autoRotate === "boolean" ? parsed.autoRotate : base.autoRotate,
-    autoRotateSpeed: parseAutoRotateSpeed(parsed.autoRotateSpeed),
-    autoRotateReverse:
-      typeof parsed.autoRotateReverse === "boolean" ? parsed.autoRotateReverse : base.autoRotateReverse,
-    zoomFraction: parseZoomFraction(parsed.zoomFraction),
-    envPreset: isEnvPreset(parsed.envPreset) ? parsed.envPreset : base.envPreset,
-    textureRotationDeg: parseTextureRotations(parsed.textureRotationDeg),
+    ...parsedToPersistedState(parsed),
     faceFiles: {},
   };
 
-  const imgs = parsed.faceImages;
-  if (isRecord(imgs)) {
-    for (const id of ALL_FACE_IDS) {
-      const entry = imgs[id];
-      if (entry === undefined) continue;
-      const file = await entryToFile(entry);
-      if (file) out.faceFiles[id] = file;
-    }
+  for (const id of ALL_FACE_IDS) {
+    const entry = parsed.faceImages[id];
+    if (!entry) continue;
+    const file = await entryToFile(entry);
+    if (file) out.faceFiles[id] = file;
   }
 
   return out;
 }
 
-export function readDesignFromStorageSync(): string | null {
-  try {
-    const next = localStorage.getItem(BOX_DESIGN_STORAGE_KEY);
-    if (next) return next;
-    const legacy = localStorage.getItem(LEGACY_BOX_DESIGN_STORAGE_KEY);
-    if (!legacy) return null;
-    try {
-      localStorage.setItem(BOX_DESIGN_STORAGE_KEY, legacy);
-      localStorage.removeItem(LEGACY_BOX_DESIGN_STORAGE_KEY);
-    } catch {
-      /* keep legacy if quota blocks dual write */
-    }
-    return legacy;
-  } catch {
-    return null;
-  }
-}
+/** Load a design returned from GET /api/shares/[id] (images referenced by URL). */
+export async function deserializeSharedDesign(payload: unknown): Promise<BoxDesignerPersistedState | null> {
+  if (!isRecord(payload) || payload.v !== 1) return null;
 
-export function writeDesignToStorage(json: string): { ok: true } | { ok: false; message: string } {
-  try {
-    localStorage.setItem(BOX_DESIGN_STORAGE_KEY, json);
-    return { ok: true };
-  } catch (e) {
-    const msg = e instanceof DOMException && e.name === "QuotaExceededError"
-      ? "Browser storage is full. Try smaller images or clear other site data."
-      : "Could not save to browser storage.";
-    return { ok: false, message: msg };
-  }
-}
+  const base = defaultBoxDesignerState();
+  const out: BoxDesignerPersistedState = {
+    ...base,
+    unit: isLengthUnit(payload.unit) ? payload.unit : base.unit,
+    dims: clampDims(payload.dims),
+    materialId: validateMaterialId(payload.materialId),
+    opening: isOpeningStyle(payload.opening) ? payload.opening : base.opening,
+    splitTopHingeSide: isSplitTopHingeSide(payload.splitTopHingeSide)
+      ? payload.splitTopHingeSide
+      : base.splitTopHingeSide,
+    openT:
+      typeof payload.openT === "number" && Number.isFinite(payload.openT)
+        ? Math.min(1, Math.max(0, payload.openT))
+        : base.openT,
+    wireframe: typeof payload.wireframe === "boolean" ? payload.wireframe : base.wireframe,
+    showGrid: typeof payload.showGrid === "boolean" ? payload.showGrid : base.showGrid,
+    showAxesGizmo: typeof payload.showAxesGizmo === "boolean" ? payload.showAxesGizmo : base.showAxesGizmo,
+    autoRotate: typeof payload.autoRotate === "boolean" ? payload.autoRotate : base.autoRotate,
+    autoRotateSpeed: parseAutoRotateSpeed(payload.autoRotateSpeed),
+    autoRotateReverse:
+      typeof payload.autoRotateReverse === "boolean" ? payload.autoRotateReverse : base.autoRotateReverse,
+    zoomFraction: parseZoomFraction(payload.zoomFraction),
+    envPreset: isEnvPreset(payload.envPreset) ? payload.envPreset : base.envPreset,
+    textureRotationDeg: parseTextureRotations(payload.textureRotationDeg),
+    faceFiles: {},
+  };
 
-export function clearDesignFromStorage(): void {
-  try {
-    localStorage.removeItem(BOX_DESIGN_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_BOX_DESIGN_STORAGE_KEY);
-  } catch {
-    /* ignore */
+  const remoteImages = parseRemoteFaceImages(payload.faceImages);
+  for (const id of ALL_FACE_IDS) {
+    const entry = remoteImages[id];
+    if (!entry) continue;
+    const file = await remoteEntryToFile(entry);
+    if (file) out.faceFiles[id] = file;
   }
+
+  return out;
 }

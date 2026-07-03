@@ -11,18 +11,17 @@ import {
   type SyntheticEvent,
 } from "react";
 import { flushSync } from "react-dom";
+import { useSearchParams } from "next/navigation";
 import type { RootState } from "@react-three/fiber";
 import {
-  BOX_DESIGN_STORAGE_KEY,
-  clearDesignFromStorage,
-  defaultBoxDesignerState,
-  deserializeDesign,
-  readDesignFromStorageSync,
-  serializeDesign,
-  writeDesignToStorage,
+  deserializeSharedDesign,
   type BoxDesignerPersistedState,
   type EnvPreset,
 } from "./boxDesignPersistence";
+import StudioFileModals from "./components/studio/StudioFileModals";
+import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
+import StudioMenuBar from "./components/studio/StudioMenuBar";
+import { useStudioDocument } from "./hooks/useStudioDocument";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { useFaceObjectUrls } from "./hooks/useTextures";
@@ -105,6 +104,8 @@ function PanelCollapse({ title, children }: { title: string; children: ReactNode
 }
 
 export default function BoxDesigner() {
+  const searchParams = useSearchParams();
+  const shareIdFromUrl = searchParams.get("share");
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
@@ -121,8 +122,8 @@ export default function BoxDesigner() {
   const [autoRotateReverse, setAutoRotateReverse] = useState(false);
   const [zoomFraction, setZoomFraction] = useState(0.5);
   const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
-  const [canPersist, setCanPersist] = useState(false);
-  const [persistMessage, setPersistMessage] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl);
+  const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
 
   const r3fRef = useRef<RootState | null>(null);
   const {
@@ -242,106 +243,54 @@ export default function BoxDesigner() {
     setEnvPreset(restored.envPreset);
   }, []);
 
+  const doc = useStudioDocument({
+    buildPersistState,
+    applyPersistedState,
+    initialShareId: shareIdFromUrl,
+    sessionReady,
+  });
+
   useEffect(() => {
+    if (!shareIdFromUrl) return;
+
     let cancelled = false;
-    const raw = readDesignFromStorageSync();
-    if (!raw) {
-      setCanPersist(true);
-      return () => {
-        cancelled = true;
-      };
-    }
-    void deserializeDesign(raw).then((restored) => {
-      if (cancelled) return;
-      if (restored) applyPersistedState(restored);
-      setCanPersist(true);
-    }).catch(() => {
-      if (!cancelled) setCanPersist(true);
-    });
+
+    void (async () => {
+      try {
+        const res = await fetch(`/api/shares/${encodeURIComponent(shareIdFromUrl)}`);
+        const data: unknown = res.ok ? await res.json() : null;
+        if (cancelled) return;
+        if (!res.ok || !data) {
+          doc.showStatus(
+            typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
+              ? (data as { error: string }).error
+              : "Could not load shared design.",
+            5000
+          );
+          return;
+        }
+        const restored = await deserializeSharedDesign(data);
+        if (cancelled) return;
+        if (restored) {
+          applyPersistedState(restored);
+          doc.showStatus("Opened shared design from link.");
+        } else {
+          doc.showStatus("Shared design could not be restored.", 5000);
+        }
+      } catch {
+        if (!cancelled) doc.showStatus("Could not load shared design.", 5000);
+      } finally {
+        if (!cancelled) {
+          setSessionReady(true);
+          doc.markClean();
+        }
+      }
+    })();
+
     return () => {
       cancelled = true;
     };
-  }, [applyPersistedState]);
-
-  const importJsonInputRef = useRef<HTMLInputElement>(null);
-
-  const exportDesignJson = useCallback(() => {
-    void (async () => {
-      const json = await serializeDesign(buildPersistState());
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `3d-box-design-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setPersistMessage("JSON file downloaded (includes embedded images).");
-      window.setTimeout(() => setPersistMessage(null), 4000);
-    })();
-  }, [buildPersistState]);
-
-  const onImportJsonChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      e.target.value = "";
-      if (!file) return;
-      void (async () => {
-        let text: string;
-        try {
-          text = await file.text();
-        } catch {
-          setPersistMessage("Could not read that file.");
-          window.setTimeout(() => setPersistMessage(null), 5000);
-          return;
-        }
-        const restored = await deserializeDesign(text);
-        if (!restored) {
-          setPersistMessage("Invalid JSON: expected a v1 design export from this studio.");
-          window.setTimeout(() => setPersistMessage(null), 5000);
-          return;
-        }
-        applyPersistedState(restored);
-        setPersistMessage(`Imported “${file.name}”.`);
-        window.setTimeout(() => setPersistMessage(null), 4000);
-      })();
-    },
-    [applyPersistedState]
-  );
-
-  useEffect(() => {
-    if (!canPersist) return;
-    const t = window.setTimeout(() => {
-      void (async () => {
-        const json = await serializeDesign(buildPersistState());
-        const r = writeDesignToStorage(json);
-        if (!r.ok) setPersistMessage(r.message);
-      })();
-    }, 900);
-    return () => window.clearTimeout(t);
-  }, [canPersist, buildPersistState]);
-
-  const saveDesignNow = useCallback(() => {
-    void (async () => {
-      const json = await serializeDesign(buildPersistState());
-      const r = writeDesignToStorage(json);
-      setPersistMessage(r.ok ? "Saved to this browser." : r.message);
-      window.setTimeout(() => setPersistMessage(null), 4000);
-    })();
-  }, [buildPersistState]);
-
-  const eraseSavedDesign = useCallback(() => {
-    if (
-      !window.confirm(
-        "Remove the saved design from this browser and reset all fields (including images) to defaults?"
-      )
-    ) {
-      return;
-    }
-    clearDesignFromStorage();
-    applyPersistedState(defaultBoxDesignerState());
-    setPersistMessage("Saved layout cleared.");
-    window.setTimeout(() => setPersistMessage(null), 4000);
-  }, [applyPersistedState]);
+  }, [applyPersistedState, shareIdFromUrl, doc.showStatus, doc.markClean]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomFraction(Math.min(1, Math.max(0, t)));
@@ -420,7 +369,25 @@ export default function BoxDesigner() {
   const dimHint = `Scene units: centimeters (converted from ${unit})`;
 
   return (
-    <div className="box-designer-root">
+    <div className="studio-workspace">
+      <StudioMenuBar
+        documentTitle={doc.documentTitle}
+        cloudBusy={doc.cloudBusy}
+        onOpenModal={doc.setModal}
+        onOpenHelpModal={setHelpModal}
+        onSave={() => void doc.saveCloud()}
+        onSaveAs={() => {
+          doc.setSaveAsLink(null);
+          doc.setModal("save-as");
+        }}
+        onNew={doc.requestNew}
+      />
+      {doc.statusMessage && (
+        <div className="studio-status-banner" role="status">
+          {doc.statusMessage}
+        </div>
+      )}
+      <div className="box-designer-root">
       <div
         style={{
           position: "relative",
@@ -554,46 +521,19 @@ export default function BoxDesigner() {
         <header style={{ marginBottom: "1.25rem" }}>
           <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
           <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>
-            Dimensions, materials, openings, and per-face artwork.
+            Dimensions, materials, openings, and per-face artwork. Use <strong>File</strong> for open, save, and import/export.
+          </p>
+          <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: "var(--muted)" }}>
+            {doc.activeShareId ? (
+              <>
+                Cloud share · <span className="dim-badge">{doc.activeShareId}</span>
+                {doc.isDirty ? " · unsaved changes" : " · saved"}
+              </>
+            ) : (
+              <>Use File → Save or Save As to upload this design and get a share link.</>
+            )}
           </p>
         </header>
-
-        <PanelCollapse title="Saved design">
-          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            Everything below is stored in your browser under <span className="dim-badge">{BOX_DESIGN_STORAGE_KEY}</span> and
-            reapplied on reload (images as base64; very large files may hit storage limits). Use JSON to move a design
-            between browsers, email a snapshot, or keep versioned backups outside localStorage.
-          </p>
-          <div className="row-2">
-            <button type="button" className="btn btn-primary" onClick={saveDesignNow}>
-              Save now
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={eraseSavedDesign}>
-              Clear saved & reset
-            </button>
-          </div>
-          <div className="row-2" style={{ marginTop: "0.55rem" }}>
-            <button type="button" className="btn" onClick={exportDesignJson}>
-              Export JSON
-            </button>
-            <button type="button" className="btn" onClick={() => importJsonInputRef.current?.click()}>
-              Import JSON…
-            </button>
-          </div>
-          <input
-            ref={importJsonInputRef}
-            type="file"
-            accept="application/json,.json"
-            style={{ display: "none" }}
-            aria-label="Import design from JSON file"
-            onChange={onImportJsonChange}
-          />
-          {persistMessage && (
-            <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.55rem 0 0" }} role="status">
-              {persistMessage}
-            </p>
-          )}
-        </PanelCollapse>
 
         <PanelCollapse title="Outer dimensions">
           <div style={{ marginBottom: "0.65rem" }}>
@@ -932,6 +872,9 @@ export default function BoxDesigner() {
           </div>
         </PanelCollapse>
       </aside>
+      </div>
+      <StudioFileModals doc={doc} />
+      <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
     </div>
   );
 }
