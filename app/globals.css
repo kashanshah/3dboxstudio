@@ -216,7 +216,7 @@ label {
 @media (max-width: 960px) {
   .box-designer-root {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(280px, 45vh) minmax(0, 1fr);
+    grid-template-rows: minmax(280px, 75vh) minmax(0, 1fr);
   }
 }
 
