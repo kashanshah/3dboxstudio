@@ -15,12 +15,14 @@ type StudioMenuBarProps = {
   cloudBusy: boolean;
   viewOnly: boolean;
   canRename: boolean;
+  canSaveCopy: boolean;
   canSharePreview: boolean;
   user: AuthUser | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
   onSaveAs: () => void;
+  onSaveCopy: () => void;
   onRename: () => void;
   onSharePreview: () => void;
   onCopyPreviewLink: () => void;
@@ -47,12 +49,14 @@ export default function StudioMenuBar({
   cloudBusy,
   viewOnly,
   canRename,
+  canSaveCopy,
   canSharePreview,
   user,
   onOpenModal,
   onOpenHelpModal,
   onSave,
   onSaveAs,
+  onSaveCopy,
   onRename,
   onSharePreview,
   onCopyPreviewLink,
@@ -195,6 +199,15 @@ export default function StudioMenuBar({
               >
                 <span>Save As…</span>
                 <kbd>⇧⌘S</kbd>
+              </button>
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={cloudBusy || !canSaveCopy}
+                onClick={() => pickFile(onSaveCopy)}
+              >
+                <span>Save a Copy…</span>
               </button>
               <button
                 type="button"

@@ -56,3 +56,23 @@ export async function sendVerificationEmail(to: string, name: string | null, ver
   const text = `${name ? `Hi ${name},` : "Hi,"}\n\nVerify your email for 3D Box Studio:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
   await sendEmail({ to, subject: "Verify your email · 3D Box Studio", html, text });
 }
+
+export async function sendPasswordResetEmail(to: string, name: string | null, resetUrl: string): Promise<void> {
+  const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
+  const safeUrl = escapeHtml(resetUrl);
+  const html = `
+    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
+      <h1 style="font-size: 20px; margin: 0 0 16px;">Reset your password</h1>
+      <p style="margin: 0 0 12px;">${greeting}</p>
+      <p style="margin: 0 0 16px;">We received a request to reset the password for your <strong>3D Box Studio</strong> account. Click below to choose a new password.</p>
+      <p style="margin: 0 0 24px;">
+        <a href="${safeUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 600;">Reset password</a>
+      </p>
+      <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">Or paste this link into your browser:</p>
+      <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${safeUrl}" style="color: #2563eb;">${safeUrl}</a></p>
+      <p style="margin: 0; font-size: 12px; color: #94a3b8;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>
+    </div>
+  `;
+  const text = `${name ? `Hi ${name},` : "Hi,"}\n\nReset your 3D Box Studio password:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`;
+  await sendEmail({ to, subject: "Reset your password · 3D Box Studio", html, text });
+}

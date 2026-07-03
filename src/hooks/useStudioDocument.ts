@@ -118,6 +118,7 @@ export function useStudioDocument({
   const [saveAsPreviewLink, setSaveAsPreviewLink] = useState<string | null>(null);
   const [saveAsName, setSaveAsName] = useState("");
   const [saveAsNameError, setSaveAsNameError] = useState<string | null>(null);
+  const [saveAsIsCopy, setSaveAsIsCopy] = useState(false);
   const [renameInput, setRenameInput] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
   const [openInput, setOpenInput] = useState("");
@@ -203,6 +204,21 @@ export function useStudioDocument({
     setSaveAsPreviewLink(null);
     setSaveAsName(activeShareName ?? "");
     setSaveAsNameError(null);
+    setSaveAsIsCopy(false);
+    setModal("save-as");
+  }, [activeShareName, viewOnly, ensureCloudAccess]);
+
+  // Duplicate the current design into a brand-new project. Reuses the "Save As"
+  // create flow (new id, fresh images/preview) so the original stays untouched.
+  const openSaveCopyModal = useCallback(() => {
+    if (viewOnly) return;
+    if (!ensureCloudAccess()) return;
+    setSaveAsLink(null);
+    setSaveAsPreviewLink(null);
+    const base = activeShareName ? `Copy of ${activeShareName}` : "Copy of design";
+    setSaveAsName(base.slice(0, 120));
+    setSaveAsNameError(null);
+    setSaveAsIsCopy(true);
     setModal("save-as");
   }, [activeShareName, viewOnly, ensureCloudAccess]);
 
@@ -627,6 +643,7 @@ export function useStudioDocument({
     setSaveAsName,
     saveAsNameError,
     setSaveAsNameError,
+    saveAsIsCopy,
     renameInput,
     setRenameInput,
     renameError,
@@ -640,6 +657,7 @@ export function useStudioDocument({
     saveCloud,
     saveCloudAs,
     openSaveAsModal,
+    openSaveCopyModal,
     openRenameModal,
     openSharePreviewModal,
     renameCloudShare,

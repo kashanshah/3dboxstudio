@@ -19,6 +19,7 @@ type AuthContextValue = {
   signUp: (email: string, password: string, name: string) => Promise<AuthActionResult>;
   signOut: () => Promise<void>;
   resendVerification: () => Promise<AuthActionResult>;
+  forgotPassword: (email: string) => Promise<AuthActionResult>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -130,8 +131,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const forgotPassword = useCallback<AuthContextValue["forgotPassword"]>(async (email) => {
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, error: readError(data, "Could not send the reset email.") };
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Please try again." };
+    }
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, refresh, signIn, signUp, signOut, resendVerification }}>
+    <AuthContext.Provider
+      value={{ user, loading, refresh, signIn, signUp, signOut, resendVerification, forgotPassword }}
+    >
       {children}
     </AuthContext.Provider>
   );

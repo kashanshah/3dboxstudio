@@ -75,3 +75,13 @@ export async function markEmailVerified(userId: string): Promise<void> {
     WHERE id = ${userId}
   `;
 }
+
+export async function updatePassword(userId: string, password: string): Promise<void> {
+  const sql = getSql();
+  const passwordHash = await hashPassword(password);
+  await sql`
+    UPDATE users
+    SET password_hash = ${passwordHash}
+    WHERE id = ${userId}
+  `;
+}

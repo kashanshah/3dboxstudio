@@ -26,6 +26,12 @@ export async function deleteSession(token: string): Promise<void> {
   await sql`DELETE FROM sessions WHERE token = ${token}`;
 }
 
+/** Revokes every active session for a user (e.g. after a password reset). */
+export async function deleteUserSessions(userId: string): Promise<void> {
+  const sql = getSql();
+  await sql`DELETE FROM sessions WHERE user_id = ${userId}`;
+}
+
 async function getUserForSession(token: string): Promise<UserRow | null> {
   const sql = getSql();
   const rows = (await sql`

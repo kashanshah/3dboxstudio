@@ -4,31 +4,45 @@ import { useEffect, useState } from "react";
 import StudioDialog from "../studio/StudioDialog";
 import { useAuth } from "./AuthProvider";
 
-type AuthMode = "signin" | "signup";
+type AuthMode = "signin" | "signup" | "forgot";
 
 type AuthModalProps = {
   open: boolean;
-  initialMode?: AuthMode;
+  initialMode?: "signin" | "signup";
   onClose: () => void;
   onSuccess?: () => void;
 };
 
+const titles: Record<AuthMode, string> = {
+  signin: "Sign in",
+  signup: "Create your account",
+  forgot: "Reset your password",
+};
+
 export default function AuthModal({ open, initialMode = "signin", onClose, onSuccess }: AuthModalProps) {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, forgotPassword } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (open) {
       setMode(initialMode);
       setError(null);
+      setNotice(null);
       setPassword("");
     }
   }, [open, initialMode]);
+
+  const switchMode = (next: AuthMode) => {
+    setMode(next);
+    setError(null);
+    setNotice(null);
+  };
 
   const submit = async () => {
     setError(null);
@@ -36,6 +50,19 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       setError("Enter your email address.");
       return;
     }
+
+    if (mode === "forgot") {
+      setBusy(true);
+      const result = await forgotPassword(email.trim());
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setNotice("If an account exists for that email, we've sent a password reset link. Check your inbox.");
+      return;
+    }
+
     if (mode === "signup" && password.length < 8) {
       setError("Password must be at least 8 characters.");
       return;
@@ -54,9 +81,17 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
     onClose();
   };
 
+  const submitLabel = busy
+    ? "Please wait…"
+    : mode === "signin"
+      ? "Sign in"
+      : mode === "signup"
+        ? "Create account"
+        : "Send reset link";
+
   return (
     <StudioDialog
-      title={mode === "signin" ? "Sign in" : "Create your account"}
+      title={titles[mode]}
       open={open}
       onClose={onClose}
       footer={
@@ -65,7 +100,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
             Cancel
           </button>
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void submit()}>
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            {submitLabel}
           </button>
         </>
       }
@@ -73,7 +108,9 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       <p className="studio-dialog-lead">
         {mode === "signin"
           ? "Sign in to open, save, and share your projects."
-          : "Create a free account to save your projects to the cloud. We'll email you a link to verify your address."}
+          : mode === "signup"
+            ? "Create a free account to save your projects to the cloud. We'll email you a link to verify your address."
+            : "Enter your account email and we'll send you a link to choose a new password."}
       </p>
 
       {mode === "signup" && (
@@ -110,24 +147,36 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
         autoFocus
       />
 
-      <label className="studio-dialog-label" htmlFor="auth-password">
-        Password
-      </label>
-      <input
-        id="auth-password"
-        className="studio-dialog-input"
-        type="password"
-        autoComplete={mode === "signin" ? "current-password" : "new-password"}
-        placeholder={mode === "signup" ? "At least 8 characters" : ""}
-        value={password}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          setError(null);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") void submit();
-        }}
-      />
+      {mode !== "forgot" && (
+        <>
+          <label className="studio-dialog-label" htmlFor="auth-password">
+            Password
+          </label>
+          <input
+            id="auth-password"
+            className="studio-dialog-input"
+            type="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            placeholder={mode === "signup" ? "At least 8 characters" : ""}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void submit();
+            }}
+          />
+        </>
+      )}
+
+      {mode === "signin" && (
+        <div className="studio-auth-forgot-row">
+          <button type="button" className="studio-auth-switch" onClick={() => switchMode("forgot")}>
+            Forgot password?
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className="studio-dialog-error" role="alert">
@@ -135,19 +184,34 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
         </p>
       )}
 
+      {notice && (
+        <p className="studio-dialog-notice" role="status">
+          {notice}
+        </p>
+      )}
+
       <p className="studio-dialog-hint">
-        {mode === "signin" ? (
+        {mode === "signin" && (
           <>
             No account yet?{" "}
-            <button type="button" className="studio-auth-switch" onClick={() => setMode("signup")}>
+            <button type="button" className="studio-auth-switch" onClick={() => switchMode("signup")}>
               Create one
             </button>
           </>
-        ) : (
+        )}
+        {mode === "signup" && (
           <>
             Already have an account?{" "}
-            <button type="button" className="studio-auth-switch" onClick={() => setMode("signin")}>
+            <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
               Sign in
+            </button>
+          </>
+        )}
+        {mode === "forgot" && (
+          <>
+            Remembered it?{" "}
+            <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
+              Back to sign in
             </button>
           </>
         )}

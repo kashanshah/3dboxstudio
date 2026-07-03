@@ -171,7 +171,7 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
       </StudioDialog>
 
       <StudioDialog
-        title="Save As"
+        title={doc.saveAsIsCopy ? "Save a Copy" : "Save As"}
         open={doc.modal === "save-as"}
         onClose={() => {
           doc.setModal(null);
@@ -206,9 +206,13 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
         {doc.saveAsLink ? (
           <>
             <p className="studio-dialog-lead">
-              {doc.activeShareName
-                ? `“${doc.activeShareName}” was uploaded. Copy an editor link for yourself or a view-only preview link for clients.`
-                : "Your design was uploaded. Copy an editor link for yourself or a view-only preview link for clients."}
+              {doc.saveAsIsCopy
+                ? doc.activeShareName
+                  ? `A copy “${doc.activeShareName}” was created as a new project. Copy an editor link for yourself or a view-only preview link for clients.`
+                  : "A copy was created as a new project. Copy an editor link for yourself or a view-only preview link for clients."
+                : doc.activeShareName
+                  ? `“${doc.activeShareName}” was uploaded. Copy an editor link for yourself or a view-only preview link for clients.`
+                  : "Your design was uploaded. Copy an editor link for yourself or a view-only preview link for clients."}
             </p>
             <label className="studio-dialog-label">Editor link</label>
             <input className="studio-dialog-input" type="text" readOnly value={doc.saveAsLink} onFocus={(e) => e.target.select()} />
@@ -228,7 +232,9 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
         ) : (
           <>
             <p className="studio-dialog-lead">
-              Upload the current design to the cloud and get a new shareable link. Images and settings are stored on AWS; config is saved in the database.
+              {doc.saveAsIsCopy
+                ? "Duplicate this design as a new project with its own link. Your original project stays unchanged."
+                : "Upload the current design to the cloud and get a new shareable link. Images and settings are stored on AWS; config is saved in the database."}
             </p>
             <label className="studio-dialog-label" htmlFor="studio-save-as-name">
               Design name <span className="studio-dialog-optional">(optional)</span>

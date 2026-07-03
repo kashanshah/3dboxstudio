@@ -131,6 +131,18 @@ await sql`
 await sql`CREATE INDEX IF NOT EXISTS idx_email_verification_user ON email_verification_tokens (user_id)`;
 console.log("OK: email_verification_tokens table is ready.");
 
+await sql`
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    consumed_at TIMESTAMPTZ
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens (user_id)`;
+console.log("OK: password_reset_tokens table is ready.");
+
 await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`;
 await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id)`;
 console.log("OK: shared_designs.user_id column is ready.");

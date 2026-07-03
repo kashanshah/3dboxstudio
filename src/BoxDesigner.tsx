@@ -505,8 +505,10 @@ export default function BoxDesigner({
         onOpenHelpModal={setHelpModal}
         onSave={() => void doc.saveCloud()}
         onSaveAs={doc.openSaveAsModal}
+        onSaveCopy={doc.openSaveCopyModal}
         onRename={doc.openRenameModal}
         canRename={Boolean(doc.activeShareId)}
+        canSaveCopy={Boolean(doc.activeShareId)}
         canSharePreview={Boolean(doc.activePreviewToken)}
         onSharePreview={doc.openSharePreviewModal}
         onCopyPreviewLink={() => void doc.copyPreviewLink()}
