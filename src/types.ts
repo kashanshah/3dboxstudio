@@ -89,6 +89,18 @@ export const faceLabels: Record<FaceId, string> = {
   topRight: "Top — right flap",
 };
 
+/** Short labels shown on box walls when no artwork is uploaded. */
+export const faceShortLabels: Record<FaceId, string> = {
+  front: "Front",
+  back: "Back",
+  left: "Left",
+  right: "Right",
+  top: "Top",
+  bottom: "Bottom",
+  topLeft: "Top left",
+  topRight: "Top right",
+};
+
 export function openingRequiresSplitTop(o: OpeningStyle): boolean {
   return o === "top_split_meet_center";
 }
