@@ -5,7 +5,7 @@ import { normalizeShareName } from "@/lib/shareName";
 import { appendShareCacheVersion, toShareCacheVersion } from "@/lib/shareUrl";
 import { getSql } from "./db";
 import { SHARE_MAX_IMAGE_BYTES, SHARE_MAX_OG_IMAGE_BYTES, shareMaxPayloadBytes, shareTtlDays } from "./env";
-import { getShareObject, uploadShareFaceImage, uploadShareOgImage } from "./s3";
+import { getShareObject, publicUrlForKey, uploadShareFaceImage, uploadShareOgImage } from "./s3";
 import { customAlphabet } from "nanoid";
 
 const SHARE_FACE_IDS = new Set<FaceId>([...ALL_FACES, ...SPLIT_TOP_FACES, "top"]);
@@ -155,15 +155,9 @@ async function saveOgImage(
   };
 }
 
-function buildShareOgImageUrl(origin: string, shareId: string, cacheVersion: number | null): string {
-  return appendShareCacheVersion(`${origin}/api/shares/${encodeURIComponent(shareId)}/og-image`, cacheVersion);
-}
-
-function buildPreviewOgImageUrl(origin: string, previewToken: string, cacheVersion: number | null): string {
-  return appendShareCacheVersion(
-    `${origin}/api/shares/preview/${encodeURIComponent(previewToken)}/og-image`,
-    cacheVersion
-  );
+function buildOgImagePublicUrl(ogImageKey: string | null, cacheVersion: number | null): string | null {
+  if (!ogImageKey) return null;
+  return appendShareCacheVersion(publicUrlForKey(ogImageKey), cacheVersion);
 }
 
 function buildPreviewCanonicalPath(previewToken: string, cacheVersion: number | null): string {
@@ -208,7 +202,7 @@ export async function createShare(
   const images = await uploadDesignImages(id, parsed);
   const config = stripImages(parsed);
   const shareName = normalizeShareName(name);
-  const ogMeta = await saveOgImage(id, ogImage);
+  const ogMeta = ogImage ? await saveOgImage(id, ogImage) : { og_image_key: null, og_image_width: null, og_image_height: null };
   const ttlDays = shareTtlDays();
   const sql = getSql();
 
@@ -273,7 +267,7 @@ export async function updateShare(
 
   const images = await uploadDesignImages(id, parsed);
   const config = stripImages(parsed);
-  const ogMeta = await saveOgImage(id, ogImage);
+  const ogMeta = ogImage ? await saveOgImage(id, ogImage) : null;
   const ttlDays = shareTtlDays();
 
   const updatedRows = (await sql`
@@ -282,9 +276,9 @@ export async function updateShare(
       config = ${JSON.stringify(config)}::jsonb,
       images = ${JSON.stringify(images)}::jsonb,
       expires_at = NOW() + (${ttlDays} * INTERVAL '1 day'),
-      og_image_key = COALESCE(${ogMeta.og_image_key}, og_image_key),
-      og_image_width = COALESCE(${ogMeta.og_image_width}, og_image_width),
-      og_image_height = COALESCE(${ogMeta.og_image_height}, og_image_height),
+      og_image_key = COALESCE(${ogMeta?.og_image_key ?? null}, og_image_key),
+      og_image_width = COALESCE(${ogMeta?.og_image_width ?? null}, og_image_width),
+      og_image_height = COALESCE(${ogMeta?.og_image_height ?? null}, og_image_height),
       updated_at = NOW()
     WHERE id = ${id}
     RETURNING updated_at
@@ -324,6 +318,65 @@ export async function renameShare(
   return { id, name: shareName, updatedAt: rows[0].updated_at };
 }
 
+export async function updateShareOgImage(
+  shareId: string,
+  pngBuffer: Buffer,
+  width: number,
+  height: number
+): Promise<{ ogImageUrl: string; width: number; height: number; updatedAt: string }> {
+  if (!SHARE_TOKEN_RE.test(shareId)) {
+    throw new ShareError("Invalid share id.", 400);
+  }
+  if (!pngBuffer.byteLength) {
+    throw new ShareError("Preview image is empty.", 400);
+  }
+  if (pngBuffer.byteLength > SHARE_MAX_OG_IMAGE_BYTES) {
+    throw new ShareError("Preview image is too large.", 413);
+  }
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    throw new ShareError("Invalid preview image dimensions.", 400);
+  }
+
+  const sql = getSql();
+  const existing = (await sql`
+    SELECT id FROM shared_designs
+    WHERE id = ${shareId}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    LIMIT 1
+  `) as { id: string }[];
+
+  if (!existing[0]) {
+    throw new ShareError("Share not found or expired.", 404);
+  }
+
+  const uploaded = await uploadShareOgImage(shareId, pngBuffer);
+  const imageWidth = Math.round(width);
+  const imageHeight = Math.round(height);
+
+  const rows = (await sql`
+    UPDATE shared_designs
+    SET
+      og_image_key = ${uploaded.s3Key},
+      og_image_width = ${imageWidth},
+      og_image_height = ${imageHeight},
+      updated_at = NOW()
+    WHERE id = ${shareId}
+    RETURNING updated_at
+  `) as { updated_at: string }[];
+
+  const updatedAt = rows[0]?.updated_at;
+  if (!updatedAt) {
+    throw new ShareError("Share not found or expired.", 404);
+  }
+
+  return {
+    ogImageUrl: publicUrlForKey(uploaded.s3Key),
+    width: imageWidth,
+    height: imageHeight,
+    updatedAt,
+  };
+}
+
 type ShareRow = {
   id: string;
   preview_token: string;
@@ -352,13 +405,11 @@ export async function getShareSeoMeta(shareId: string): Promise<ShareSeoMeta | n
   const row = rows[0];
   if (!row) return null;
 
-  const { getSiteOrigin } = await import("@/lib/siteOrigin");
-  const origin = getSiteOrigin();
   const cacheVersion = toShareCacheVersion(row.updated_at);
 
   return {
     name: row.name ?? null,
-    ogImageUrl: row.og_image_key ? buildShareOgImageUrl(origin, shareId, cacheVersion) : null,
+    ogImageUrl: buildOgImagePublicUrl(row.og_image_key, cacheVersion),
     ogImageWidth: row.og_image_width ?? null,
     ogImageHeight: row.og_image_height ?? null,
     canonicalPath: `/studio/${shareId}`,
@@ -382,13 +433,11 @@ export async function getShareSeoMetaByPreviewToken(previewToken: string): Promi
   const row = rows[0];
   if (!row) return null;
 
-  const { getSiteOrigin } = await import("@/lib/siteOrigin");
-  const origin = getSiteOrigin();
   const cacheVersion = toShareCacheVersion(row.updated_at);
 
   return {
     name: row.name ?? null,
-    ogImageUrl: row.og_image_key ? buildPreviewOgImageUrl(origin, previewToken, cacheVersion) : null,
+    ogImageUrl: buildOgImagePublicUrl(row.og_image_key, cacheVersion),
     ogImageWidth: row.og_image_width ?? null,
     ogImageHeight: row.og_image_height ?? null,
     canonicalPath: buildPreviewCanonicalPath(previewToken, cacheVersion),

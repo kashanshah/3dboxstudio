@@ -15,8 +15,8 @@ export async function PUT(req: Request, context: RouteContext) {
     if (!rawBody.trim()) {
       return NextResponse.json({ error: "Request body is empty." }, { status: 400 });
     }
-    const { designJson, ogImage } = parseShareSaveRequest(req, rawBody);
-    const result = await updateShare(id, designJson, ogImage);
+    const { designJson } = parseShareSaveRequest(req, rawBody);
+    const result = await updateShare(id, designJson);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

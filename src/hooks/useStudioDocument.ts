@@ -18,6 +18,7 @@ import {
   type RecentDesignEntry,
 } from "@/lib/recentDesigns";
 import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/shareName";
+import { uploadShareOgImageToCloud, type ShareOgImageBlob } from "@/lib/shareOgImage";
 
 export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "share-preview" | "export" | "import" | "new" | null;
 
@@ -77,36 +78,18 @@ type UseStudioDocumentOptions = {
   initialShareId: string | null;
   sessionReady: boolean;
   viewOnly?: boolean;
-  capturePreviewImage?: () => Promise<{
-    base64Png: string;
-    width: number;
-    height: number;
-  } | null>;
+  capturePreviewImage?: () => Promise<ShareOgImageBlob | null>;
 };
 
-async function buildSaveRequest(
-  designJson: string,
-  capturePreviewImage?: UseStudioDocumentOptions["capturePreviewImage"]
-): Promise<{ headers: Record<string, string>; body: string }> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-  if (!capturePreviewImage) {
-    return { headers, body: designJson };
-  }
-
-  try {
-    const preview = await capturePreviewImage();
-    if (!preview) return { headers, body: designJson };
-    return {
-      headers,
-      body: JSON.stringify({
-        design: JSON.parse(designJson),
-        ogImage: preview,
-      }),
-    };
-  } catch {
-    return { headers, body: designJson };
-  }
+async function uploadOgPreviewIfPresent(
+  shareId: string,
+  preview: ShareOgImageBlob | null,
+  onPhase: (message: string) => void
+): Promise<number | null> {
+  if (!preview) return null;
+  onPhase("Uploading preview image to cloud…");
+  await uploadShareOgImageToCloud(shareId, preview);
+  return Date.now();
 }
 
 export function useStudioDocument({
@@ -125,6 +108,7 @@ export function useStudioDocument({
   const [modal, setModal] = useState<StudioFileModal>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [cloudBusy, setCloudBusy] = useState(false);
+  const [saveOverlayMessage, setSaveOverlayMessage] = useState<string | null>(null);
   const [saveAsLink, setSaveAsLink] = useState<string | null>(null);
   const [saveAsPreviewLink, setSaveAsPreviewLink] = useState<string | null>(null);
   const [saveAsName, setSaveAsName] = useState("");
@@ -309,26 +293,38 @@ export function useStudioDocument({
       return;
     }
     setCloudBusy(true);
+    setSaveOverlayMessage("Saving design to cloud…");
     try {
+      let preview: ShareOgImageBlob | null = null;
+      if (capturePreviewImage) {
+        try {
+          preview = await capturePreviewImage();
+        } catch {
+          preview = null;
+        }
+      }
+
       const json = await serializeDesign(buildPersistState());
-      const { headers, body } = await buildSaveRequest(json, capturePreviewImage);
       const res = await fetch(`/api/shares/${encodeURIComponent(activeShareId)}`, {
         method: "PUT",
-        headers,
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: json,
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
       const result = parseShareResult(data);
       if (result.name !== undefined) setActiveShareName(normalizeShareName(result.name));
       if (result.previewToken) setActivePreviewToken(result.previewToken);
-      setPreviewCacheVersion(readShareUpdatedAt(result));
+
+      const ogUpdatedAt = await uploadOgPreviewIfPresent(activeShareId, preview, setSaveOverlayMessage);
+      setPreviewCacheVersion(ogUpdatedAt ?? readShareUpdatedAt(result));
       setIsDirty(false);
       rememberRecent(activeShareId, "saved", undefined, result.name ?? activeShareName);
       showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
     } finally {
+      setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
   }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly]);
@@ -344,16 +340,26 @@ export function useStudioDocument({
     const normalizedName = normalizeShareName(saveAsName);
     setSaveAsNameError(null);
     setCloudBusy(true);
+    setSaveOverlayMessage("Saving design to cloud…");
     setSaveAsLink(null);
     try {
+      let preview: ShareOgImageBlob | null = null;
+      if (capturePreviewImage) {
+        try {
+          preview = await capturePreviewImage();
+        } catch {
+          preview = null;
+        }
+      }
+
       const json = await serializeDesign(buildPersistState());
-      const { headers, body } = await buildSaveRequest(json, capturePreviewImage);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (normalizedName) headers["X-Share-Name"] = normalizedName;
 
       const res = await fetch("/api/shares", {
         method: "POST",
         headers,
-        body,
+        body: json,
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not create share link."));
@@ -362,12 +368,15 @@ export function useStudioDocument({
       setActiveShareId(id);
       setActivePreviewToken(previewToken ?? null);
       setActiveShareName(resolvedName);
-      setPreviewCacheVersion(toShareCacheVersion(updatedAt));
       syncUrlToShare(id);
+
+      const ogUpdatedAt = await uploadOgPreviewIfPresent(id, preview, setSaveOverlayMessage);
+      const cacheVersion = ogUpdatedAt ?? toShareCacheVersion(updatedAt);
+      setPreviewCacheVersion(cacheVersion);
       setSaveAsLink(url);
       setSaveAsPreviewLink(
         previewUrl ??
-          (previewToken ? studioPreviewUrl(previewToken, undefined, toShareCacheVersion(updatedAt)) : null)
+          (previewToken ? studioPreviewUrl(previewToken, undefined, cacheVersion) : null)
       );
       setIsDirty(false);
       rememberRecent(id, "saved", url, resolvedName);
@@ -380,6 +389,7 @@ export function useStudioDocument({
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not create share link.", 6000);
     } finally {
+      setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
   }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly]);
@@ -568,6 +578,7 @@ export function useStudioDocument({
     setModal,
     statusMessage,
     cloudBusy,
+    saveOverlayMessage,
     saveAsLink,
     setSaveAsLink,
     saveAsPreviewLink,

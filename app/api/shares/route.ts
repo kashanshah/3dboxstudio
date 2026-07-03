@@ -14,8 +14,8 @@ export async function POST(req: Request) {
     }
 
     const name = req.headers.get("X-Share-Name");
-    const { designJson, ogImage } = parseShareSaveRequest(req, rawBody);
-    const result = await createShare(designJson, createdBy, name, ogImage);
+    const { designJson } = parseShareSaveRequest(req, rawBody);
+    const result = await createShare(designJson, createdBy, name);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {

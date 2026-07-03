@@ -19,8 +19,9 @@ import {
 import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
+import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import { useStudioDocument } from "./hooks/useStudioDocument";
-import { downscaleCanvasToOgPng } from "./lib/shareOgImage";
+import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
@@ -274,7 +275,7 @@ export default function BoxDesigner({
     const s = r3fRef.current;
     if (!s?.gl || !s.camera) return null;
     s.gl.render(s.scene, s.camera);
-    return downscaleCanvasToOgPng(s.gl.domElement);
+    return captureCanvasOgBlob(s.gl.domElement);
   }, []);
 
   const doc = useStudioDocument({
@@ -413,6 +414,7 @@ export default function BoxDesigner({
 
   return (
     <div className="studio-workspace">
+      {doc.saveOverlayMessage && <StudioSaveOverlay message={doc.saveOverlayMessage} />}
       <StudioMenuBar
         documentTitle={doc.documentTitle}
         cloudBusy={doc.cloudBusy}
