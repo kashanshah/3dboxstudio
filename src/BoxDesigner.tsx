@@ -24,6 +24,7 @@ import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
 import StudioProjectsModal from "./components/studio/StudioProjectsModal";
 import AuthModal from "./components/auth/AuthModal";
+import AccountSettingsModal, { type AccountSettingsTab } from "./components/auth/AccountSettingsModal";
 import { useAuth } from "./components/auth/AuthProvider";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
@@ -176,6 +177,10 @@ export default function BoxDesigner({
     mode: "signin",
   });
   const [projectsModalOpen, setProjectsModalOpen] = useState(false);
+  const [accountSettings, setAccountSettings] = useState<{ open: boolean; tab: AccountSettingsTab }>({
+    open: false,
+    tab: "account",
+  });
   const [startDialogOpen, setStartDialogOpen] = useState(
     () => !initialShareId && !initialPreviewToken && !viewOnly
   );
@@ -383,6 +388,17 @@ export default function BoxDesigner({
     setProjectsModalOpen(true);
   }, [auth.user, openSignIn]);
 
+  const openAccountSettings = useCallback(
+    (tab: AccountSettingsTab = "account") => {
+      if (!auth.user) {
+        openSignIn();
+        return;
+      }
+      setAccountSettings({ open: true, tab });
+    },
+    [auth.user, openSignIn]
+  );
+
   const handleOpenProject = useCallback(
     (id: string) => {
       setProjectsModalOpen(false);
@@ -562,6 +578,7 @@ export default function BoxDesigner({
         onSignUp={openSignUp}
         onSignOut={handleSignOut}
         onOpenProjects={openProjects}
+        onOpenAccountSettings={openAccountSettings}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
@@ -1188,6 +1205,12 @@ export default function BoxDesigner({
         initialMode={authModal.mode}
         onClose={() => setAuthModal((s) => ({ ...s, open: false }))}
         onSuccess={() => auth.refresh()}
+      />
+      <AccountSettingsModal
+        open={accountSettings.open}
+        initialTab={accountSettings.tab}
+        onClose={() => setAccountSettings((s) => ({ ...s, open: false }))}
+        onStatus={(message) => doc.showStatus(message, 5000)}
       />
     </div>
   );
