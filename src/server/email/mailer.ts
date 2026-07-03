@@ -57,6 +57,30 @@ export async function sendVerificationEmail(to: string, name: string | null, ver
   await sendEmail({ to, subject: "Verify your email · 3D Box Studio", html, text });
 }
 
+export async function sendEmailChangeVerificationEmail(
+  to: string,
+  name: string | null,
+  verifyUrl: string
+): Promise<void> {
+  const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
+  const safeUrl = escapeHtml(verifyUrl);
+  const html = `
+    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
+      <h1 style="font-size: 20px; margin: 0 0 16px;">Confirm your new email</h1>
+      <p style="margin: 0 0 12px;">${greeting}</p>
+      <p style="margin: 0 0 16px;">You requested to change the email address on your <strong>3D Box Studio</strong> account. Confirm this address to finish the update and restore cloud save access.</p>
+      <p style="margin: 0 0 24px;">
+        <a href="${safeUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 600;">Confirm new email</a>
+      </p>
+      <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">Or paste this link into your browser:</p>
+      <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${safeUrl}" style="color: #2563eb;">${safeUrl}</a></p>
+      <p style="margin: 0; font-size: 12px; color: #94a3b8;">This link expires in 48 hours. If you didn't request this change, sign in and update your password right away.</p>
+    </div>
+  `;
+  const text = `${name ? `Hi ${name},` : "Hi,"}\n\nConfirm your new email for 3D Box Studio:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
+  await sendEmail({ to, subject: "Confirm your new email · 3D Box Studio", html, text });
+}
+
 export async function sendPasswordResetEmail(to: string, name: string | null, resetUrl: string): Promise<void> {
   const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
   const safeUrl = escapeHtml(resetUrl);

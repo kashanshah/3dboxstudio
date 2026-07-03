@@ -89,6 +89,35 @@ export async function updateUserName(userId: string, name: string | null): Promi
   return rows[0] ?? null;
 }
 
+export class EmailInUseError extends Error {
+  constructor() {
+    super("Email already in use.");
+    this.name = "EmailInUseError";
+  }
+}
+
+export async function updateUserEmail(userId: string, email: string): Promise<UserRow> {
+  const normalized = normalizeEmail(email);
+  const existing = await getUserByEmail(normalized);
+  if (existing && existing.id !== userId) {
+    throw new EmailInUseError();
+  }
+
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE users
+    SET email = ${normalized}, email_verified_at = NULL
+    WHERE id = ${userId}
+    RETURNING id, email, name, password_hash, email_verified_at, created_at
+  `) as UserRow[];
+
+  const updated = rows[0];
+  if (!updated) {
+    throw new Error("User not found.");
+  }
+  return updated;
+}
+
 export async function updateUserPassword(userId: string, passwordHash: string): Promise<boolean> {
   const sql = getSql();
   const rows = (await sql`
