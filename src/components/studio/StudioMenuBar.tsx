@@ -33,6 +33,7 @@ type StudioMenuBarProps = {
   onSignOut: () => void;
   onOpenProjects: () => void;
   onToggleSidebar: () => void;
+  onOpenAccountSettings: (tab?: "account" | "profile") => void;
 };
 
 function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObject<HTMLElement | null>) {
@@ -69,6 +70,7 @@ export default function StudioMenuBar({
   onOpenProjects,
   sidebarOpen,
   onToggleSidebar,
+  onOpenAccountSettings,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
@@ -376,6 +378,22 @@ export default function StudioMenuBar({
                 <div className="studio-menu-sep" role="separator" />
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onOpenProjects)}>
                   <span>My Projects…</span>
+                </button>
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  onClick={() => pickAccount(() => onOpenAccountSettings("account"))}
+                >
+                  <span>Account settings…</span>
+                </button>
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  onClick={() => pickAccount(() => onOpenAccountSettings("profile"))}
+                >
+                  <span>Profile settings…</span>
                 </button>
                 <div className="studio-menu-sep" role="separator" />
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignOut)}>
