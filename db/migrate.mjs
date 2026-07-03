@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
+import { customAlphabet } from "nanoid";
 
 function loadDatabaseUrl() {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
@@ -36,6 +37,42 @@ if (!databaseUrl) {
 }
 
 const sql = neon(databaseUrl);
+const createPreviewToken = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 16);
 
 await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS name TEXT`;
 console.log("OK: shared_designs.name column is ready.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS preview_token TEXT`;
+console.log("OK: shared_designs.preview_token column is ready.");
+
+try {
+  await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_shared_designs_preview_token ON shared_designs (preview_token)`;
+  console.log("OK: preview_token unique index is ready.");
+} catch (e) {
+  console.warn("Could not create preview_token index (may already exist):", e.message);
+}
+
+const missing = await sql`SELECT id FROM shared_designs WHERE preview_token IS NULL`;
+for (const row of missing) {
+  let token = createPreviewToken();
+  let inserted = false;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await sql`UPDATE shared_designs SET preview_token = ${token} WHERE id = ${row.id} AND preview_token IS NULL`;
+      inserted = true;
+      break;
+    } catch {
+      token = createPreviewToken();
+    }
+  }
+  if (!inserted) {
+    console.error(`Failed to backfill preview_token for share ${row.id}`);
+    process.exit(1);
+  }
+}
+
+if (missing.length > 0) {
+  console.log(`OK: backfilled preview_token for ${missing.length} existing share(s).`);
+} else {
+  console.log("OK: all shares already have preview_token.");
+}

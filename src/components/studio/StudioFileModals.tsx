@@ -291,7 +291,8 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
           onFocus={(e) => e.target.select()}
         />
         <p className="studio-dialog-hint studio-share-preview-note">
-          Preview links end with <code>&view=1</code>. Keep the editor link private if you do not want others to change the design.
+          Preview links use a separate token (<code>?preview=…</code>) and do not reveal the editor share id. Keep your
+          editor link private.
         </p>
         <label className="studio-dialog-label">Editor link</label>
         <input

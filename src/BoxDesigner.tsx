@@ -21,7 +21,7 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import { useStudioDocument } from "./hooks/useStudioDocument";
-import { isViewOnlyParam, studioEditorPath } from "./lib/shareUrl";
+import { isShareToken } from "./lib/shareUrl";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { useFaceObjectUrls } from "./hooks/useTextures";
@@ -105,8 +105,9 @@ function PanelCollapse({ title, children }: { title: string; children: ReactNode
 
 export default function BoxDesigner() {
   const searchParams = useSearchParams();
-  const shareIdFromUrl = searchParams.get("share");
-  const viewOnly = isViewOnlyParam(searchParams.get("view"));
+  const previewTokenFromUrl = searchParams.get("preview");
+  const viewOnly = isShareToken(previewTokenFromUrl);
+  const shareIdFromUrl = viewOnly ? null : searchParams.get("share");
   const [unit, setUnit] = useState<LengthUnit>("cm");
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
@@ -123,7 +124,7 @@ export default function BoxDesigner() {
   const [autoRotateReverse, setAutoRotateReverse] = useState(false);
   const [zoomFraction, setZoomFraction] = useState(0.5);
   const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
-  const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl);
+  const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
 
   const r3fRef = useRef<RootState | null>(null);
@@ -260,9 +261,7 @@ export default function BoxDesigner() {
     void (async () => {
       try {
         await doc.loadShareById(shareIdFromUrl);
-        if (!cancelled) {
-          doc.showStatus(viewOnly ? "View-only preview opened." : "Opened shared design from link.");
-        }
+        if (!cancelled) doc.showStatus("Opened shared design from link.");
       } catch {
         if (!cancelled) doc.showStatus("Could not load shared design.", 5000);
       } finally {
@@ -276,7 +275,31 @@ export default function BoxDesigner() {
     return () => {
       cancelled = true;
     };
-  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean, viewOnly]);
+  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean]);
+
+  useEffect(() => {
+    if (!previewTokenFromUrl) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        await doc.loadShareByPreviewToken(previewTokenFromUrl);
+        if (!cancelled) doc.showStatus("View-only preview opened.");
+      } catch {
+        if (!cancelled) doc.showStatus("Could not load preview.", 5000);
+      } finally {
+        if (!cancelled) {
+          setSessionReady(true);
+          doc.markClean();
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomFraction(Math.min(1, Math.max(0, t)));
@@ -354,10 +377,6 @@ export default function BoxDesigner() {
 
   const dimHint = `Scene units: centimeters (converted from ${unit})`;
   const openingLabel = openingOptions.find((o) => o.value === opening)?.label ?? opening;
-  const editorHref =
-    doc.activeShareId ?? shareIdFromUrl
-      ? studioEditorPath((doc.activeShareId ?? shareIdFromUrl)!)
-      : null;
 
   return (
     <div className="studio-workspace">
@@ -371,21 +390,14 @@ export default function BoxDesigner() {
         onSaveAs={doc.openSaveAsModal}
         onRename={doc.openRenameModal}
         canRename={Boolean(doc.activeShareId)}
-        canSharePreview={Boolean(doc.activeShareId)}
+        canSharePreview={Boolean(doc.activePreviewToken)}
         onSharePreview={doc.openSharePreviewModal}
         onCopyPreviewLink={() => void doc.copyPreviewLink()}
-        editorHref={editorHref}
         onNew={doc.requestNew}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
-          View-only preview — clients can explore and export PNGs but cannot edit or save changes.
-          {editorHref && (
-            <>
-              {" "}
-              <a href={editorHref}>Open in editor</a>
-            </>
-          )}
+          View-only preview — explore the design and export PNGs. Editing is not available from this link.
         </div>
       )}
       {doc.statusMessage && (

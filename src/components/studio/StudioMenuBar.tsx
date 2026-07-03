@@ -14,7 +14,6 @@ type StudioMenuBarProps = {
   viewOnly: boolean;
   canRename: boolean;
   canSharePreview: boolean;
-  editorHref: string | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
@@ -42,7 +41,6 @@ export default function StudioMenuBar({
   viewOnly,
   canRename,
   canSharePreview,
-  editorHref,
   onOpenModal,
   onOpenHelpModal,
   onSave,
@@ -213,12 +211,6 @@ export default function StudioMenuBar({
           </div>
         )}
       </div>
-
-      {viewOnly && editorHref && (
-        <a className="studio-menu-editor-link" href={editorHref}>
-          Open in editor
-        </a>
-      )}
 
       <div className="studio-doc-title-wrap">
         <div className="studio-doc-title" title={documentTitle}>

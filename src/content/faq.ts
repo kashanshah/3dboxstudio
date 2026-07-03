@@ -77,14 +77,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "export",
     question: "How do cloud save and share links work?",
     answer:
-      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a view-only URL (ends with view=1). Editor links open the full studio; preview links hide editing controls.",
+      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>?preview=…</code>). Editor links use <code>?share=…</code> and are not exposed in preview mode.",
   },
   {
     id: "view-only-preview",
     category: "export",
     question: "Can I send a view-only preview link to clients?",
     answer:
-      "Yes. After you save a design to the cloud, use File → Share Preview Link or Copy Preview Link. The preview URL opens the studio in read-only mode: clients can orbit, zoom, adjust lighting, animate openings, and export PNGs, but cannot change dimensions, artwork, or save over your design. Keep the editor link private if you do not want others to edit.",
+      "Yes. After you save a design to the cloud, use File → Share Preview Link or Copy Preview Link. The preview URL uses its own token and opens read-only mode: clients can orbit, zoom, adjust lighting, animate openings, and export PNGs, but cannot discover or use your editor link from that page.",
   },
   {
     id: "color-accuracy",

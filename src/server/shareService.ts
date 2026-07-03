@@ -8,8 +8,10 @@ import { getShareObject, uploadShareFaceImage } from "./s3";
 import { customAlphabet } from "nanoid";
 
 const SHARE_FACE_IDS = new Set<FaceId>([...ALL_FACES, ...SPLIT_TOP_FACES, "top"]);
+const SHARE_TOKEN_RE = /^[0-9A-Za-z]{10,24}$/;
 
 const createShareId = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 14);
+const createPreviewToken = customAlphabet("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", 16);
 
 export type StoredShareImage = {
   s3Key: string;
@@ -18,6 +20,14 @@ export type StoredShareImage = {
 };
 
 export type ShareConfig = Omit<ParsedDesignV1, "faceImages" | "v">;
+
+export type ShareLinks = {
+  id: string;
+  previewToken: string;
+  url: string;
+  previewUrl: string;
+  name: string | null;
+};
 
 function stripImages(parsed: ParsedDesignV1): ShareConfig {
   const { faceImages: _faceImages, v: _v, ...config } = parsed;
@@ -57,6 +67,10 @@ function shareImageApiUrl(shareId: string, faceId: FaceId): string {
   return `/api/shares/${encodeURIComponent(shareId)}/images/${encodeURIComponent(faceId)}`;
 }
 
+function sharePreviewImageApiUrl(previewToken: string, faceId: FaceId): string {
+  return `/api/shares/preview/${encodeURIComponent(previewToken)}/images/${encodeURIComponent(faceId)}`;
+}
+
 async function uploadDesignImages(
   shareId: string,
   parsed: ParsedDesignV1
@@ -75,13 +89,51 @@ async function uploadDesignImages(
   return images;
 }
 
+async function buildShareLinks(id: string, previewToken: string, name: string | null): Promise<ShareLinks> {
+  const { getSiteOrigin } = await import("@/lib/siteOrigin");
+  const origin = getSiteOrigin();
+  return {
+    id,
+    previewToken,
+    name,
+    url: `${origin}/studio?share=${id}`,
+    previewUrl: `${origin}/studio?preview=${previewToken}`,
+  };
+}
+
+function buildEditorPayload(
+  row: ShareRow,
+  faceImageUrl: (faceId: FaceId) => string,
+  includePreviewToken: boolean
+): Record<string, unknown> {
+  const faceImages: Partial<Record<FaceId, { name: string; mime: string; url: string }>> = {};
+  for (const [faceId, meta] of Object.entries(row.images ?? {})) {
+    if (!meta?.s3Key) continue;
+    const id = faceId as FaceId;
+    faceImages[id] = {
+      name: meta.name,
+      mime: meta.mime,
+      url: faceImageUrl(id),
+    };
+  }
+
+  return {
+    v: 1,
+    shareName: row.name ?? null,
+    ...(includePreviewToken ? { previewToken: row.preview_token } : {}),
+    ...row.config,
+    faceImages,
+  };
+}
+
 export async function createShare(
   designJson: string,
   createdBy: string | null,
   name?: string | null
-): Promise<{ id: string; url: string; previewUrl: string; name: string | null }> {
+): Promise<ShareLinks> {
   const parsed = await parseAndValidateDesignJson(designJson);
   const id = createShareId();
+  const previewToken = createPreviewToken();
   const images = await uploadDesignImages(id, parsed);
   const config = stripImages(parsed);
   const shareName = normalizeShareName(name);
@@ -89,9 +141,10 @@ export async function createShare(
   const sql = getSql();
 
   await sql`
-    INSERT INTO shared_designs (id, name, config, images, expires_at, created_by)
+    INSERT INTO shared_designs (id, preview_token, name, config, images, expires_at, created_by)
     VALUES (
       ${id},
+      ${previewToken},
       ${shareName},
       ${JSON.stringify(config)}::jsonb,
       ${JSON.stringify(images)}::jsonb,
@@ -100,15 +153,11 @@ export async function createShare(
     )
   `;
 
-  const { getSiteOrigin } = await import("@/lib/siteOrigin");
-  const origin = getSiteOrigin();
-  const url = `${origin}/studio?share=${id}`;
-  const previewUrl = `${url}&view=1`;
-  return { id, url, previewUrl, name: shareName };
+  return buildShareLinks(id, previewToken, shareName);
 }
 
-export async function updateShare(id: string, designJson: string): Promise<{ id: string; url: string; previewUrl: string; name: string | null }> {
-  if (!/^[0-9A-Za-z]{10,24}$/.test(id)) {
+export async function updateShare(id: string, designJson: string): Promise<ShareLinks> {
+  if (!SHARE_TOKEN_RE.test(id)) {
     throw new ShareError("Invalid share id.", 400);
   }
 
@@ -116,13 +165,13 @@ export async function updateShare(id: string, designJson: string): Promise<{ id:
   const sql = getSql();
 
   const existing = (await sql`
-    SELECT id, name FROM shared_designs
+    SELECT id, preview_token, name FROM shared_designs
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as { id: string; name: string | null }[];
+  `) as { id: string; preview_token: string; name: string | null }[];
 
-  if (!existing[0]) {
+  if (!existing[0]?.preview_token) {
     throw new ShareError("Share not found or expired.", 404);
   }
 
@@ -139,15 +188,11 @@ export async function updateShare(id: string, designJson: string): Promise<{ id:
     WHERE id = ${id}
   `;
 
-  const { getSiteOrigin } = await import("@/lib/siteOrigin");
-  const origin = getSiteOrigin();
-  const url = `${origin}/studio?share=${id}`;
-  const previewUrl = `${url}&view=1`;
-  return { id, url, previewUrl, name: existing[0].name ?? null };
+  return buildShareLinks(existing[0].id, existing[0].preview_token, existing[0].name ?? null);
 }
 
 export async function renameShare(id: string, name: string | null): Promise<{ id: string; name: string | null }> {
-  if (!/^[0-9A-Za-z]{10,24}$/.test(id)) {
+  if (!SHARE_TOKEN_RE.test(id)) {
     throw new ShareError("Invalid share id.", 400);
   }
 
@@ -171,6 +216,7 @@ export async function renameShare(id: string, name: string | null): Promise<{ id
 
 type ShareRow = {
   id: string;
+  preview_token: string;
   name: string | null;
   config: ShareConfig;
   images: Partial<Record<FaceId, StoredShareImage>>;
@@ -178,7 +224,7 @@ type ShareRow = {
 };
 
 export async function getShare(id: string): Promise<Record<string, unknown> | null> {
-  if (!/^[0-9A-Za-z]{10,24}$/.test(id)) return null;
+  if (!SHARE_TOKEN_RE.test(id)) return null;
 
   const sql = getSql();
   const rows = (await sql`
@@ -186,42 +232,69 @@ export async function getShare(id: string): Promise<Record<string, unknown> | nu
     SET view_count = view_count + 1
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, name, config, images, expires_at
+    RETURNING id, preview_token, name, config, images, expires_at
+  `) as ShareRow[];
+
+  const row = rows[0];
+  if (!row?.preview_token) return null;
+
+  return buildEditorPayload(row, (faceId) => shareImageApiUrl(row.id, faceId), true);
+}
+
+export async function getShareByPreviewToken(previewToken: string): Promise<Record<string, unknown> | null> {
+  if (!SHARE_TOKEN_RE.test(previewToken)) return null;
+
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE shared_designs
+    SET view_count = view_count + 1
+    WHERE preview_token = ${previewToken}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    RETURNING id, preview_token, name, config, images, expires_at
   `) as ShareRow[];
 
   const row = rows[0];
   if (!row) return null;
 
-  const faceImages: Partial<Record<FaceId, { name: string; mime: string; url: string }>> = {};
-  for (const [faceId, meta] of Object.entries(row.images ?? {})) {
-    if (!meta?.s3Key) continue;
-    const id = faceId as FaceId;
-    faceImages[id] = {
-      name: meta.name,
-      mime: meta.mime,
-      url: shareImageApiUrl(row.id, id),
-    };
-  }
-
-  return {
-    v: 1,
-    shareName: row.name ?? null,
-    ...row.config,
-    faceImages,
-  };
+  return buildEditorPayload(row, (faceId) => sharePreviewImageApiUrl(row.preview_token, faceId), false);
 }
 
 export async function getShareFaceImage(
   shareId: string,
   faceId: string
 ): Promise<{ body: Uint8Array; contentType: string } | null> {
-  if (!/^[0-9A-Za-z]{10,24}$/.test(shareId)) return null;
+  if (!SHARE_TOKEN_RE.test(shareId)) return null;
   if (!SHARE_FACE_IDS.has(faceId as FaceId)) return null;
 
   const sql = getSql();
   const rows = (await sql`
     SELECT images FROM shared_designs
     WHERE id = ${shareId}
+      AND (expires_at IS NULL OR expires_at > NOW())
+    LIMIT 1
+  `) as { images: Partial<Record<FaceId, StoredShareImage>> }[];
+
+  const meta = rows[0]?.images?.[faceId as FaceId];
+  if (!meta?.s3Key) return null;
+
+  try {
+    return await getShareObject(meta.s3Key);
+  } catch {
+    return null;
+  }
+}
+
+export async function getSharePreviewFaceImage(
+  previewToken: string,
+  faceId: string
+): Promise<{ body: Uint8Array; contentType: string } | null> {
+  if (!SHARE_TOKEN_RE.test(previewToken)) return null;
+  if (!SHARE_FACE_IDS.has(faceId as FaceId)) return null;
+
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT images FROM shared_designs
+    WHERE preview_token = ${previewToken}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
   `) as { images: Partial<Record<FaceId, StoredShareImage>> }[];
