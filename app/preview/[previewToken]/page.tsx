@@ -4,6 +4,8 @@ import { isShareToken } from "@/lib/shareUrl";
 import { getShareSeoMetaByPreviewToken } from "@/server/shareService";
 import StudioClient from "@/components/StudioClient";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ previewToken: string }>;
 };
