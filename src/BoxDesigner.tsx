@@ -17,6 +17,7 @@ import {
   type EnvPreset,
 } from "./boxDesignPersistence";
 import StudioFileModals from "./components/studio/StudioFileModals";
+import StudioDialog from "./components/studio/StudioDialog";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
@@ -104,6 +105,15 @@ function IconClearImage() {
   );
 }
 
+function IconApplyToAll() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
 function IconTimes() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round">
@@ -169,6 +179,7 @@ export default function BoxDesigner({
   const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
   const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
+  const [applyToAllFace, setApplyToAllFace] = useState<FaceId | null>(null);
   const [showViewportHint, setShowViewportHint] = useState(false);
 
   useEffect(() => {
@@ -471,6 +482,18 @@ export default function BoxDesigner({
       });
     },
     [faceFiles, splitTop, textureRotationDeg]
+  );
+
+  const confirmApplyOneToAll = useCallback(() => {
+    if (!applyToAllFace) return;
+    applyOneToAll(applyToAllFace);
+    setApplyToAllFace(null);
+  }, [applyToAllFace, applyOneToAll]);
+
+  const faceArtworkLabel = useCallback(
+    (fid: FaceId) =>
+      fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid],
+    [splitTopHingeSide]
   );
 
   const exportPng = useCallback(() => {
@@ -833,8 +856,8 @@ export default function BoxDesigner({
         <PanelCollapse title="Face artwork">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             PNG or JPG recommended. Art is UV-stretched to each rectangle; for print-ready proofs, design to the flat dieline
-            first, then preview here. Hover the rotate and clear icons beside each face for hints; rotation advances 90° per
-            click.
+            first, then preview here. Hover the rotate, apply-to-all, and clear icons beside each face for hints; rotation
+            advances 90° per click.
           </p>
           {(splitTop ? [...ALL_FACES.filter((f) => f !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES).map((fid) => (
             <div key={fid} style={{ marginBottom: "0.65rem" }}>
@@ -862,6 +885,17 @@ export default function BoxDesigner({
                   type="button"
                   className="btn btn-ghost"
                   style={faceArtIconBtn}
+                  onClick={() => setApplyToAllFace(fid)}
+                  disabled={!faceFiles[fid]}
+                  title="Use this image for all faces"
+                  aria-label="Use this image for all faces"
+                >
+                  <IconApplyToAll />
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={faceArtIconBtn}
                   onClick={() => setFile(fid, null)}
                   disabled={!faceFiles[fid]}
                   title="Remove image from this face"
@@ -873,11 +907,6 @@ export default function BoxDesigner({
                   {(textureRotationDeg[fid] ?? 0) === 0 ? "0°" : `${textureRotationDeg[fid]}°`}
                 </span>
               </div>
-              {faceFiles[fid] && (
-                <button type="button" className="btn" style={{ marginTop: 6, width: "100%" }} onClick={() => applyOneToAll(fid)}>
-                  Use this image for all faces
-                </button>
-              )}
             </div>
           ))}
           <div style={{ marginTop: "0.5rem" }}>
@@ -1079,6 +1108,34 @@ export default function BoxDesigner({
       </div>
       <StudioFileModals doc={doc} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
+      <StudioDialog
+        title="Apply image to all faces?"
+        open={applyToAllFace !== null}
+        onClose={() => setApplyToAllFace(null)}
+        footer={
+          <>
+            <button type="button" className="btn btn-ghost" onClick={() => setApplyToAllFace(null)}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-primary" onClick={confirmApplyOneToAll}>
+              Apply to all faces
+            </button>
+          </>
+        }
+      >
+        <p className="studio-dialog-lead">
+          Replace artwork on every face with the image from{" "}
+          <strong>{applyToAllFace ? faceArtworkLabel(applyToAllFace) : "this face"}</strong>. Any existing images on other
+          faces will be overwritten.
+        </p>
+        {(applyToAllFace && (textureRotationDeg[applyToAllFace] ?? 0) !== 0) ? (
+          <p className="studio-dialog-hint">
+            The current {textureRotationDeg[applyToAllFace]}° rotation on this face will be copied to all faces as well.
+          </p>
+        ) : (
+          <p className="studio-dialog-hint">This cannot be undone in one step—use Clear all artwork if you need to reset.</p>
+        )}
+      </StudioDialog>
       <StudioStartDialog
         open={startDialogOpen && !viewOnly}
         user={auth.user}
