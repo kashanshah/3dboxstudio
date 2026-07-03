@@ -22,6 +22,7 @@ import StudioHelpModals, { type StudioHelpModal } from "./components/studio/Stud
 import StudioMenuBar from "./components/studio/StudioMenuBar";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { isShareToken } from "./lib/shareUrl";
+import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
 import { Viewport3D } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { useFaceObjectUrls } from "./hooks/useTextures";
@@ -89,6 +90,15 @@ function IconClearImage() {
   );
 }
 
+function IconTimes() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden stroke="currentColor" fill="none" strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 function PanelCollapse({ title, children }: { title: string; children: ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
@@ -126,6 +136,16 @@ export default function BoxDesigner() {
   const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
   const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
+  const [showViewportHint, setShowViewportHint] = useState(false);
+
+  useEffect(() => {
+    setShowViewportHint(!isViewportHintDismissed());
+  }, []);
+
+  const dismissViewportHintOverlay = useCallback(() => {
+    dismissViewportHint();
+    setShowViewportHint(false);
+  }, []);
 
   const r3fRef = useRef<RootState | null>(null);
   const {
@@ -508,24 +528,23 @@ export default function BoxDesigner() {
             )}
           </div>
         )}
-        <div
-          style={{
-            position: "absolute",
-            left: 16,
-            bottom: 16,
-            padding: "10px 14px",
-            borderRadius: "var(--radius)",
-            background: "rgba(12,14,18,0.72)",
-            border: "1px solid var(--panel-border)",
-            fontSize: "0.8rem",
-            color: "var(--muted)",
-            maxWidth: 320,
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          Drag to orbit · Scroll to zoom · Right-drag to pan. Inspired by packaging configurators — this is a lightweight
-          structural + artwork preview (not a full CAD die-line engine).
-        </div>
+        {showViewportHint && (
+          <div className="viewport-hint" role="note">
+            <p className="viewport-hint-text">
+              Drag to orbit · Scroll to zoom · Right-drag to pan. Inspired by packaging configurators — this is a
+              lightweight structural + artwork preview (not a full CAD die-line engine).
+            </p>
+            <button
+              type="button"
+              className="viewport-hint-close"
+              onClick={dismissViewportHintOverlay}
+              aria-label="Dismiss viewport hint"
+              title="Dismiss for 24 hours"
+            >
+              <IconTimes />
+            </button>
+          </div>
+        )}
       </div>
 
       <aside

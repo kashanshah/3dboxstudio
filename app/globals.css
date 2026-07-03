@@ -232,6 +232,50 @@ label {
   }
 }
 
+.viewport-hint {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 320px;
+  padding: 10px 10px 10px 14px;
+  border-radius: var(--radius);
+  background: rgba(12, 14, 18, 0.72);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(8px);
+  z-index: 4;
+}
+
+.viewport-hint-text {
+  margin: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.viewport-hint-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.viewport-hint-close:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .studio-top-bar-link {
   transition: color 0.15s ease;
 }
