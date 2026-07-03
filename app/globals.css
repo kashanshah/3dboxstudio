@@ -1578,3 +1578,70 @@ label {
 .verify-cta {
   text-decoration: none;
 }
+
+/* --- Compact studio menu bar for phones ---
+   Keeps a single tidy row: logo-only brand, the menus, and the account control.
+   The document id and view-only badge are dropped (the preview banner below the
+   bar already communicates view-only state), and the cascading submenu is shown
+   inline because a side flyout can't be tapped and would run off-screen. */
+@media (max-width: 640px) {
+  .studio-menu-bar {
+    gap: 0;
+    padding: 0 6px;
+  }
+
+  .studio-menu-trigger {
+    padding: 4px 7px;
+  }
+
+  .studio-menu-brand {
+    gap: 0;
+  }
+
+  .studio-menu-brand span {
+    display: none;
+  }
+
+  .studio-doc-title-wrap {
+    display: none;
+  }
+
+  .studio-menu-preview-badge {
+    display: none;
+  }
+
+  .studio-menu-account-item {
+    margin-left: auto;
+  }
+
+  .studio-menu-dropdown {
+    min-width: 190px;
+    max-width: calc(100vw - 16px);
+  }
+
+  .studio-menu-submenu-panel {
+    position: static;
+    display: block;
+    top: auto;
+    left: auto;
+    min-width: 0;
+    margin: 2px 0 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .studio-menu-submenu-panel .studio-menu-check-item {
+    padding-left: 26px;
+  }
+
+  .studio-menu-submenu-trigger {
+    color: var(--muted);
+    cursor: default;
+  }
+
+  .studio-menu-submenu-trigger::after {
+    display: none;
+  }
+}
