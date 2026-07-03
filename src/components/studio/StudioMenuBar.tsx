@@ -78,6 +78,9 @@ export default function StudioMenuBar({
               <span>Open…</span>
               <kbd>⌘O</kbd>
             </button>
+            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
+              <span>View Recent</span>
+            </button>
             <div className="studio-menu-sep" role="separator" />
             <button
               type="button"

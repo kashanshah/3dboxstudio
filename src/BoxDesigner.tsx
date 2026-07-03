@@ -14,7 +14,6 @@ import { flushSync } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import type { RootState } from "@react-three/fiber";
 import {
-  deserializeSharedDesign,
   type BoxDesignerPersistedState,
   type EnvPreset,
 } from "./boxDesignPersistence";
@@ -257,26 +256,8 @@ export default function BoxDesigner() {
 
     void (async () => {
       try {
-        const res = await fetch(`/api/shares/${encodeURIComponent(shareIdFromUrl)}`);
-        const data: unknown = res.ok ? await res.json() : null;
-        if (cancelled) return;
-        if (!res.ok || !data) {
-          doc.showStatus(
-            typeof data === "object" && data !== null && "error" in data && typeof (data as { error: unknown }).error === "string"
-              ? (data as { error: string }).error
-              : "Could not load shared design.",
-            5000
-          );
-          return;
-        }
-        const restored = await deserializeSharedDesign(data);
-        if (cancelled) return;
-        if (restored) {
-          applyPersistedState(restored);
-          doc.showStatus("Opened shared design from link.");
-        } else {
-          doc.showStatus("Shared design could not be restored.", 5000);
-        }
+        await doc.loadShareById(shareIdFromUrl);
+        if (!cancelled) doc.showStatus("Opened shared design from link.");
       } catch {
         if (!cancelled) doc.showStatus("Could not load shared design.", 5000);
       } finally {
@@ -290,7 +271,7 @@ export default function BoxDesigner() {
     return () => {
       cancelled = true;
     };
-  }, [applyPersistedState, shareIdFromUrl, doc.showStatus, doc.markClean]);
+  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomFraction(Math.min(1, Math.max(0, t)));

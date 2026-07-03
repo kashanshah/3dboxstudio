@@ -3,6 +3,7 @@
 import { useCallback, useState, type ChangeEvent, type DragEvent } from "react";
 import StudioDialog from "./StudioDialog";
 import type { useStudioDocument } from "@/hooks/useStudioDocument";
+import { formatRecentTimestamp } from "@/lib/recentDesigns";
 
 type StudioFileModalsProps = {
   doc: ReturnType<typeof useStudioDocument>;
@@ -91,6 +92,68 @@ export default function StudioFileModals({ doc }: StudioFileModalsProps) {
           <p className="studio-dialog-error" role="alert">
             {doc.openError}
           </p>
+        )}
+      </StudioDialog>
+
+      <StudioDialog
+        title="Recent Designs"
+        open={doc.modal === "recent"}
+        onClose={() => doc.setModal(null)}
+        width={520}
+        footer={
+          <>
+            {doc.recentDesigns.length > 0 && (
+              <button type="button" className="btn btn-ghost studio-recent-clear" onClick={doc.clearAllRecentDesigns}>
+                Clear list
+              </button>
+            )}
+            <button type="button" className="btn btn-primary" onClick={() => doc.setModal(null)}>
+              Close
+            </button>
+          </>
+        }
+      >
+        <p className="studio-dialog-lead">
+          Cloud designs you saved or opened on this browser. Select one to reopen, or remove entries you no longer need.
+        </p>
+        {doc.recentDesigns.length === 0 ? (
+          <p className="studio-dialog-hint studio-recent-empty">
+            No recent designs yet. Use <strong>File → Save As</strong> to create a share link, or open a design from a link to
+            see it here.
+          </p>
+        ) : (
+          <ul className="studio-recent-list">
+            {doc.recentDesigns.map((entry) => (
+              <li key={entry.id} className="studio-recent-item">
+                <div className="studio-recent-item-main">
+                  <span className="studio-recent-id">{entry.id}</span>
+                  <span className="studio-recent-meta">
+                    {formatRecentTimestamp(entry.lastOpenedAt)}
+                    {" · "}
+                    {entry.source === "saved" ? "Saved" : "Opened"}
+                  </span>
+                </div>
+                <div className="studio-recent-item-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    disabled={doc.cloudBusy}
+                    onClick={() => void doc.openRecentDesign(entry.id)}
+                  >
+                    Open
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    aria-label={`Remove ${entry.id} from recent`}
+                    onClick={() => doc.removeRecentDesignEntry(entry.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </StudioDialog>
 

@@ -9,8 +9,15 @@ import {
   type BoxDesignerPersistedState,
 } from "@/boxDesignPersistence";
 import { parseShareIdFromInput, studioSharePath } from "@/lib/shareUrl";
+import {
+  addRecentDesign,
+  clearRecentDesigns,
+  readRecentDesigns,
+  removeRecentDesign,
+  type RecentDesignEntry,
+} from "@/lib/recentDesigns";
 
-export type StudioFileModal = "open" | "save-as" | "export" | "import" | "new" | null;
+export type StudioFileModal = "open" | "recent" | "save-as" | "export" | "import" | "new" | null;
 
 type ShareApiResult = { id: string; url: string };
 type ShareApiError = { error: string };
@@ -57,6 +64,7 @@ export function useStudioDocument({
   const [saveAsLink, setSaveAsLink] = useState<string | null>(null);
   const [openInput, setOpenInput] = useState("");
   const [openError, setOpenError] = useState<string | null>(null);
+  const [recentDesigns, setRecentDesigns] = useState<RecentDesignEntry[]>([]);
   const importInputRef = useRef<HTMLInputElement>(null);
   const bootstrapDone = useRef(false);
   const skipDirtyOnce = useRef(false);
@@ -96,8 +104,24 @@ export function useStudioDocument({
     setIsDirty(true);
   }, [sessionReady, buildPersistState]);
 
+  const refreshRecentDesigns = useCallback(() => {
+    setRecentDesigns(readRecentDesigns());
+  }, []);
+
+  const rememberRecent = useCallback(
+    (id: string, source: "opened" | "saved", url?: string) => {
+      addRecentDesign({ id, url, source });
+      refreshRecentDesigns();
+    },
+    [refreshRecentDesigns]
+  );
+
+  useEffect(() => {
+    if (modal === "recent") refreshRecentDesigns();
+  }, [modal, refreshRecentDesigns]);
+
   const loadShareById = useCallback(
-    async (shareId: string): Promise<boolean> => {
+    async (shareId: string, source: "opened" | "saved" = "opened"): Promise<boolean> => {
       const res = await fetch(`/api/shares/${encodeURIComponent(shareId)}`);
       const data: unknown = res.ok ? await res.json() : null;
       if (!res.ok || !data) {
@@ -109,9 +133,10 @@ export function useStudioDocument({
       setActiveShareId(shareId);
       syncUrlToShare(shareId);
       setIsDirty(false);
+      rememberRecent(shareId, source);
       return true;
     },
-    [applyPersistedState, syncUrlToShare]
+    [applyPersistedState, syncUrlToShare, rememberRecent]
   );
 
   const saveCloud = useCallback(async () => {
@@ -132,13 +157,14 @@ export function useStudioDocument({
       if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
       parseShareResult(data);
       setIsDirty(false);
+      rememberRecent(activeShareId, "saved");
       showStatus("Design saved to cloud.");
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, buildPersistState, showStatus]);
+  }, [activeShareId, buildPersistState, showStatus, rememberRecent]);
 
   const saveCloudAs = useCallback(async () => {
     setCloudBusy(true);
@@ -157,6 +183,7 @@ export function useStudioDocument({
       syncUrlToShare(id);
       setSaveAsLink(url);
       setIsDirty(false);
+      rememberRecent(id, "saved", url);
       try {
         await navigator.clipboard.writeText(url);
         showStatus("New share link created and copied.");
@@ -168,7 +195,7 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [buildPersistState, showStatus, syncUrlToShare]);
+  }, [buildPersistState, showStatus, syncUrlToShare, rememberRecent]);
 
   const openFromInput = useCallback(async () => {
     const shareId = parseShareIdFromInput(openInput);
@@ -189,6 +216,36 @@ export function useStudioDocument({
       setCloudBusy(false);
     }
   }, [loadShareById, openInput, showStatus]);
+
+  const openRecentDesign = useCallback(
+    async (shareId: string) => {
+      setCloudBusy(true);
+      try {
+        await loadShareById(shareId, "opened");
+        setModal(null);
+        showStatus("Design opened from recent.");
+      } catch (e) {
+        showStatus(e instanceof Error ? e.message : "Could not open design.", 6000);
+      } finally {
+        setCloudBusy(false);
+      }
+    },
+    [loadShareById, showStatus]
+  );
+
+  const removeRecentDesignEntry = useCallback(
+    (shareId: string) => {
+      removeRecentDesign(shareId);
+      refreshRecentDesigns();
+    },
+    [refreshRecentDesigns]
+  );
+
+  const clearAllRecentDesigns = useCallback(() => {
+    clearRecentDesigns();
+    refreshRecentDesigns();
+    showStatus("Recent list cleared.");
+  }, [refreshRecentDesigns, showStatus]);
 
   const exportJson = useCallback(async () => {
     const json = await serializeDesign(buildPersistState());
@@ -288,6 +345,12 @@ export function useStudioDocument({
     saveCloud,
     saveCloudAs,
     openFromInput,
+    loadShareById,
+    openRecentDesign,
+    recentDesigns,
+    removeRecentDesignEntry,
+    clearAllRecentDesigns,
+    refreshRecentDesigns,
     exportJson,
     importJsonFile,
     newDocument,
