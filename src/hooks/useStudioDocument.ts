@@ -8,7 +8,7 @@ import {
   serializeDesign,
   type BoxDesignerPersistedState,
 } from "@/boxDesignPersistence";
-import { parseShareIdFromInput, studioPreviewPath, studioPreviewUrl, studioSharePath, studioShareUrl } from "@/lib/shareUrl";
+import { parseShareIdFromInput, studioPreviewPath, studioPreviewUrl, studioSharePath, studioShareUrl, toShareCacheVersion } from "@/lib/shareUrl";
 import {
   addRecentDesign,
   clearRecentDesigns,
@@ -21,7 +21,14 @@ import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/sha
 
 export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "share-preview" | "export" | "import" | "new" | null;
 
-type ShareApiResult = { id: string; url: string; previewUrl?: string; previewToken?: string; name?: string | null };
+type ShareApiResult = {
+  id: string;
+  url: string;
+  previewUrl?: string;
+  previewToken?: string;
+  name?: string | null;
+  updatedAt?: string;
+};
 type ShareApiError = { error: string };
 
 function readApiError(data: unknown, fallback: string): string {
@@ -55,6 +62,13 @@ function readPreviewTokenFromPayload(data: unknown): string | null {
   if (typeof data !== "object" || data === null) return null;
   const token = (data as { previewToken?: unknown }).previewToken;
   return typeof token === "string" && /^[0-9A-Za-z]{10,24}$/.test(token) ? token : null;
+}
+
+function readShareUpdatedAt(data: unknown): number | null {
+  if (typeof data !== "object" || data === null) return null;
+  const updatedAt = (data as { updatedAt?: unknown; shareUpdatedAt?: unknown }).updatedAt
+    ?? (data as { shareUpdatedAt?: unknown }).shareUpdatedAt;
+  return toShareCacheVersion(typeof updatedAt === "string" ? updatedAt : null);
 }
 
 type UseStudioDocumentOptions = {
@@ -101,6 +115,7 @@ export function useStudioDocument({
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
   const [activeShareName, setActiveShareName] = useState<string | null>(null);
+  const [previewCacheVersion, setPreviewCacheVersion] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [modal, setModal] = useState<StudioFileModal>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -196,8 +211,8 @@ export function useStudioDocument({
 
   const getPreviewLink = useCallback(() => {
     if (!activePreviewToken) return null;
-    return studioPreviewUrl(activePreviewToken);
-  }, [activePreviewToken]);
+    return studioPreviewUrl(activePreviewToken, undefined, previewCacheVersion);
+  }, [activePreviewToken, previewCacheVersion]);
 
   const getEditorLink = useCallback(
     (shareId?: string | null) => {
@@ -252,6 +267,7 @@ export function useStudioDocument({
       setActiveShareId(shareId);
       setActivePreviewToken(previewToken);
       setActiveShareName(shareName);
+      setPreviewCacheVersion(readShareUpdatedAt(data));
       syncUrlToShare(shareId);
       setIsDirty(false);
       rememberRecent(shareId, source, undefined, shareName);
@@ -301,6 +317,7 @@ export function useStudioDocument({
       const result = parseShareResult(data);
       if (result.name !== undefined) setActiveShareName(normalizeShareName(result.name));
       if (result.previewToken) setActivePreviewToken(result.previewToken);
+      setPreviewCacheVersion(readShareUpdatedAt(result));
       setIsDirty(false);
       rememberRecent(activeShareId, "saved", undefined, result.name ?? activeShareName);
       showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
@@ -335,14 +352,18 @@ export function useStudioDocument({
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not create share link."));
-      const { id, url, name, previewUrl, previewToken } = parseShareResult(data);
+      const { id, url, name, previewUrl, previewToken, updatedAt } = parseShareResult(data);
       const resolvedName = normalizeShareName(name ?? normalizedName);
       setActiveShareId(id);
       setActivePreviewToken(previewToken ?? null);
       setActiveShareName(resolvedName);
+      setPreviewCacheVersion(toShareCacheVersion(updatedAt));
       syncUrlToShare(id);
       setSaveAsLink(url);
-      setSaveAsPreviewLink(previewUrl ?? (previewToken ? studioPreviewUrl(previewToken) : null));
+      setSaveAsPreviewLink(
+        previewUrl ??
+          (previewToken ? studioPreviewUrl(previewToken, undefined, toShareCacheVersion(updatedAt)) : null)
+      );
       setIsDirty(false);
       rememberRecent(id, "saved", url, resolvedName);
       try {
@@ -378,9 +399,10 @@ export function useStudioDocument({
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) throw new Error(readApiError(data, "Could not rename design."));
-      const result = data as { name?: string | null };
+      const result = data as { name?: string | null; updatedAt?: string };
       const resolvedName = normalizeShareName(result.name ?? normalizedName);
       setActiveShareName(resolvedName);
+      setPreviewCacheVersion(toShareCacheVersion(result.updatedAt));
       updateRecentDesignName(activeShareId, resolvedName);
       refreshRecentDesigns();
       setModal(null);
@@ -474,6 +496,7 @@ export function useStudioDocument({
       setActiveShareId(null);
       setActivePreviewToken(null);
       setActiveShareName(null);
+      setPreviewCacheVersion(null);
       syncUrlToShare(null);
       setIsDirty(true);
       setModal(null);
@@ -488,6 +511,7 @@ export function useStudioDocument({
     setActiveShareId(null);
     setActivePreviewToken(null);
     setActiveShareName(null);
+    setPreviewCacheVersion(null);
     syncUrlToShare(null);
     setIsDirty(false);
     setModal(null);

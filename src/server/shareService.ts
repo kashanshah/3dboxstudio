@@ -2,6 +2,7 @@ import type { ParsedDesignV1 } from "@/boxDesignPersistence";
 import type { FaceId } from "@/types";
 import { ALL_FACES, SPLIT_TOP_FACES } from "@/types";
 import { normalizeShareName } from "@/lib/shareName";
+import { appendShareCacheVersion, toShareCacheVersion } from "@/lib/shareUrl";
 import { getSql } from "./db";
 import { SHARE_MAX_IMAGE_BYTES, SHARE_MAX_OG_IMAGE_BYTES, shareMaxPayloadBytes, shareTtlDays } from "./env";
 import { getShareObject, uploadShareFaceImage, uploadShareOgImage } from "./s3";
@@ -27,6 +28,7 @@ export type ShareLinks = {
   url: string;
   previewUrl: string;
   name: string | null;
+  updatedAt: string;
 };
 
 export type ShareOgImageInput = {
@@ -42,6 +44,7 @@ export type ShareSeoMeta = {
   ogImageHeight: number | null;
   canonicalPath: string;
   isPreview: boolean;
+  cacheVersion: number | null;
 };
 
 function stripImages(parsed: ParsedDesignV1): ShareConfig {
@@ -104,15 +107,23 @@ async function uploadDesignImages(
   return images;
 }
 
-async function buildShareLinks(id: string, previewToken: string, name: string | null): Promise<ShareLinks> {
+async function buildShareLinks(
+  id: string,
+  previewToken: string,
+  name: string | null,
+  updatedAt: string | Date
+): Promise<ShareLinks> {
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
+  const updatedAtIso = typeof updatedAt === "string" ? updatedAt : updatedAt.toISOString();
+  const cacheVersion = toShareCacheVersion(updatedAtIso);
   return {
     id,
     previewToken,
     name,
     url: `${origin}/studio/${id}`,
-    previewUrl: `${origin}/preview/${previewToken}`,
+    previewUrl: appendShareCacheVersion(`${origin}/preview/${previewToken}`, cacheVersion),
+    updatedAt: updatedAtIso,
   };
 }
 
@@ -144,12 +155,19 @@ async function saveOgImage(
   };
 }
 
-function buildShareOgImageUrl(origin: string, shareId: string): string {
-  return `${origin}/api/shares/${encodeURIComponent(shareId)}/og-image`;
+function buildShareOgImageUrl(origin: string, shareId: string, cacheVersion: number | null): string {
+  return appendShareCacheVersion(`${origin}/api/shares/${encodeURIComponent(shareId)}/og-image`, cacheVersion);
 }
 
-function buildPreviewOgImageUrl(origin: string, previewToken: string): string {
-  return `${origin}/api/shares/preview/${encodeURIComponent(previewToken)}/og-image`;
+function buildPreviewOgImageUrl(origin: string, previewToken: string, cacheVersion: number | null): string {
+  return appendShareCacheVersion(
+    `${origin}/api/shares/preview/${encodeURIComponent(previewToken)}/og-image`,
+    cacheVersion
+  );
+}
+
+function buildPreviewCanonicalPath(previewToken: string, cacheVersion: number | null): string {
+  return appendShareCacheVersion(`/preview/${previewToken}`, cacheVersion);
 }
 
 function buildEditorPayload(
@@ -171,6 +189,7 @@ function buildEditorPayload(
   return {
     v: 1,
     shareName: row.name ?? null,
+    shareUpdatedAt: row.updated_at ?? null,
     ...(includePreviewToken ? { previewToken: row.preview_token } : {}),
     ...row.config,
     faceImages,
@@ -193,7 +212,7 @@ export async function createShare(
   const ttlDays = shareTtlDays();
   const sql = getSql();
 
-  await sql`
+  const rows = (await sql`
     INSERT INTO shared_designs (
       id,
       preview_token,
@@ -218,9 +237,15 @@ export async function createShare(
       ${ogMeta.og_image_width},
       ${ogMeta.og_image_height}
     )
-  `;
+    RETURNING updated_at
+  `) as { updated_at: string }[];
 
-  return buildShareLinks(id, previewToken, shareName);
+  const updatedAt = rows[0]?.updated_at;
+  if (!updatedAt) {
+    throw new ShareError("Could not create share.", 500);
+  }
+
+  return buildShareLinks(id, previewToken, shareName, updatedAt);
 }
 
 export async function updateShare(
@@ -251,7 +276,7 @@ export async function updateShare(
   const ogMeta = await saveOgImage(id, ogImage);
   const ttlDays = shareTtlDays();
 
-  await sql`
+  const updatedRows = (await sql`
     UPDATE shared_designs
     SET
       config = ${JSON.stringify(config)}::jsonb,
@@ -259,14 +284,24 @@ export async function updateShare(
       expires_at = NOW() + (${ttlDays} * INTERVAL '1 day'),
       og_image_key = COALESCE(${ogMeta.og_image_key}, og_image_key),
       og_image_width = COALESCE(${ogMeta.og_image_width}, og_image_width),
-      og_image_height = COALESCE(${ogMeta.og_image_height}, og_image_height)
+      og_image_height = COALESCE(${ogMeta.og_image_height}, og_image_height),
+      updated_at = NOW()
     WHERE id = ${id}
-  `;
+    RETURNING updated_at
+  `) as { updated_at: string }[];
 
-  return buildShareLinks(existing[0].id, existing[0].preview_token, existing[0].name ?? null);
+  const updatedAt = updatedRows[0]?.updated_at;
+  if (!updatedAt) {
+    throw new ShareError("Share not found or expired.", 404);
+  }
+
+  return buildShareLinks(existing[0].id, existing[0].preview_token, existing[0].name ?? null, updatedAt);
 }
 
-export async function renameShare(id: string, name: string | null): Promise<{ id: string; name: string | null }> {
+export async function renameShare(
+  id: string,
+  name: string | null
+): Promise<{ id: string; name: string | null; updatedAt: string }> {
   if (!SHARE_TOKEN_RE.test(id)) {
     throw new ShareError("Invalid share id.", 400);
   }
@@ -276,17 +311,17 @@ export async function renameShare(id: string, name: string | null): Promise<{ id
 
   const rows = (await sql`
     UPDATE shared_designs
-    SET name = ${shareName}
+    SET name = ${shareName}, updated_at = NOW()
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id
-  `) as { id: string }[];
+    RETURNING id, updated_at
+  `) as { id: string; updated_at: string }[];
 
   if (!rows[0]) {
     throw new ShareError("Share not found or expired.", 404);
   }
 
-  return { id, name: shareName };
+  return { id, name: shareName, updatedAt: rows[0].updated_at };
 }
 
 type ShareRow = {
@@ -299,6 +334,7 @@ type ShareRow = {
   og_image_key: string | null;
   og_image_width: number | null;
   og_image_height: number | null;
+  updated_at: string | null;
 };
 
 export async function getShareSeoMeta(shareId: string): Promise<ShareSeoMeta | null> {
@@ -306,26 +342,28 @@ export async function getShareSeoMeta(shareId: string): Promise<ShareSeoMeta | n
 
   const sql = getSql();
   const rows = (await sql`
-    SELECT name, og_image_key, og_image_width, og_image_height
+    SELECT name, og_image_key, og_image_width, og_image_height, updated_at
     FROM shared_designs
     WHERE id = ${shareId}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as Pick<ShareRow, "name" | "og_image_key" | "og_image_width" | "og_image_height">[];
+  `) as Pick<ShareRow, "name" | "og_image_key" | "og_image_width" | "og_image_height" | "updated_at">[];
 
   const row = rows[0];
   if (!row) return null;
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
+  const cacheVersion = toShareCacheVersion(row.updated_at);
 
   return {
     name: row.name ?? null,
-    ogImageUrl: row.og_image_key ? buildShareOgImageUrl(origin, shareId) : null,
+    ogImageUrl: row.og_image_key ? buildShareOgImageUrl(origin, shareId, cacheVersion) : null,
     ogImageWidth: row.og_image_width ?? null,
     ogImageHeight: row.og_image_height ?? null,
     canonicalPath: `/studio/${shareId}`,
     isPreview: false,
+    cacheVersion,
   };
 }
 
@@ -334,26 +372,28 @@ export async function getShareSeoMetaByPreviewToken(previewToken: string): Promi
 
   const sql = getSql();
   const rows = (await sql`
-    SELECT name, og_image_key, og_image_width, og_image_height
+    SELECT name, og_image_key, og_image_width, og_image_height, updated_at
     FROM shared_designs
     WHERE preview_token = ${previewToken}
       AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1
-  `) as Pick<ShareRow, "name" | "og_image_key" | "og_image_width" | "og_image_height">[];
+  `) as Pick<ShareRow, "name" | "og_image_key" | "og_image_width" | "og_image_height" | "updated_at">[];
 
   const row = rows[0];
   if (!row) return null;
 
   const { getSiteOrigin } = await import("@/lib/siteOrigin");
   const origin = getSiteOrigin();
+  const cacheVersion = toShareCacheVersion(row.updated_at);
 
   return {
     name: row.name ?? null,
-    ogImageUrl: row.og_image_key ? buildPreviewOgImageUrl(origin, previewToken) : null,
+    ogImageUrl: row.og_image_key ? buildPreviewOgImageUrl(origin, previewToken, cacheVersion) : null,
     ogImageWidth: row.og_image_width ?? null,
     ogImageHeight: row.og_image_height ?? null,
-    canonicalPath: `/preview/${previewToken}`,
+    canonicalPath: buildPreviewCanonicalPath(previewToken, cacheVersion),
     isPreview: true,
+    cacheVersion,
   };
 }
 
@@ -425,7 +465,7 @@ export async function getShare(id: string): Promise<Record<string, unknown> | nu
     SET view_count = view_count + 1
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, preview_token, name, config, images, expires_at
+    RETURNING id, preview_token, name, config, images, expires_at, updated_at
   `) as ShareRow[];
 
   const row = rows[0];
@@ -443,7 +483,7 @@ export async function getShareByPreviewToken(previewToken: string): Promise<Reco
     SET view_count = view_count + 1
     WHERE preview_token = ${previewToken}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, preview_token, name, config, images, expires_at
+    RETURNING id, preview_token, name, config, images, expires_at, updated_at
   `) as ShareRow[];
 
   const row = rows[0];

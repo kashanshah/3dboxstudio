@@ -52,12 +52,33 @@ export function isShareToken(value: string | null | undefined): boolean {
   return Boolean(value && SHARE_TOKEN_RE.test(value));
 }
 
+/** Milliseconds since epoch for cache-busting share preview and OG URLs. */
+export function toShareCacheVersion(updatedAt: string | Date | number | null | undefined): number | null {
+  if (updatedAt == null) return null;
+  if (typeof updatedAt === "number" && Number.isFinite(updatedAt)) return Math.floor(updatedAt);
+  if (typeof updatedAt === "string") {
+    const ms = Date.parse(updatedAt);
+    return Number.isFinite(ms) ? ms : null;
+  }
+  if (updatedAt instanceof Date) {
+    const ms = updatedAt.getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+  return null;
+}
+
+export function appendShareCacheVersion(pathOrUrl: string, cacheVersion?: number | null): string {
+  if (!cacheVersion) return pathOrUrl;
+  const separator = pathOrUrl.includes("?") ? "&" : "?";
+  return `${pathOrUrl}${separator}v=${cacheVersion}`;
+}
+
 export function studioSharePath(id: string): string {
   return `/studio/${encodeURIComponent(id)}`;
 }
 
-export function studioPreviewPath(previewToken: string): string {
-  return `/preview/${encodeURIComponent(previewToken)}`;
+export function studioPreviewPath(previewToken: string, cacheVersion?: number | null): string {
+  return appendShareCacheVersion(`/preview/${encodeURIComponent(previewToken)}`, cacheVersion);
 }
 
 export function studioShareUrl(id: string, origin?: string): string {
@@ -67,8 +88,12 @@ export function studioShareUrl(id: string, origin?: string): string {
   return `${resolvedOrigin.replace(/\/$/, "")}${path}`;
 }
 
-export function studioPreviewUrl(previewToken: string, origin?: string): string {
-  const path = studioPreviewPath(previewToken);
+export function studioPreviewUrl(
+  previewToken: string,
+  origin?: string,
+  cacheVersion?: number | null
+): string {
+  const path = studioPreviewPath(previewToken, cacheVersion);
   const resolvedOrigin = origin ?? (typeof window !== "undefined" ? window.location.origin : "");
   if (!resolvedOrigin) return path;
   return `${resolvedOrigin.replace(/\/$/, "")}${path}`;
@@ -82,10 +107,13 @@ export function studioEditorUrl(id: string, origin?: string): string {
   return studioShareUrl(id, origin);
 }
 
-export function shareOgImageApiPath(shareId: string): string {
-  return `/api/shares/${encodeURIComponent(shareId)}/og-image`;
+export function shareOgImageApiPath(shareId: string, cacheVersion?: number | null): string {
+  return appendShareCacheVersion(`/api/shares/${encodeURIComponent(shareId)}/og-image`, cacheVersion);
 }
 
-export function previewOgImageApiPath(previewToken: string): string {
-  return `/api/shares/preview/${encodeURIComponent(previewToken)}/og-image`;
+export function previewOgImageApiPath(previewToken: string, cacheVersion?: number | null): string {
+  return appendShareCacheVersion(
+    `/api/shares/preview/${encodeURIComponent(previewToken)}/og-image`,
+    cacheVersion
+  );
 }

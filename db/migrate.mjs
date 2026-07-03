@@ -85,3 +85,9 @@ console.log("OK: shared_designs.og_image_width column is ready.");
 
 await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS og_image_height INTEGER`;
 console.log("OK: shared_designs.og_image_height column is ready.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+console.log("OK: shared_designs.updated_at column is ready.");
+
+await sql`UPDATE shared_designs SET updated_at = created_at WHERE updated_at IS NULL`;
+console.log("OK: backfilled updated_at from created_at where needed.");
