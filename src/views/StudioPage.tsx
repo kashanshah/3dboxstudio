@@ -14,14 +14,12 @@ export default function StudioPage({
 }) {
   return (
     <AuthProvider>
-      <div style={{ height: "100vh", display: "flex", flexDirection: "column", minHeight: 480 }}>
-        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <BoxDesigner
-            initialShareId={initialShareId}
-            initialPreviewToken={initialPreviewToken}
-            viewOnly={viewOnly}
-          />
-        </div>
+      <div className="studio-shell-page">
+        <BoxDesigner
+          initialShareId={initialShareId}
+          initialPreviewToken={initialPreviewToken}
+          viewOnly={viewOnly}
+        />
       </div>
     </AuthProvider>
   );
