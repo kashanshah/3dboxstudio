@@ -1,10 +1,10 @@
-import { FAQ_ITEMS } from "../content/faq";
+import { faqAnswerPlainText, getLandingFaqItems } from "../content/faq";
 
 export const LANDING_TITLE =
   "3D Box Studio — Free 3D Box Designer, Maker & Simulator | 3dboxstudio.com";
 
 export const LANDING_DESCRIPTION =
-  "Free 3D box designer, box maker, and packaging simulator in your browser. Design folding cartons and mailers with PBR materials, lid and flap openings, per-face artwork, HDRI lighting, cloud save, view-only client preview links, PNG and JSON export—no signup. Open source (MIT).";
+  "Free 3D box designer, online box mockup generator, and packaging simulator in your browser. Design folding cartons and mailers with PBR materials, lid and flap openings, per-face artwork, HDRI lighting, cloud save, view-only client preview links, PNG and JSON export—no signup. Open source (MIT).";
 
 export const LANDING_OG_IMAGE_PATH = "/images/featured-image.jpg";
 export const LANDING_OG_IMAGE_WIDTH = 1402;
@@ -93,12 +93,12 @@ export function buildLandingJsonLd(origin: string) {
       },
       {
         "@type": "FAQPage",
-        mainEntity: FAQ_ITEMS.map((item) => ({
+        mainEntity: getLandingFaqItems().map((item) => ({
           "@type": "Question",
           name: item.question,
           acceptedAnswer: {
             "@type": "Answer",
-            text: item.answer,
+            text: faqAnswerPlainText(item.answer),
           },
         })),
       },

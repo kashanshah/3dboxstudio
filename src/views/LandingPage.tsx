@@ -14,7 +14,7 @@ import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";
 import FaqList from "../components/FaqList";
 import { BLOG_POSTS } from "../content/blogPosts";
-import { FAQ_ITEMS } from "../content/faq";
+import { FAQ_ITEMS, getLandingFaqItems } from "../content/faq";
 import "../landing.css";
 import GithubLink from "../components/GithubLink";
 
@@ -300,6 +300,10 @@ const HERO_PREVIEW = {
     "Stylized 3D packaging preview—representative of the interactive simulator.",
 } as const;
 
+const LANDING_FEATURED_POSTS = [...BLOG_POSTS]
+  .sort((a, b) => b.published.localeCompare(a.published))
+  .slice(0, 3);
+
 /** Scroll past this many pixels before the main nav pins to the top of the viewport. */
 export default function LandingPage() {
   const [navOpen, setNavOpen] = useState(false);
@@ -461,11 +465,11 @@ export default function LandingPage() {
                     </span>
                   </h1>
                   <p className="landing-hero-lead">
-                    Preview folding cartons and mailer-style boxes with
-                    realistic materials, HDRI lighting, lid and flap motions,
-                    and per-face artwork. Built for designers, brands, and
-                    printers who need a fast 3D packaging preview—not a full CAD
-                    die-line engine.
+                    Free online box mockup generator for folding cartons and
+                    mailer-style boxes—realistic PBR materials, HDRI lighting,
+                    lid and flap animations, and per-face artwork. Built for
+                    designers, e-commerce sellers, and print shops who need a
+                    fast 3D packaging preview without CAD or subscriptions.
                   </p>
                   <div className="landing-hero-ctas">
                     <Link
@@ -839,11 +843,12 @@ export default function LandingPage() {
               </div>
             </div>
             <p className="landing-section-intro">
-              Practical articles on 3D box makers, packaging simulators, and
-              browser-based carton mockups for designers and brand teams.
+              {BLOG_POSTS.length} practical articles on 3D box makers, free
+              packaging mockup generators, folding carton design, and
+              browser-based previews for designers, sellers, and brand teams.
             </p>
             <ul className="blog-index-list blog-index-list--landing">
-              {BLOG_POSTS.slice(0, 3).map((post) => (
+              {LANDING_FEATURED_POSTS.map((post) => (
                 <li key={post.slug} className="blog-index-card">
                   <h3 className="blog-index-title">
                     <Link href={`/blog/${post.slug}`}>{post.title}</Link>
@@ -881,10 +886,11 @@ export default function LandingPage() {
               </div>
             </div>
             <p className="landing-section-intro">
-              Straight answers for teams evaluating a browser-based 3D box
-              designer, box maker, or packaging simulator versus desktop CAD.
+              Straight answers about our free 3D box designer, online mockup
+              generator, Pacdora alternative, export options, and how it compares
+              to packaging CAD tools.
             </p>
-            <FaqList items={FAQ_ITEMS.slice(0, 7)} openFirst />
+            <FaqList items={getLandingFaqItems()} openFirst />
             <p className="content-page-more landing-faq-more">
               <Link href="/faq">
                 Browse all {FAQ_ITEMS.length} questions with search & filters →
@@ -930,10 +936,13 @@ export default function LandingPage() {
             <p className="landing-kw">
               <strong>Popular searches:</strong> 3D box studio, 3D box designer,
               3D box maker, 3D box design maker, 3D box simulation, 3D packaging
-              simulator, free box designer online, carton 3D preview, folding box
-              visualizer, mailer box mockup, structural packaging preview, online
-              box configurator, PBR packaging render, corrugated box simulator,
-              retail carton preview, CPG packaging review.
+              simulator, free box designer online, online box mockup generator,
+              free packaging mockup generator, Pacdora alternative, product box
+              mockup, folding carton mockup, tuck end box mockup, carton 3D
+              preview, mailer box mockup, corrugated box simulator, gift box
+              mockup, ecommerce box mockup, kraft box mockup, structural
+              packaging preview, packaging visualization tool, retail carton
+              preview, CPG packaging review, small business packaging design.
             </p>
           </div>
         </section>

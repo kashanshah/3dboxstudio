@@ -14,8 +14,9 @@ export default function FaqPage() {
             Frequently asked questions
           </h1>
           <p className="landing-section-intro content-page-intro">
-            Browse {FAQ_ITEMS.length} answers about 3D Box Studio — search by
-            keyword or filter by topic.
+            Browse {FAQ_ITEMS.length} answers about 3D Box Studio—search by
+            keyword or filter by topic. Covers free mockups, Pacdora
+            alternatives, export formats, commercial use, and CAD comparisons.
           </p>
         </div>
       </section>

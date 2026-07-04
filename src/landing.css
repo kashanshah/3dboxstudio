@@ -1854,6 +1854,14 @@
   box-shadow: var(--l-shadow);
 }
 
+.blog-index-card .faq-item-category {
+  margin-bottom: 0.65rem;
+}
+
+.blog-explorer {
+  /* max-width: 1120px; */
+}
+
 .blog-index-meta,
 .blog-post-meta {
   margin: 0 0 0.5rem;

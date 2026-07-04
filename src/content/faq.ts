@@ -22,6 +22,22 @@ export const FAQ_CATEGORIES: { id: FaqCategoryId; label: string }[] = [
   { id: "technical", label: "Technical" },
 ];
 
+/** FAQs shown on the landing page preview (must match JSON-LD on homepage). */
+export const LANDING_FAQ_PREVIEW_COUNT = 8;
+
+export function getLandingFaqItems(): FaqItem[] {
+  return FAQ_ITEMS.slice(0, LANDING_FAQ_PREVIEW_COUNT);
+}
+
+/** Plain text for FAQ schema (strips HTML markup from answers). */
+export function faqAnswerPlainText(answer: string): string {
+  return answer
+    .replace(/<code>(.*?)<\/code>/gi, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const FAQ_ITEMS: FaqItem[] = [
   {
     id: "what-is-3d-box-designer",
@@ -121,6 +137,90 @@ export const FAQ_ITEMS: FaqItem[] = [
     answer:
       "Graphic designers, packaging freelancers, brand managers, and print shops who need a quick 3D box preview without installing CAD software. It complements—not replaces—structural engineering tools when you need production-ready die-lines.",
   },
+  {
+    id: "vs-pacdora",
+    category: "comparison",
+    question: "Is 3D Box Studio a free Pacdora alternative?",
+    answer:
+      "For quick 3D box mockups and client previews, yes. Pacdora offers a large dieline template library, print-ready exports, and 4K campaign renders. 3D Box Studio is a free, open-source browser tool focused on interactive 3D simulation—custom dimensions, per-face artwork, material presets, and PNG export—without subscriptions or credits. Use Pacdora when you need production dielines; use 3D Box Studio when you need fast visual validation.",
+  },
+  {
+    id: "download-required",
+    category: "getting-started",
+    question: "Do I need to download software to use this online box mockup generator?",
+    answer:
+      "No. 3D Box Studio is a browser-based online box mockup generator. Open the studio in Chrome, Firefox, Safari, or Edge—no install, plugin, or desktop license required. WebGL support is recommended for smooth 3D rendering.",
+  },
+  {
+    id: "amazon-listing-use",
+    category: "overview",
+    question: "Can I use 3D box mockups for Amazon or Shopify product listings?",
+    answer:
+      "Yes. Export a viewport PNG and use it in Amazon main images, A+ content, Shopify product pages, or social ads. The mockup helps you test angles and artwork before a photo shoot. For final listing photography, many sellers still use professional product photos—but 3D previews accelerate early listing setup and internal approvals.",
+  },
+  {
+    id: "commercial-use",
+    category: "getting-started",
+    question: "Can I use exported mockups commercially?",
+    answer:
+      "Yes. PNG and MP4 exports from your own designs are yours to use in client work, marketing, e-commerce listings, and presentations. 3D Box Studio is open source under the MIT license. Always ensure your uploaded artwork and logos are properly licensed for commercial use.",
+  },
+  {
+    id: "custom-dimensions",
+    category: "technical",
+    question: "Can I set custom box dimensions in millimeters, centimeters, or inches?",
+    answer:
+      "Yes. Enter any width, height, and depth in millimeters, centimeters, or inches. The 3D preview updates in real time so you can compare standard retail sizes, custom mailers, or shipper boxes without being locked to template dimensions.",
+  },
+  {
+    id: "open-source",
+    category: "overview",
+    question: "Is 3D Box Studio open source?",
+    answer:
+      "Yes. The project is MIT-licensed and available on GitHub. You can self-host, contribute features, or inspect the code. The public instance at 3dboxstudio.com is free to use with no account required to start designing.",
+  },
+  {
+    id: "folding-carton-explainer",
+    category: "overview",
+    question: "What is a folding carton and can I mock one up in 3D?",
+    answer:
+      "A folding carton is a paperboard box folded from a single sheet—common for retail products, cosmetics, food, and supplements. 3D Box Studio simulates folding cartons and mailer-style boxes with configurable lid and flap openings so you can preview artwork, proportions, and shelf presence before print.",
+  },
+  {
+    id: "dieline-vs-mockup",
+    category: "comparison",
+    question: "What is the difference between a dieline and a 3D box mockup?",
+    answer:
+      "A dieline is a flat production file with cut, crease, and bleed lines for the printer—it defines manufacturing geometry. A 3D box mockup is a visual preview showing how finished packaging looks with artwork, materials, and lighting. Use dieline tools (Pacdora, ArtiosCAD, Templatemaker) for print plates; use a 3D mockup tool for client presentations, e-commerce visuals, and design reviews.",
+  },
+  {
+    id: "tuck-end-box",
+    category: "technical",
+    question: "Can I preview tuck end boxes and retail cartons?",
+    answer:
+      "Yes. Set retail carton dimensions and upload artwork to each face to simulate tuck end and folding carton proportions. The tool focuses on visual scale and graphic placement—not engineering every glue tab or tuck flap for production.",
+  },
+  {
+    id: "no-account-required",
+    category: "getting-started",
+    question: "Can I create a 3D box mockup without signing up?",
+    answer:
+      "Yes. Open the studio and start designing immediately—no account, email, or credit card required. Create an optional account only when you want cloud save, share links, and view-only client preview URLs.",
+  },
+  {
+    id: "unboxing-video",
+    category: "export",
+    question: "Can I record an unboxing video or animation of my box mockup?",
+    answer:
+      "Yes. Use the viewport recording feature to capture a short MP4 of your 3D box—ideal for storyboarding unboxing videos, crowdfunding campaign clips, or social media teasers before physical samples exist.",
+  },
+  {
+    id: "material-presets",
+    category: "technical",
+    question: "What packaging materials can I simulate?",
+    answer:
+      "Material presets include kraft board, white carton, gloss and matte plastic, corrugated cardboard, and metallic foil. Combined with HDRI studio lighting, these presets help you approximate how artwork reads on different substrates before print.",
+  },
 ];
 
 export function getCategoryLabel(id: FaqCategoryId): string {
@@ -131,4 +231,4 @@ export const FAQ_PAGE_TITLE =
   "FAQ — 3D Box Designer, Maker & Simulator | 3D Box Studio";
 
 export const FAQ_PAGE_DESCRIPTION =
-  "Answers about 3D Box Studio: free 3D box designer, box maker, design tool, and packaging simulation. Compare with CAD, learn about export, mobile support, and data storage.";
+  "Answers about 3D Box Studio: free 3D box designer, online box mockup generator, Pacdora alternative, packaging simulation, export formats, custom dimensions, commercial use, and comparison with CAD tools.";

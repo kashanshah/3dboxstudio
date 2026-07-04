@@ -4,6 +4,13 @@ export type BlogSection =
   | { type: "h3"; text: string }
   | { type: "ul"; items: string[] };
 
+export type BlogCategoryId =
+  | "getting-started"
+  | "workflow"
+  | "ecommerce"
+  | "industry"
+  | "tools";
+
 export type BlogPost = {
   slug: string;
   title: string;
@@ -15,11 +22,51 @@ export type BlogPost = {
   sections: BlogSection[];
 };
 
+export const BLOG_CATEGORIES: { id: BlogCategoryId; label: string }[] = [
+  { id: "getting-started", label: "Getting started" },
+  { id: "workflow", label: "Workflow & teams" },
+  { id: "ecommerce", label: "E-commerce & DTC" },
+  { id: "industry", label: "Industry guides" },
+  { id: "tools", label: "Tools & structure" },
+];
+
+const BLOG_CATEGORY_BY_SLUG: Record<string, BlogCategoryId> = {
+  "what-is-a-3d-box-designer": "getting-started",
+  "free-3d-box-maker-online": "getting-started",
+  "how-to-create-3d-product-box-mockup-online": "getting-started",
+  "3d-box-simulation-for-packaging-teams": "workflow",
+  "3d-box-design-maker-workflow": "workflow",
+  "print-shop-client-approval-3d-mockups": "workflow",
+  "freelance-packaging-designer-mockups": "workflow",
+  "ecommerce-product-listing-box-mockups": "ecommerce",
+  "subscription-box-unboxing-preview": "ecommerce",
+  "corrugated-shipping-box-branding": "ecommerce",
+  "small-business-product-box-design": "ecommerce",
+  "cosmetics-packaging-3d-preview": "industry",
+  "food-beverage-carton-shelf-preview": "industry",
+  "kickstarter-packaging-campaign-visuals": "industry",
+  "supplement-vitamin-packaging-3d-preview": "industry",
+  "gift-box-packaging-luxury-preview": "industry",
+  "sustainable-eco-packaging-3d-review": "industry",
+  "candle-home-fragrance-packaging-preview": "industry",
+  "pet-product-packaging-3d-mockup": "industry",
+  "free-pacdora-alternative-3d-box-mockups": "tools",
+  "tuck-end-folding-carton-mockup": "tools",
+};
+
+export function getBlogCategory(slug: string): BlogCategoryId {
+  return BLOG_CATEGORY_BY_SLUG[slug] ?? "getting-started";
+}
+
+export function getBlogCategoryLabel(id: BlogCategoryId): string {
+  return BLOG_CATEGORIES.find((c) => c.id === id)?.label ?? id;
+}
+
 export const BLOG_INDEX_TITLE =
   "Blog — 3D Box Design, Simulation & Packaging Guides | 3D Box Studio";
 
 export const BLOG_INDEX_DESCRIPTION =
-  "Guides on 3D box design for e-commerce sellers, beauty brands, print shops, freelancers, and packaging teams. Free browser-based carton mockups with 3D Box Studio.";
+  "Guides on 3D box design, free packaging mockup generators, folding carton previews, and browser-based box makers for e-commerce sellers, beauty brands, print shops, freelancers, and packaging teams.";
 
 export const BLOG_POSTS: BlogPost[] = [
   {
@@ -717,6 +764,517 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         type: "p",
         text: "Open the studio, set shipper dimensions, upload one-color or full-color art per face, and export a PNG for your ops and marketing sync. No CAD license required.",
+      },
+    ],
+  },
+  {
+    slug: "free-pacdora-alternative-3d-box-mockups",
+    title: "Free Pacdora Alternative for 3D Box Mockups in Your Browser",
+    description:
+      "Looking for a free Pacdora alternative? Compare browser-based 3D box mockup tools and see when a lightweight packaging simulator beats full dieline platforms.",
+    published: "2025-08-26",
+    readMinutes: 6,
+    keywords: [
+      "pacdora alternative",
+      "free packaging mockup generator",
+      "online box mockup generator",
+      "3d box mockup free",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Pacdora is a popular all-in-one packaging platform with thousands of dieline templates, 4K renders, and print-ready exports. But many designers search for a free Pacdora alternative when they only need a quick 3D box mockup—not a full structural engineering workflow. That is where lightweight browser tools like 3D Box Studio fit.",
+      },
+      {
+        type: "h2",
+        text: "What you get from a free packaging mockup generator",
+      },
+      {
+        type: "p",
+        text: "A free online box mockup generator lets you set custom dimensions, upload artwork per face, pick materials, and export PNG previews without a subscription or credit system. You trade dieline export and template libraries for speed, zero cost, and no account requirement.",
+      },
+      {
+        type: "h2",
+        text: "When to use Pacdora vs. a free 3D box mockup tool",
+      },
+      {
+        type: "ul",
+        items: [
+          "Use Pacdora when you need print-ready dielines in AI, PDF, or DXF and a large template catalog",
+          "Use a free 3D box mockup tool when you need client approval, e-commerce listing shots, or internal reviews",
+          "Use Pacdora for photorealistic 4K campaign renders with complex box structures",
+          "Use a browser simulator when you want open-source, MIT-licensed software with JSON export",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Other free Pacdora alternatives worth knowing",
+      },
+      {
+        type: "p",
+        text: "Templatemaker.nl generates parametric dielines for papercraft. BOXLAB combines editing and 3D preview. Mockey and similar sites offer fixed mockup templates. 3D Box Studio focuses on interactive 3D simulation—orbit, open flaps, change materials—in a single free studio with cloud save and client preview links.",
+      },
+      {
+        type: "h2",
+        text: "Try 3D Box Studio as your free mockup generator",
+      },
+      {
+        type: "p",
+        text: "Open the studio, enter your carton dimensions, upload panel artwork, and export a viewport PNG in minutes. No download, no signup, no credits—just a fast 3D box mockup when Pacdora's full feature set is more than you need.",
+      },
+    ],
+  },
+  {
+    slug: "how-to-create-3d-product-box-mockup-online",
+    title: "How to Create a 3D Product Box Mockup Online (Step by Step)",
+    description:
+      "Learn how to create a 3D product box mockup online without Photoshop or CAD. A practical workflow for designers, sellers, and brand teams using a free browser tool.",
+    published: "2025-09-02",
+    readMinutes: 5,
+    keywords: [
+      "how to create 3d box mockup",
+      "product box mockup online",
+      "online box mockup maker",
+      "packaging mockup tutorial",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Creating a 3D product box mockup online used to mean wrestling with Photoshop smart objects or paying for template libraries. Today you can build an interactive carton preview in a browser—set real dimensions, upload your artwork, and export a PNG for presentations or product listings.",
+      },
+      {
+        type: "h2",
+        text: "Step 1: Gather your box dimensions and artwork",
+      },
+      {
+        type: "p",
+        text: "Start with outer width, height, and depth from your structural brief or product spec. Export flat panel artwork as PNG or JPG—one image per face if your tool supports per-face upload. If you only have a composite flat, start with the front panel and add others as they become available.",
+      },
+      {
+        type: "h2",
+        text: "Step 2: Open a free online box mockup maker",
+      },
+      {
+        type: "p",
+        text: "Launch 3D Box Studio in your browser—no install required. Enter dimensions in millimeters, centimeters, or inches. Pick a material preset: white carton, kraft, gloss or matte plastic, corrugated, or metallic foil.",
+      },
+      {
+        type: "h2",
+        text: "Step 3: Upload artwork and review in 3D",
+      },
+      {
+        type: "ul",
+        items: [
+          "Upload graphics to each face independently and rotate 90° if needed",
+          "Orbit the model to check logo scale and readability at shelf angle",
+          "Open the lid or flaps to confirm nothing important is hidden",
+          "Switch HDRI environments to match your target photo shoot lighting",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Step 4: Export and share",
+      },
+      {
+        type: "p",
+        text: "Export a viewport PNG for decks, Amazon listings, or social posts. Save to the cloud and send a view-only preview link so clients can explore the mockup themselves. For video, record a short MP4 of the opening animation for unboxing previews.",
+      },
+      {
+        type: "h2",
+        text: "Start your first mockup now",
+      },
+      {
+        type: "p",
+        text: "The entire workflow takes minutes, not hours. Open the studio and create your first 3D product box mockup online—free, with no account required.",
+      },
+    ],
+  },
+  {
+    slug: "supplement-vitamin-packaging-3d-preview",
+    title: "Supplement & Vitamin Packaging: 3D Carton Previews for Compliance Reviews",
+    description:
+      "Preview supplement and vitamin carton mockups in 3D before print—validate panel layout, regulatory copy placement, and shelf presence for health & wellness brands.",
+    published: "2025-09-09",
+    readMinutes: 5,
+    keywords: [
+      "supplement packaging mockup",
+      "vitamin box design",
+      "health packaging 3d",
+      "pharma carton preview",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Supplement and vitamin packaging carries strict label requirements—Supplement Facts panels, allergen statements, lot codes, and brand claims must land on the right faces without crowding the hero art. A 3D carton preview catches layout mistakes that flat PDFs hide until the first physical sample arrives.",
+      },
+      {
+        type: "h2",
+        text: "Why 3D matters for supplement cartons",
+      },
+      {
+        type: "ul",
+        items: [
+          "Confirm the facts panel is readable at arm's length on a retail shelf",
+          "Check that lid openings do not obscure mandatory copy",
+          "Validate bottle-count claims against actual carton proportions",
+          "Compare white board vs. kraft for natural/organic positioning",
+          "Share view-only previews with regulatory consultants before print",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Typical supplement box dimensions",
+      },
+      {
+        type: "p",
+        text: "Enter your exact outer dimensions—whether a 60-count bottle shipper, a sample sachet mailer, or a multi-pack display carton. Custom sizing matters because supplement brands rarely fit standard template mockups.",
+      },
+      {
+        type: "h2",
+        text: "Workflow for brand and compliance teams",
+      },
+      {
+        type: "p",
+        text: "Design in Illustrator, export panel PNGs, upload to 3D Box Studio, and orbit the model with marketing, regulatory, and print partners in one review session. Export PNGs for internal decks; send preview links for async sign-off.",
+      },
+      {
+        type: "h2",
+        text: "Preview your supplement carton free",
+      },
+      {
+        type: "p",
+        text: "Open the studio, set your carton dimensions, upload label art per face, and review in 3D. Browser-based, free, and ready for your next SKU launch.",
+      },
+    ],
+  },
+  {
+    slug: "gift-box-packaging-luxury-preview",
+    title: "Gift Box & Luxury Packaging: 3D Previews Before Premium Print Runs",
+    description:
+      "Luxury and gift box packaging demands flawless proportions. Use a 3D packaging simulator to preview rigid-style cartons, foil accents, and unboxing angles before committing to premium print.",
+    published: "2025-09-16",
+    readMinutes: 5,
+    keywords: [
+      "gift box mockup",
+      "luxury packaging 3d",
+      "premium box design",
+      "gift packaging preview",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Gift box and luxury packaging buyers judge quality before they read a word—emboss depth, foil catch light, and lid reveal all communicate premium positioning. Physical samples are expensive and slow. A 3D packaging preview lets creative directors iterate on proportions and graphic hierarchy in hours instead of weeks.",
+      },
+      {
+        type: "h2",
+        text: "What luxury teams preview in 3D",
+      },
+      {
+        type: "ul",
+        items: [
+          "Logo scale on lid vs. front panel for unboxing hero shots",
+          "Metallic foil material preset against matte board contrast",
+          "Lid-from-back opening animation for gift-reveal videos",
+          "Interior panel art visibility when the box is partially open",
+          "Retail shelf presence next to competitor cartons",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Gift box mockups without rigid-box CAD",
+      },
+      {
+        type: "p",
+        text: "True rigid boxes with separate wrap and tray need structural CAD. But many premium gift lines use folding cartons with magnetic-style closures or tuck lids that simulate a rigid feel. 3D Box Studio handles folding cartons and mailer-style boxes with configurable openings—ideal for early luxury concept reviews.",
+      },
+      {
+        type: "h2",
+        text: "Record unboxing previews for campaigns",
+      },
+      {
+        type: "p",
+        text: "Record a viewport MP4 of the lid opening to storyboard holiday campaign videos or pitch retail buyers. Pair the render with flat artwork for a complete creative presentation.",
+      },
+      {
+        type: "h2",
+        text: "Start your luxury carton preview",
+      },
+      {
+        type: "p",
+        text: "Set dimensions, apply the metallic foil or gloss white preset, upload your brand art, and export shelf-angle PNGs. Free in the browser—save budget for the actual foil stamp die.",
+      },
+    ],
+  },
+  {
+    slug: "sustainable-eco-packaging-3d-review",
+    title: "Sustainable & Eco-Friendly Packaging: Preview Kraft and Recycled Board in 3D",
+    description:
+      "Evaluate eco-friendly packaging choices—kraft board, minimal ink coverage, right-sized cartons—in a 3D simulator before committing to sustainable print runs.",
+    published: "2025-09-23",
+    readMinutes: 5,
+    keywords: [
+      "eco-friendly packaging mockup",
+      "sustainable packaging design",
+      "kraft box mockup",
+      "recyclable carton preview",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Sustainable packaging is a brand promise—not just a material spec. Customers expect kraft textures, minimal over-packaging, and honest unboxing. A 3D packaging simulator lets sustainability and design teams agree on board color, print coverage, and box size before the first eco-certified print run.",
+      },
+      {
+        type: "h2",
+        text: "Preview kraft and natural board realistically",
+      },
+      {
+        type: "p",
+        text: "Switch to the kraft material preset in 3D Box Studio to see how one-color or full-color art reads on unbleached board. Compare against white carton to decide whether the eco story or color vibrancy wins for your SKU.",
+      },
+      {
+        type: "h2",
+        text: "Right-size boxes to reduce waste",
+      },
+      {
+        type: "ul",
+        items: [
+          "Enter exact product dimensions plus minimal void fill",
+          "Compare a snug mailer vs. oversized shipper in 3D",
+          "Validate that sustainability copy fits without shrinking the logo",
+          "Share previews with fulfillment teams before ordering corrugated MOQs",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Eco claims need honest visuals",
+      },
+      {
+        type: "p",
+        text: "If your packaging says recyclable or FSC-certified, the mockup should reflect actual board color and structure—not an idealized gloss finish. Simulation keeps marketing visuals aligned with what arrives on the customer's doorstep.",
+      },
+      {
+        type: "h2",
+        text: "Try a kraft carton preview free",
+      },
+      {
+        type: "p",
+        text: "Open the studio, pick kraft or corrugated presets, set right-sized dimensions, and export PNGs for your sustainability review. No CAD license, no physical sample waste.",
+      },
+    ],
+  },
+  {
+    slug: "small-business-product-box-design",
+    title: "Product Box Design for Small Business: Free 3D Mockups Without a Design Agency",
+    description:
+      "Small businesses and startups can preview product box designs in 3D before hiring designers or ordering print—free browser tools for Amazon sellers, Etsy shops, and DTC launches.",
+    published: "2025-09-30",
+    readMinutes: 5,
+    keywords: [
+      "small business packaging design",
+      "startup product box",
+      "product packaging for small business",
+      "diy box mockup",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Small business owners often need product box design on a tight budget—too early for a packaging agency, too late for guesswork. A free 3D box mockup tool bridges the gap: visualize your carton, test artwork placement, and show manufacturers exactly what you want before paying for plates or samples.",
+      },
+      {
+        type: "h2",
+        text: "When small businesses need a box mockup",
+      },
+      {
+        type: "ul",
+        items: [
+          "Launching a first SKU on Amazon, Etsy, or Shopify",
+          "Sending RFQs to overseas manufacturers with clear dimensional intent",
+          "Pitching retail buyers with professional-looking product visuals",
+          "Testing two label layouts before committing to a print minimum",
+          "Creating social media and ad creative before the product ships",
+        ],
+      },
+      {
+        type: "h2",
+        text: "No design agency required",
+      },
+      {
+        type: "p",
+        text: "Design your flat artwork in Canva, Figma, or Illustrator, export PNGs, and upload them to 3D Box Studio. The browser tool handles dimension entry, material preview, and PNG export—you focus on brand and copy, not 3D modeling.",
+      },
+      {
+        type: "h2",
+        text: "Share with manufacturers and partners",
+      },
+      {
+        type: "p",
+        text: "Save your design to the cloud and share a view-only preview link with your packaging supplier. They see exact proportions and artwork placement without needing an editor account.",
+      },
+      {
+        type: "h2",
+        text: "Start your small business box design",
+      },
+      {
+        type: "p",
+        text: "Open the free studio, enter your product carton dimensions, upload artwork, and export your first mockup in minutes. No signup, no subscription—ideal for bootstrapped launches.",
+      },
+    ],
+  },
+  {
+    slug: "tuck-end-folding-carton-mockup",
+    title: "Tuck End & Folding Carton Mockups: 3D Preview for Retail Packaging",
+    description:
+      "Preview tuck end boxes and folding cartons in 3D—validate retail packaging proportions, panel artwork, and shelf angles before your converter runs the first proof.",
+    published: "2025-10-07",
+    readMinutes: 5,
+    keywords: [
+      "tuck end box mockup",
+      "folding carton design",
+      "retail carton mockup",
+      "carton box 3d preview",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Tuck end cartons and folding boxes dominate retail shelves—from cereal and cosmetics to electronics accessories. These structures fold from a single sheet with tuck flaps top and bottom. A folding carton mockup in 3D shows how your artwork wraps corners and whether the tuck flaps interfere with front-panel branding.",
+      },
+      {
+        type: "h2",
+        text: "What is a tuck end folding carton?",
+      },
+      {
+        type: "p",
+        text: "A tuck end box is a paperboard carton where the top and bottom flaps tuck into the body without glue on the closing panels. Variations include reverse tuck, straight tuck, and auto-bottom styles. For visual preview purposes, the key is proportion and face layout—not engineering every glue tab.",
+      },
+      {
+        type: "h2",
+        text: "Why retail teams simulate tuck end boxes",
+      },
+      {
+        type: "ul",
+        items: [
+          "Check barcode and nutrition panel placement at shelf height",
+          "Confirm brand color blocks align across front and side panels",
+          "Compare tall vs. wide carton options for the same volume",
+          "Preview split-top or lid openings for premium retail lines",
+          "Export PNGs for buyer presentations before structural CAD",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Folding carton mockup vs. dieline CAD",
+      },
+      {
+        type: "p",
+        text: "Structural CAD tools generate knife lines and glue patterns for production. A folding carton mockup tool like 3D Box Studio focuses on visual validation—dimensions, materials, artwork, and openings—so your team approves the look before investing in die tooling.",
+      },
+      {
+        type: "h2",
+        text: "Preview your tuck end carton",
+      },
+      {
+        type: "p",
+        text: "Enter retail carton dimensions, upload panel artwork per face, pick white board or kraft, and orbit the model at shelf angle. Free, browser-based, and ready for your next line review.",
+      },
+    ],
+  },
+  {
+    slug: "candle-home-fragrance-packaging-preview",
+    title: "Candle & Home Fragrance Packaging: 3D Box Mockups for DTC Brands",
+    description:
+      "Candle makers and home fragrance brands can preview gift-ready carton mockups in 3D—validate label art, box proportions, and unboxing angles before seasonal print runs.",
+    published: "2025-10-14",
+    readMinutes: 4,
+    keywords: [
+      "candle box mockup",
+      "home fragrance packaging",
+      "candle packaging design",
+      "wax melt box preview",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Candle and home fragrance packaging sells the scent before the wick is lit—box art, texture, and unboxing set expectations for luxury, cozy, or minimalist brands. Seasonal launches (holiday collections, limited editions) move fast, and physical samples rarely arrive before the marketing deadline. A 3D box mockup keeps creative and ops aligned.",
+      },
+      {
+        type: "h2",
+        text: "What candle brands preview in 3D",
+      },
+      {
+        type: "ul",
+        items: [
+          "Jar shipper proportions for 2oz, 4oz, and 8oz vessels",
+          "Front-panel scent name and illustration at shelf distance",
+          "Kraft vs. white board for artisan vs. premium positioning",
+          "Gift box lid reveal for holiday unboxing content",
+          "Multi-candle set cartons with consistent panel alignment",
+        ],
+      },
+      {
+        type: "h2",
+        text: "Seasonal launches without sample delays",
+      },
+      {
+        type: "p",
+        text: "Upload your autumn or holiday artwork, set the shipper dimensions from your glass vendor spec, and export PNGs for Instagram ads and wholesale line sheets—weeks before the printer delivers the first article.",
+      },
+      {
+        type: "h2",
+        text: "Try a candle box mockup free",
+      },
+      {
+        type: "p",
+        text: "Open 3D Box Studio, enter your carton dimensions, apply kraft or gloss white, upload label art, and export viewport PNGs. Browser-based and free for indie candle makers and DTC fragrance brands.",
+      },
+    ],
+  },
+  {
+    slug: "pet-product-packaging-3d-mockup",
+    title: "Pet Product Packaging: 3D Carton Mockups for Treats, Toys & Supplements",
+    description:
+      "Pet brand packaging needs bold shelf presence. Preview treat cartons, supplement boxes, and toy shippers in 3D before committing to pet-category print minimums.",
+    published: "2025-10-21",
+    readMinutes: 4,
+    keywords: [
+      "pet packaging mockup",
+      "dog treat box design",
+      "pet product box mockup",
+      "animal supplement packaging",
+    ],
+    sections: [
+      {
+        type: "p",
+        text: "Pet product packaging competes in a crowded aisle—bold colors, playful mascots, and clear product claims must read instantly. Whether you are launching dog treats, cat supplements, or durable toy shippers, a 3D carton mockup validates proportions and artwork before you hit category-specific print minimums.",
+      },
+      {
+        type: "h2",
+        text: "Pet packaging design challenges",
+      },
+      {
+        type: "ul",
+        items: [
+          "Large front-panel illustrations that stay readable at shelf distance",
+          "Regulatory copy for supplements without shrinking the mascot",
+          "Right-sized shippers that protect product without excess void fill",
+          "Seasonal or limited-edition artwork swaps on the same carton size",
+          "Wholesale case prints vs. consumer unit design alignment",
+        ],
+      },
+      {
+        type: "h2",
+        text: "From treat pouch shipper to display carton",
+      },
+      {
+        type: "p",
+        text: "Enter exact outer dimensions for your SKU—single-serve treat boxes, multi-pack cartons, or corrugated toy shippers. Upload artwork per face, switch between corrugated and white board presets, and orbit the model at pet-aisle eye level.",
+      },
+      {
+        type: "h2",
+        text: "Preview your pet product box",
+      },
+      {
+        type: "p",
+        text: "Open the free studio, set dimensions, upload your pet brand artwork, and export PNGs for retail buyer decks or Amazon listings. No CAD required.",
       },
     ],
   },

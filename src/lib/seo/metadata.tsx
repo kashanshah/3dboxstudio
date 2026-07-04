@@ -4,6 +4,7 @@ import type { ShareSeoMeta } from "@/server/shareService";
 import {
   BLOG_INDEX_DESCRIPTION,
   BLOG_INDEX_TITLE,
+  BLOG_POSTS,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { displayShareLabel } from "@/lib/shareName";
@@ -43,10 +44,11 @@ function buildOpenGraph(
     alt?: string;
     type?: string;
   } | null,
+  article?: { publishedTime: string; modifiedTime: string },
 ): Metadata["openGraph"] {
   const origin = getSiteOrigin();
   const imageUrl = image?.url ?? getOgImageUrl(origin);
-  return {
+  const base = {
     title,
     description,
     type,
@@ -61,6 +63,10 @@ function buildOpenGraph(
       },
     ],
   };
+  if (type === "article" && article) {
+    return { ...base, publishedTime: article.publishedTime, modifiedTime: article.modifiedTime };
+  }
+  return base;
 }
 
 function buildTwitter(
@@ -165,7 +171,10 @@ export function createBlogPostMetadata(post: BlogPost): Metadata {
     description: post.description,
     keywords: post.keywords,
     alternates: { canonical: path },
-    openGraph: buildOpenGraph(title, post.description, path, "article"),
+    openGraph: buildOpenGraph(title, post.description, path, "article", null, {
+      publishedTime: post.published,
+      modifiedTime: post.updated ?? post.published,
+    }),
     twitter: buildTwitter(title, post.description),
   };
 }
@@ -186,6 +195,31 @@ export function FaqJsonLd() {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(origin)) }}
+    />
+  );
+}
+
+export function BlogIndexJsonLd() {
+  const origin = getSiteOrigin();
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: "3D Box Studio Blog",
+    description: BLOG_INDEX_DESCRIPTION,
+    url: `${origin}/blog`,
+    blogPost: BLOG_POSTS.map((post) => ({
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.description,
+      datePublished: post.published,
+      dateModified: post.updated ?? post.published,
+      url: `${origin}/blog/${post.slug}`,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );
 }

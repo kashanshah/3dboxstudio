@@ -1,4 +1,4 @@
-import { FAQ_ITEMS, FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "../content/faq";
+import { FAQ_ITEMS, FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE, faqAnswerPlainText } from "../content/faq";
 import {
   applySocialMeta,
   buildSocialMetaTags,
@@ -25,7 +25,7 @@ export function buildFaqJsonLd(_origin: string) {
       name: item.question,
       acceptedAnswer: {
         "@type": "Answer",
-        text: item.answer,
+        text: faqAnswerPlainText(item.answer),
       },
     })),
   };
