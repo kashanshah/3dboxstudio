@@ -95,14 +95,14 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       open={open}
       onClose={onClose}
       footer={
-        <>
+        <div className="mb-3">
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Cancel
           </button>
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void submit()}>
             {submitLabel}
           </button>
-        </>
+        </div>
       }
     >
       <p className="studio-dialog-lead">
@@ -114,7 +114,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       </p>
 
       {mode === "signup" && (
-        <>
+        <div className="mb-3">
           <label className="studio-dialog-label" htmlFor="auth-name">
             Name <span className="studio-dialog-optional">(optional)</span>
           </label>
@@ -127,9 +127,10 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
             maxLength={80}
             onChange={(e) => setName(e.target.value)}
           />
-        </>
+        </div>
       )}
 
+      <div className="mb-3">
       <label className="studio-dialog-label" htmlFor="auth-email">
         Email
       </label>
@@ -146,9 +147,10 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
         }}
         autoFocus
       />
+      </div>
 
       {mode !== "forgot" && (
-        <>
+        <div className="mb-3">
           <label className="studio-dialog-label" htmlFor="auth-password">
             Password
           </label>
@@ -167,7 +169,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
               if (e.key === "Enter") void submit();
             }}
           />
-        </>
+        </div>
       )}
 
       {mode === "signin" && (
@@ -200,20 +202,20 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
           </>
         )}
         {mode === "signup" && (
-          <>
+          <div className="mb-3">
             Already have an account?{" "}
             <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
               Sign in
             </button>
-          </>
+          </div>
         )}
         {mode === "forgot" && (
-          <>
+          <div className="mb-3">
             Remembered it?{" "}
             <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
               Back to sign in
             </button>
-          </>
+          </div>
         )}
       </p>
     </StudioDialog>

@@ -313,6 +313,7 @@ export default function AccountSettingsModal({
                 This name appears in the studio menu and on your saved projects.
               </p>
 
+              <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-name">
                 Display name
               </label>
@@ -330,6 +331,7 @@ export default function AccountSettingsModal({
                 }}
               />
               <p className="studio-dialog-hint">Leave blank to show your email initial in the menu avatar.</p>
+              </div>
 
               <div className="studio-settings-actions">
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveProfile()}>
@@ -351,6 +353,7 @@ export default function AccountSettingsModal({
                 Choose a strong password you do not use on other sites.
               </p>
 
+              <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-current-password">
                 Current password
               </label>
@@ -366,7 +369,9 @@ export default function AccountSettingsModal({
                   setSuccess(null);
                 }}
               />
+              </div>
 
+              <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-new-password">
                 New password
               </label>
@@ -383,7 +388,9 @@ export default function AccountSettingsModal({
                   setSuccess(null);
                 }}
               />
+              </div>
 
+              <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-confirm-password">
                 Confirm new password
               </label>
@@ -402,7 +409,7 @@ export default function AccountSettingsModal({
                   if (e.key === "Enter") void savePassword();
                 }}
               />
-
+              </div>
               <div className="studio-settings-actions">
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void savePassword()}>
                   {busy ? "Updating…" : "Change password"}
