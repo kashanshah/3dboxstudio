@@ -166,98 +166,104 @@ export default function StudioMenuBar({
         )}
       </div>
 
-      {!viewOnly && (
-        <div className="studio-menu-item" ref={fileRef}>
-          <button
-            type="button"
-            className={`studio-menu-trigger${openMenu === "file" ? " is-open" : ""}`}
-            aria-expanded={openMenu === "file"}
-            aria-haspopup="menu"
-            onClick={() => setOpenMenu((m) => (m === "file" ? null : "file"))}
-          >
-            File
-          </button>
-          {openMenu === "file" && (
-            <div className="studio-menu-dropdown" role="menu">
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
-                <span>New</span>
-              </button>
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
-                <span>Open…</span>
-                <kbd>⌘O</kbd>
-              </button>
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
-                <span>View Recent</span>
-              </button>
-              <div className="studio-menu-sep" role="separator" />
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={cloudBusy}
-                onClick={() => pickFile(onSave)}
-              >
-                <span>{cloudBusy ? "Saving…" : "Save"}</span>
-                <kbd>⌘S</kbd>
-              </button>
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={cloudBusy}
-                onClick={() => pickFile(onSaveAs)}
-              >
-                <span>Save As…</span>
-                <kbd>⇧⌘S</kbd>
-              </button>
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={cloudBusy || !canSaveCopy}
-                onClick={() => pickFile(onSaveCopy)}
-              >
-                <span>Save a Copy…</span>
-              </button>
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={cloudBusy || !canRename}
-                onClick={() => pickFile(onRename)}
-              >
-                <span>Rename…</span>
-              </button>
-              <div className="studio-menu-sep" role="separator" />
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={!canSharePreview}
-                onClick={() => pickFile(onSharePreview)}
-              >
-                <span>Share Preview Link…</span>
-              </button>
-              <button
-                type="button"
-                className="studio-menu-action"
-                role="menuitem"
-                disabled={!canSharePreview}
-                onClick={() => pickFile(onCopyPreviewLink)}
-              >
-                <span>Copy Preview Link</span>
-              </button>
-              <div className="studio-menu-sep" role="separator" />
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>
-                <span>Import JSON…</span>
-              </button>
-              <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("export"))}>
-                <span>Export JSON…</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      <div className="studio-menu-item" ref={fileRef}>
+        <button
+          type="button"
+          className={`studio-menu-trigger${openMenu === "file" ? " is-open" : ""}`}
+          aria-expanded={openMenu === "file"}
+          aria-haspopup="menu"
+          onClick={() => setOpenMenu((m) => (m === "file" ? null : "file"))}
+        >
+          File
+        </button>
+        {openMenu === "file" && (
+          <div className="studio-menu-dropdown" role="menu">
+            {!viewOnly && (
+              <>
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
+                  <span>New</span>
+                </button>
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
+                  <span>Open…</span>
+                  <kbd>⌘O</kbd>
+                </button>
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
+                  <span>View Recent</span>
+                </button>
+                <div className="studio-menu-sep" role="separator" />
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  disabled={cloudBusy}
+                  onClick={() => pickFile(onSave)}
+                >
+                  <span>{cloudBusy ? "Saving…" : "Save"}</span>
+                  <kbd>⌘S</kbd>
+                </button>
+              </>
+            )}
+            <button
+              type="button"
+              className="studio-menu-action"
+              role="menuitem"
+              disabled={cloudBusy}
+              onClick={() => pickFile(onSaveAs)}
+            >
+              <span>Save As…</span>
+              {!viewOnly && <kbd>⇧⌘S</kbd>}
+            </button>
+            {!viewOnly && (
+              <>
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  disabled={cloudBusy || !canSaveCopy}
+                  onClick={() => pickFile(onSaveCopy)}
+                >
+                  <span>Save a Copy…</span>
+                </button>
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  disabled={cloudBusy || !canRename}
+                  onClick={() => pickFile(onRename)}
+                >
+                  <span>Rename…</span>
+                </button>
+                <div className="studio-menu-sep" role="separator" />
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  disabled={!canSharePreview}
+                  onClick={() => pickFile(onSharePreview)}
+                >
+                  <span>Share Preview Link…</span>
+                </button>
+                <button
+                  type="button"
+                  className="studio-menu-action"
+                  role="menuitem"
+                  disabled={!canSharePreview}
+                  onClick={() => pickFile(onCopyPreviewLink)}
+                >
+                  <span>Copy Preview Link</span>
+                </button>
+                <div className="studio-menu-sep" role="separator" />
+                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>
+                  <span>Import JSON…</span>
+                </button>
+              </>
+            )}
+            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("export"))}>
+              <span>Export JSON…</span>
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="studio-menu-item" ref={viewRef}>
         <button

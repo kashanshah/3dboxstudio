@@ -198,13 +198,15 @@ export function useStudioDocument({
   }, [modal, refreshRecentDesigns]);
 
   const openSaveAsModal = useCallback(() => {
-    if (viewOnly) return;
     if (!ensureCloudAccess()) return;
     setSaveAsLink(null);
     setSaveAsPreviewLink(null);
-    setSaveAsName(activeShareName ?? "");
+    const defaultName = viewOnly
+      ? (activeShareName ? `Copy of ${activeShareName}` : "Copy of design").slice(0, 120)
+      : (activeShareName ?? "");
+    setSaveAsName(defaultName);
     setSaveAsNameError(null);
-    setSaveAsIsCopy(false);
+    setSaveAsIsCopy(viewOnly);
     setModal("save-as");
   }, [activeShareName, viewOnly, ensureCloudAccess]);
 
@@ -367,7 +369,6 @@ export function useStudioDocument({
   }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess]);
 
   const saveCloudAs = useCallback(async () => {
-    if (viewOnly) return;
     if (!ensureCloudAccess()) return;
     const nameError = shareNameError(saveAsName);
     if (nameError) {
@@ -406,18 +407,25 @@ export function useStudioDocument({
       setActiveShareId(id);
       setActivePreviewToken(previewToken ?? null);
       setActiveShareName(resolvedName);
-      syncUrlToShare(id);
 
       const ogUpdatedAt = await uploadOgPreviewIfPresent(id, preview, setSaveOverlayMessage);
       const cacheVersion = ogUpdatedAt ?? toShareCacheVersion(updatedAt);
       setPreviewCacheVersion(cacheVersion);
+      setIsDirty(false);
+      rememberRecent(id, "saved", url, resolvedName);
+
+      if (viewOnly) {
+        // Reload so the route re-evaluates ownership and unlocks the full editor.
+        window.location.assign(studioSharePath(id));
+        return;
+      }
+
+      syncUrlToShare(id);
       setSaveAsLink(url);
       setSaveAsPreviewLink(
         previewUrl ??
           (previewToken ? studioPreviewUrl(previewToken, undefined, cacheVersion) : null)
       );
-      setIsDirty(false);
-      rememberRecent(id, "saved", url, resolvedName);
       try {
         await navigator.clipboard.writeText(url);
         showStatus(resolvedName ? `“${resolvedName}” saved and link copied.` : "New share link created and copied.");
