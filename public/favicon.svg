@@ -1,26 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
   <defs>
-    <linearGradient id="fv-bg" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#0f172a"/>
-      <stop offset="1" stop-color="#1e293b"/>
-    </linearGradient>
-    <linearGradient id="fv-top" x1="8" y1="8" x2="24" y2="18" gradientUnits="userSpaceOnUse">
+    <linearGradient id="lm-top" x1="6" y1="6" x2="26" y2="16" gradientUnits="userSpaceOnUse">
       <stop stop-color="#93c5fd"/>
       <stop offset="1" stop-color="#3b82f6"/>
     </linearGradient>
-    <linearGradient id="fv-right" x1="16" y1="12" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+    <linearGradient id="lm-right" x1="16" y1="10" x2="28" y2="28" gradientUnits="userSpaceOnUse">
       <stop stop-color="#3b82f6"/>
-      <stop offset="1" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
     </linearGradient>
-    <linearGradient id="fv-left" x1="16" y1="12" x2="6" y2="26" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1d4ed8"/>
+    <linearGradient id="lm-left" x1="16" y1="10" x2="4" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e40af"/>
       <stop offset="1" stop-color="#1e3a8a"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="7" fill="url(#fv-bg)"/>
-  <g transform="translate(0 0.5)">
-    <path fill="url(#fv-top)" d="M16 7 24.5 12.2 16 17.4 7.5 12.2Z"/>
-    <path fill="url(#fv-left)" d="M7.5 12.2 7.5 22.6 16 27.8 16 17.4Z"/>
-    <path fill="url(#fv-right)" d="M24.5 12.2 24.5 22.6 16 27.8 16 17.4Z"/>
-  </g>
+  <path fill="url(#lm-top)" d="M16 5 25.2 10.5 16 16 6.8 10.5Z"/>
+  <path fill="url(#lm-left)" d="M6.8 10.5 6.8 22.2 16 27.5 16 16Z"/>
+  <path fill="url(#lm-right)" d="M25.2 10.5 25.2 22.2 16 27.5 16 16Z"/>
 </svg>

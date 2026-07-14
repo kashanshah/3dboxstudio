@@ -28,6 +28,9 @@ export const metadata: Metadata = {
     default: "3D Box Studio — Free 3D Box Designer, Maker & Simulator",
     template: "%s | 3D Box Studio",
   },
+  icons: {
+    icon: "/logo-mark.svg",
+  },
 };
 
 export default function RootLayout({
