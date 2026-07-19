@@ -19,7 +19,7 @@ export default function AdminShell({ children }: AdminShellProps) {
 
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
-    router.push("/admin/login");
+    router.push("/");
     router.refresh();
   }
 

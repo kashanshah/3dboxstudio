@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
 import Script from "next/script";
-import { Analytics } from "@vercel/analytics/next";
+import VercelAnalytics from "@/components/VercelAnalytics";
 import { createLandingMetadata } from "@/lib/seo/metadata";
 import "./globals.css";
 
@@ -46,7 +46,7 @@ export default function RootLayout({
     >
       <body>
         {children}
-        <Analytics />
+        <VercelAnalytics />
         <Script
           id="bmc-widget"
           strategy="lazyOnload"
