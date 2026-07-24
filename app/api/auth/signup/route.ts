@@ -3,7 +3,7 @@ import { createUser, getUserByEmail, normalizeEmail, toPublicUser } from "@/serv
 import { createSession, setSessionCookie } from "@/server/auth/session";
 import { createVerificationToken } from "@/server/auth/verification";
 import { isValidEmail, normalizeName, passwordError } from "@/server/auth/validation";
-import { sendVerificationEmail } from "@/server/email/mailer";
+import { sendAdminNewRegistrationEmail, sendVerificationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 
 export const runtime = "nodejs";
@@ -43,6 +43,18 @@ export async function POST(req: Request) {
     } catch (mailErr) {
       console.error("Failed to send verification email:", mailErr);
       // Account + session still created; user can request a resend from the studio.
+    }
+
+    try {
+      await sendAdminNewRegistrationEmail({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.created_at,
+      });
+    } catch (adminMailErr) {
+      console.error("Failed to send admin registration alert:", adminMailErr);
+      // Signup must not fail if the admin alert cannot be delivered.
     }
 
     return NextResponse.json({ user: toPublicUser(user) });

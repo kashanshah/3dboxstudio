@@ -100,3 +100,53 @@ export async function sendPasswordResetEmail(to: string, name: string | null, re
   const text = `${name ? `Hi ${name},` : "Hi,"}\n\nReset your 3D Box Studio password:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`;
   await sendEmail({ to, subject: "Reset your password · 3D Box Studio", html, text });
 }
+
+/** Recipient for admin operational alerts (new registrations, etc.). */
+export function adminAlertEmail(): string {
+  return optionalEnv("ADMIN_EMAIL", "kashanshah@hotmail.com");
+}
+
+/** Notifies the admin that a new user just registered. */
+export async function sendAdminNewRegistrationEmail(user: {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt: string;
+}): Promise<void> {
+  const to = adminAlertEmail();
+  const safeEmail = escapeHtml(user.email);
+  const safeName = user.name ? escapeHtml(user.name) : "—";
+  const safeId = escapeHtml(user.id);
+  const safeCreated = escapeHtml(user.createdAt);
+  const html = `
+    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
+      <h1 style="font-size: 20px; margin: 0 0 16px;">New registration</h1>
+      <p style="margin: 0 0 16px;">A new account was created on <strong>3D Box Studio</strong>.</p>
+      <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+        <tr>
+          <td style="padding: 6px 0; color: #64748b; width: 88px;">Name</td>
+          <td style="padding: 6px 0;">${safeName}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Email</td>
+          <td style="padding: 6px 0;"><a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">User ID</td>
+          <td style="padding: 6px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">${safeId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #64748b;">Created</td>
+          <td style="padding: 6px 0;">${safeCreated}</td>
+        </tr>
+      </table>
+    </div>
+  `;
+  const text = `New registration on 3D Box Studio\n\nName: ${user.name ?? "—"}\nEmail: ${user.email}\nUser ID: ${user.id}\nCreated: ${user.createdAt}`;
+  await sendEmail({
+    to,
+    subject: `New registration · ${user.email}`,
+    html,
+    text,
+  });
+}
