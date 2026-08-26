@@ -859,7 +859,7 @@ export default function LandingPage() {
                       src={getBlogPostImagePath(post.slug)}
                       alt={getBlogPostImageAlt(post)}
                       width={1200}
-                      height={675}
+                      height={800}
                       loading="lazy"
                       decoding="async"
                     />
