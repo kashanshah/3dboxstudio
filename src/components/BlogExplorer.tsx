@@ -171,7 +171,7 @@ export default function BlogExplorer() {
                   src={getBlogPostImagePath(post.slug)}
                   alt={getBlogPostImageAlt(post)}
                   width={1200}
-                  height={800}
+                  height={675}
                   loading="lazy"
                   decoding="async"
                 />
