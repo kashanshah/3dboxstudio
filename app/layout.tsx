@@ -27,9 +27,21 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   ...createLandingMetadata(),
   title: {
-    default: "3D Box Studio — Free 3D Box Designer, Maker & Simulator",
+    default: "Free 3D Box Designer & Packaging Mockup Generator | 3D Box Studio",
     template: "%s | 3D Box Studio",
   },
+  keywords: [
+    "3d box designer",
+    "3d box maker",
+    "free 3d box maker",
+    "online box designer",
+    "packaging mockup generator",
+    "free packaging mockup",
+    "3d packaging simulator",
+    "carton mockup",
+    "mailer box mockup",
+    "3d box studio",
+  ],
   icons: {
     icon: "/logo-mark.svg",
   },

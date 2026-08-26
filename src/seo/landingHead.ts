@@ -1,10 +1,13 @@
 import { faqAnswerPlainText, getLandingFaqItems } from "../content/faq";
+import { SITE_KEYWORDS_META } from "./siteKeywords";
 
 export const LANDING_TITLE =
-  "3D Box Studio — Free 3D Box Designer, Maker & Simulator | 3dboxstudio.com";
+  "Free 3D Box Designer & Packaging Mockup Generator | 3D Box Studio";
 
 export const LANDING_DESCRIPTION =
-  "Free 3D box designer, online box mockup generator, and packaging simulator in your browser. Design folding cartons and mailers with PBR materials, lid and flap openings, per-face artwork, HDRI lighting, cloud save, view-only client preview links, PNG and JSON export—no signup. Open source (MIT).";
+  "Free online 3D box designer and packaging mockup generator. Create folding carton and mailer mockups in your browser—custom dimensions, PBR materials, lid & flap openings, per-face artwork, cloud save, client preview links, PNG & JSON export. No signup. Open source.";
+
+export const LANDING_KEYWORDS = SITE_KEYWORDS_META;
 
 export const LANDING_OG_IMAGE_PATH = "/images/featured-image.jpg";
 export const LANDING_OG_IMAGE_WIDTH = 1402;
@@ -72,18 +75,35 @@ export function buildLandingJsonLd(origin: string) {
       {
         "@type": "WebSite",
         name: "3D Box Studio",
+        alternateName: [
+          "3D Box Maker",
+          "Free Packaging Mockup Generator",
+          "3dboxstudio.com",
+        ],
         description: LANDING_DESCRIPTION,
         url: origin ? `${origin}/` : "/",
       },
       {
         "@type": "WebApplication",
         name: "3D Box Studio",
+        alternateName: "Free 3D Box Designer",
         applicationCategory: "DesignApplication",
         operatingSystem: "Any",
         browserRequirements: "Requires JavaScript. WebGL recommended.",
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
         description: LANDING_DESCRIPTION,
         url: origin ? `${origin}/studio` : "/studio",
+        featureList: [
+          "Custom box dimensions (mm, cm, in)",
+          "PBR packaging materials",
+          "Lid and flap opening simulation",
+          "Per-face artwork upload",
+          "HDRI lighting environments",
+          "Cloud save and share links",
+          "View-only client previews",
+          "PNG and JSON export",
+        ],
+        keywords: LANDING_KEYWORDS,
       },
       {
         "@type": "Organization",
@@ -129,6 +149,7 @@ export function applyLandingRouteSeo(
 ): () => void {
   doc.title = LANDING_TITLE;
   setMeta(doc, "description", LANDING_DESCRIPTION);
+  setMeta(doc, "keywords", LANDING_KEYWORDS);
   const themeMeta = doc.querySelector('meta[name="theme-color"]');
   const prevThemeColor = themeMeta?.getAttribute("content") ?? null;
   if (themeMeta) {
@@ -179,6 +200,7 @@ export function buildLandingHeadHtml(origin: string, options?: LandingHeadOption
   const tags = [
     `<title>${escapeHtml(LANDING_TITLE)}</title>`,
     `<meta name="description" content="${escapeHtml(LANDING_DESCRIPTION)}" />`,
+    `<meta name="keywords" content="${escapeHtml(LANDING_KEYWORDS)}" />`,
     `<meta name="theme-color" content="#e8edf4" />`,
   ];
   if (origin) {

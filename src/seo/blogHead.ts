@@ -24,6 +24,7 @@ import {
   LANDING_OG_IMAGE_TYPE,
   LANDING_OG_IMAGE_WIDTH,
 } from "./landingHead";
+import { SITE_KEYWORDS_META } from "./siteKeywords";
 
 function getBlogPostImageUrl(origin: string, slug: string): string {
   if (!origin) return getBlogPostImagePath(slug);
@@ -61,7 +62,12 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
     description: post.description,
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
-    keywords: post.keywords.join(", "),
+    keywords: Array.from(
+      new Set([
+        ...post.keywords,
+        ...SITE_KEYWORDS_META.split(", ").slice(0, 6),
+      ]),
+    ).join(", "),
     image: getBlogPostImageUrl(origin, post.slug),
     url,
     mainEntityOfPage: url,
@@ -79,6 +85,7 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
 export function applyBlogIndexRouteSeo(doc: Document, origin: string): () => void {
   doc.title = BLOG_INDEX_TITLE;
   setMeta(doc, "description", BLOG_INDEX_DESCRIPTION);
+  setMeta(doc, "keywords", SITE_KEYWORDS_META);
   const themeMeta = doc.querySelector('meta[name="theme-color"]');
   const prevThemeColor = themeMeta?.getAttribute("content") ?? null;
   if (themeMeta) {
@@ -121,7 +128,16 @@ export function applyBlogPostRouteSeo(
   const title = `${post.title} | 3D Box Studio`;
   doc.title = title;
   setMeta(doc, "description", post.description);
-  setMeta(doc, "keywords", post.keywords.join(", "));
+  setMeta(
+    doc,
+    "keywords",
+    Array.from(
+      new Set([
+        ...post.keywords,
+        ...SITE_KEYWORDS_META.split(", ").slice(0, 6),
+      ]),
+    ).join(", "),
+  );
   const themeMeta = doc.querySelector('meta[name="theme-color"]');
   const prevThemeColor = themeMeta?.getAttribute("content") ?? null;
   if (themeMeta) {
@@ -163,6 +179,7 @@ export function buildBlogIndexHeadHtml(origin: string): string {
   const tags = [
     `<title>${escapeHtml(BLOG_INDEX_TITLE)}</title>`,
     `<meta name="description" content="${escapeHtml(BLOG_INDEX_DESCRIPTION)}" />`,
+    `<meta name="keywords" content="${escapeHtml(SITE_KEYWORDS_META)}" />`,
     `<meta name="theme-color" content="#e8edf4" />`,
   ];
   if (origin) {
@@ -192,7 +209,14 @@ export function buildBlogPostHeadHtml(origin: string, post: BlogPost): string {
   const tags = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(post.description)}" />`,
-    `<meta name="keywords" content="${escapeHtml(post.keywords.join(", "))}" />`,
+    `<meta name="keywords" content="${escapeHtml(
+      Array.from(
+        new Set([
+          ...post.keywords,
+          ...SITE_KEYWORDS_META.split(", ").slice(0, 6),
+        ]),
+      ).join(", "),
+    )}" />`,
     `<meta name="theme-color" content="#e8edf4" />`,
   ];
   if (origin) {

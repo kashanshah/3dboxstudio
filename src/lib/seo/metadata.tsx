@@ -15,6 +15,7 @@ import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
   LANDING_DESCRIPTION,
+  LANDING_KEYWORDS,
   LANDING_OG_IMAGE_ALT,
   LANDING_OG_IMAGE_HEIGHT,
   LANDING_OG_IMAGE_PATH,
@@ -23,8 +24,18 @@ import {
   LANDING_TITLE,
 } from "@/seo/landingHead";
 import { buildFaqJsonLd } from "@/seo/faqHead";
-import { STUDIO_DESCRIPTION, STUDIO_TITLE } from "@/seo/studioHead";
+import {
+  STUDIO_DESCRIPTION,
+  STUDIO_KEYWORDS,
+  STUDIO_TITLE,
+} from "@/seo/studioHead";
+import { SITE_KEYWORDS_META } from "@/seo/siteKeywords";
 import { getSiteOrigin } from "@/lib/siteOrigin";
+
+/** Avoid Next.js root title templates doubling the brand suffix. */
+function absoluteTitle(title: string): Metadata["title"] {
+  return { absolute: title };
+}
 
 function resolveOgImageVersion(): string {
   return process.env.NEXT_PUBLIC_OG_IMAGE_VERSION?.trim() || "1";
@@ -97,24 +108,25 @@ function buildTwitter(
 function sharePageTitle(meta: ShareSeoMeta): string {
   const label = displayShareLabel(meta.name, null);
   if (meta.isPreview) {
-    return `${label} · Preview | 3D Box Studio`;
+    return `${label} · View-Only Packaging Preview | 3D Box Studio`;
   }
-  return `${label} | 3D Box Studio`;
+  return `${label} · Free 3D Box Designer | 3D Box Studio`;
 }
 
 function sharePageDescription(meta: ShareSeoMeta): string {
   const label = displayShareLabel(meta.name, null);
   if (meta.isPreview) {
-    return `View-only preview of “${label}” in 3D Box Studio. Explore dimensions, materials, and artwork in the browser.`;
+    return `View-only 3D packaging preview of “${label}” in 3D Box Studio. Orbit the carton, check materials and openings, and review artwork in your browser—no editor access.`;
   }
-  return `Open “${label}” in the free 3D Box Studio editor. Adjust dimensions, materials, openings, and per-face artwork in your browser.`;
+  return `Open “${label}” in the free 3D Box Studio online box designer. Adjust dimensions, packaging materials, lid openings, and per-face artwork, then export PNG mockups.`;
 }
 
 export function createLandingMetadata(): Metadata {
   const origin = getSiteOrigin();
   return {
-    title: LANDING_TITLE,
+    title: absoluteTitle(LANDING_TITLE),
     description: LANDING_DESCRIPTION,
+    keywords: LANDING_KEYWORDS.split(", "),
     metadataBase: new URL(origin),
     alternates: { canonical: "/" },
     openGraph: buildOpenGraph(LANDING_TITLE, LANDING_DESCRIPTION, "/"),
@@ -124,8 +136,9 @@ export function createLandingMetadata(): Metadata {
 
 export function createStudioMetadata(): Metadata {
   return {
-    title: STUDIO_TITLE,
+    title: absoluteTitle(STUDIO_TITLE),
     description: STUDIO_DESCRIPTION,
+    keywords: STUDIO_KEYWORDS.split(", "),
     alternates: { canonical: "/studio" },
     openGraph: buildOpenGraph(STUDIO_TITLE, STUDIO_DESCRIPTION, "/studio"),
     twitter: buildTwitter(STUDIO_TITLE, STUDIO_DESCRIPTION),
@@ -140,14 +153,15 @@ export function createShareMetadata(meta: ShareSeoMeta): Metadata {
         url: meta.ogImageUrl,
         width: meta.ogImageWidth,
         height: meta.ogImageHeight,
-        alt: `${displayShareLabel(meta.name, null)} preview`,
+        alt: `${displayShareLabel(meta.name, null)} 3D packaging preview`,
         type: "image/png",
       }
     : null;
 
   return {
-    title,
+    title: absoluteTitle(title),
     description,
+    keywords: SITE_KEYWORDS_META.split(", "),
     alternates: { canonical: meta.canonicalPath },
     openGraph: buildOpenGraph(title, description, meta.canonicalPath, "website", ogImage),
     twitter: buildTwitter(title, description, meta.ogImageUrl),
@@ -156,8 +170,9 @@ export function createShareMetadata(meta: ShareSeoMeta): Metadata {
 
 export function createFaqMetadata(): Metadata {
   return {
-    title: FAQ_PAGE_TITLE,
+    title: absoluteTitle(FAQ_PAGE_TITLE),
     description: FAQ_PAGE_DESCRIPTION,
+    keywords: SITE_KEYWORDS_META.split(", "),
     alternates: { canonical: "/faq" },
     openGraph: buildOpenGraph(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION, "/faq"),
     twitter: buildTwitter(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION),
@@ -166,8 +181,9 @@ export function createFaqMetadata(): Metadata {
 
 export function createBlogIndexMetadata(): Metadata {
   return {
-    title: BLOG_INDEX_TITLE,
+    title: absoluteTitle(BLOG_INDEX_TITLE),
     description: BLOG_INDEX_DESCRIPTION,
+    keywords: SITE_KEYWORDS_META.split(", "),
     alternates: { canonical: "/blog" },
     openGraph: buildOpenGraph(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION, "/blog"),
     twitter: buildTwitter(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION),
@@ -175,7 +191,7 @@ export function createBlogIndexMetadata(): Metadata {
 }
 
 export function createBlogPostMetadata(post: BlogPost): Metadata {
-  const title = `${post.title} | 3D Box Studio`;
+  const title = `${post.title} | Free 3D Box Designer | 3D Box Studio`;
   const path = `/blog/${post.slug}`;
   const origin = getSiteOrigin();
   const imageUrl = getBlogPostOgImageUrl(origin, post.slug);
@@ -187,10 +203,13 @@ export function createBlogPostMetadata(post: BlogPost): Metadata {
     alt: imageAlt,
     type: "image/webp",
   };
+  const keywords = Array.from(
+    new Set([...post.keywords, ...SITE_KEYWORDS_META.split(", ").slice(0, 6)]),
+  );
   return {
-    title,
+    title: absoluteTitle(title),
     description: post.description,
-    keywords: post.keywords,
+    keywords,
     alternates: { canonical: path },
     openGraph: buildOpenGraph(title, post.description, path, "article", ogImage, {
       publishedTime: post.published,
@@ -225,7 +244,8 @@ export function BlogIndexJsonLd() {
   const data = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "3D Box Studio Blog",
+    name: "3D Box Studio Packaging Blog",
+    alternateName: "Free 3D Box Design & Mockup Guides",
     description: BLOG_INDEX_DESCRIPTION,
     url: `${origin}/blog`,
     blogPost: BLOG_POSTS.map((post) => ({
@@ -256,7 +276,9 @@ export function BlogPostJsonLd({ post }: { post: BlogPost }) {
     description: post.description,
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
-    keywords: post.keywords.join(", "),
+    keywords: Array.from(
+      new Set([...post.keywords, ...SITE_KEYWORDS_META.split(", ").slice(0, 6)]),
+    ).join(", "),
     image: getBlogPostOgImageUrl(origin, post.slug),
     url,
     mainEntityOfPage: url,
