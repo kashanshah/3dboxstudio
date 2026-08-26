@@ -1852,6 +1852,37 @@
   background: var(--l-surface);
   padding: 1.35rem 1.4rem;
   box-shadow: var(--l-shadow);
+  overflow: hidden;
+}
+
+.blog-index-thumb-link {
+  display: block;
+  margin: -1.35rem -1.4rem 1rem;
+  text-decoration: none;
+}
+
+.blog-index-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: linear-gradient(145deg, #e8edf4 0%, #d5dde8 100%);
+}
+
+.blog-post-hero-figure {
+  margin: 1.5rem 0 0;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--l-border-light);
+  box-shadow: var(--l-shadow);
+  background: linear-gradient(145deg, #e8edf4 0%, #d5dde8 100%);
+}
+
+.blog-post-hero-image {
+  display: block;
+  width: 100%;
+  max-height: min(52vh, 420px);
+  object-fit: cover;
 }
 
 .blog-index-card .faq-item-category {

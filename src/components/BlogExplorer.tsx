@@ -7,6 +7,8 @@ import {
   BLOG_POSTS,
   getBlogCategory,
   getBlogCategoryLabel,
+  getBlogPostImageAlt,
+  getBlogPostImagePath,
   type BlogCategoryId,
   type BlogPost,
 } from "@/content/blogPosts";
@@ -160,6 +162,20 @@ export default function BlogExplorer() {
         <ul className="blog-index-list">
           {filteredPosts.map((post) => (
             <li key={post.slug} className="blog-index-card">
+              <Link
+                href={`/blog/${post.slug}`}
+                className="blog-index-thumb-link"
+              >
+                <img
+                  className="blog-index-thumb"
+                  src={getBlogPostImagePath(post.slug)}
+                  alt={getBlogPostImageAlt(post)}
+                  width={1200}
+                  height={800}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </Link>
               <span className="faq-item-category">
                 {getBlogCategoryLabel(getBlogCategory(post.slug))}
               </span>

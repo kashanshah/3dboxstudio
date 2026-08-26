@@ -19,8 +19,22 @@ export type BlogPost = {
   updated?: string;
   readMinutes: number;
   keywords: string[];
+  /** Optional alt override; defaults to a title-based caption. */
+  imageAlt?: string;
   sections: BlogSection[];
 };
+
+export const BLOG_IMAGE_WIDTH = 1200;
+export const BLOG_IMAGE_HEIGHT = 800;
+
+/** Public path for a post’s generated 16:9 thumbnail (WebP). */
+export function getBlogPostImagePath(slug: string): string {
+  return `/images/blog/${slug}.webp`;
+}
+
+export function getBlogPostImageAlt(post: BlogPost): string {
+  return post.imageAlt ?? `${post.title} — packaging preview thumbnail`;
+}
 
 export const BLOG_CATEGORIES: { id: BlogCategoryId; label: string }[] = [
   { id: "getting-started", label: "Getting started" },

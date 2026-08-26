@@ -13,7 +13,7 @@ import {
 import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";
 import FaqList from "../components/FaqList";
-import { BLOG_POSTS } from "../content/blogPosts";
+import { BLOG_POSTS, getBlogPostImageAlt, getBlogPostImagePath } from "../content/blogPosts";
 import { FAQ_ITEMS, getLandingFaqItems } from "../content/faq";
 import "../landing.css";
 import GithubLink from "../components/GithubLink";
@@ -850,6 +850,20 @@ export default function LandingPage() {
             <ul className="blog-index-list blog-index-list--landing">
               {LANDING_FEATURED_POSTS.map((post) => (
                 <li key={post.slug} className="blog-index-card">
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="blog-index-thumb-link"
+                  >
+                    <img
+                      className="blog-index-thumb"
+                      src={getBlogPostImagePath(post.slug)}
+                      alt={getBlogPostImageAlt(post)}
+                      width={1200}
+                      height={800}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </Link>
                   <h3 className="blog-index-title">
                     <Link href={`/blog/${post.slug}`}>{post.title}</Link>
                   </h3>
