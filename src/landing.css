@@ -1859,7 +1859,6 @@
   display: block;
   margin: -1.35rem -1.4rem 1rem;
   text-decoration: none;
-  overflow: hidden;
   line-height: 0;
 }
 
@@ -1867,9 +1866,8 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
-  max-height: 200px;
-  object-fit: cover;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
   object-position: center;
   background: linear-gradient(145deg, #e8edf4 0%, #d5dde8 100%);
 }
@@ -1886,19 +1884,10 @@
 .blog-post-hero-image {
   display: block;
   width: 100%;
-  max-height: min(52vh, 420px);
-  object-fit: cover;
-}
-
-@media (max-width: 640px) {
-  .blog-index-thumb {
-    aspect-ratio: 2 / 1;
-    max-height: 148px;
-  }
-
-  .blog-post-hero-image {
-    max-height: min(36vh, 220px);
-  }
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: contain;
+  object-position: center;
 }
 
 .blog-index-card .faq-item-category {

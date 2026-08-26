@@ -135,7 +135,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
                         src={getBlogPostImagePath(item.slug)}
                         alt={getBlogPostImageAlt(item)}
                         width={1200}
-                        height={675}
+                        height={800}
                         loading="lazy"
                         decoding="async"
                       />
