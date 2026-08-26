@@ -15,6 +15,7 @@ import {
   LANDING_OG_IMAGE_TYPE,
   LANDING_OG_IMAGE_WIDTH,
 } from "./landingHead";
+import { SITE_KEYWORDS_META } from "./siteKeywords";
 
 export function buildFaqJsonLd(_origin: string) {
   return {
@@ -34,6 +35,7 @@ export function buildFaqJsonLd(_origin: string) {
 export function applyFaqRouteSeo(doc: Document, origin: string): () => void {
   doc.title = FAQ_PAGE_TITLE;
   setMeta(doc, "description", FAQ_PAGE_DESCRIPTION);
+  setMeta(doc, "keywords", SITE_KEYWORDS_META);
   const themeMeta = doc.querySelector('meta[name="theme-color"]');
   const prevThemeColor = themeMeta?.getAttribute("content") ?? null;
   if (themeMeta) {
@@ -73,6 +75,7 @@ export function buildFaqHeadHtml(origin: string): string {
   const tags = [
     `<title>${escapeHtml(FAQ_PAGE_TITLE)}</title>`,
     `<meta name="description" content="${escapeHtml(FAQ_PAGE_DESCRIPTION)}" />`,
+    `<meta name="keywords" content="${escapeHtml(SITE_KEYWORDS_META)}" />`,
     `<meta name="theme-color" content="#e8edf4" />`,
   ];
   if (origin) {

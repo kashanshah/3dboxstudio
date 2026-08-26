@@ -85,10 +85,10 @@ export function getBlogCategoryLabel(id: BlogCategoryId): string {
 }
 
 export const BLOG_INDEX_TITLE =
-  "Blog — 3D Box Design, Simulation & Packaging Guides | 3D Box Studio";
+  "3D Box Design Blog — Free Packaging Mockups, Carton & Mailer Guides | 3D Box Studio";
 
 export const BLOG_INDEX_DESCRIPTION =
-  "Guides on 3D box design, free packaging mockup generators, folding carton previews, and browser-based box makers for e-commerce sellers, beauty, coffee, electronics, jewelry, confectionery, print shops, freelancers, and packaging teams.";
+  "Practical guides to free 3D box designers, packaging mockup generators, folding carton previews, mailer box mockups, and browser-based box makers—for e-commerce sellers, beauty, coffee, electronics, jewelry, print shops, freelancers, and packaging teams.";
 
 export const BLOG_POSTS: BlogPost[] = [
   {

@@ -11,12 +11,13 @@ export default function FaqPage() {
         <div className="landing-container">
           <p className="landing-eyebrow landing-eyebrow--section">Support</p>
           <h1 className="landing-display content-page-title">
-            Frequently asked questions
+            FAQ: free 3D box designer & packaging mockups
           </h1>
           <p className="landing-section-intro content-page-intro">
-            Browse {FAQ_ITEMS.length} answers about 3D Box Studio—search by
-            keyword or filter by topic. Covers free mockups, Pacdora
-            alternatives, export formats, commercial use, and CAD comparisons.
+            Browse {FAQ_ITEMS.length} answers about 3D Box Studio—the free
+            online box maker and carton simulator. Search by keyword or filter
+            by topic for Pacdora alternatives, export formats, commercial use,
+            and CAD comparisons.
           </p>
         </div>
       </section>

@@ -228,7 +228,7 @@ export function getCategoryLabel(id: FaqCategoryId): string {
 }
 
 export const FAQ_PAGE_TITLE =
-  "FAQ — 3D Box Designer, Maker & Simulator | 3D Box Studio";
+  "FAQ: Free 3D Box Designer, Packaging Mockups & Pacdora Alternative | 3D Box Studio";
 
 export const FAQ_PAGE_DESCRIPTION =
-  "Answers about 3D Box Studio: free 3D box designer, online box mockup generator, Pacdora alternative, packaging simulation, export formats, custom dimensions, commercial use, and comparison with CAD tools.";
+  "Answers about 3D Box Studio—the free online 3D box maker and packaging mockup generator. Learn about carton simulation, custom dimensions, Pacdora alternatives, export formats, commercial use, privacy, and how we compare to packaging CAD tools.";

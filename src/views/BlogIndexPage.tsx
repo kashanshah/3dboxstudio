@@ -10,13 +10,13 @@ export default function BlogIndexPage() {
         <div className="landing-container">
           <p className="landing-eyebrow landing-eyebrow--section">Guides</p>
           <h1 className="landing-display content-page-title">
-            3D box design & packaging blog
+            Free 3D box design & packaging mockup guides
           </h1>
           <p className="landing-section-intro content-page-intro">
-            {BLOG_POSTS.length} practical articles on 3D box designers, free
-            packaging mockup generators, folding carton previews, Pacdora
-            alternatives, and browser-based box makers for designers, sellers,
-            and brand teams.
+            {BLOG_POSTS.length} practical articles on free 3D box designers,
+            online packaging mockup generators, folding carton and mailer
+            previews, Pacdora alternatives, and browser-based box makers for
+            designers, e-commerce sellers, and brand teams.
           </p>
         </div>
       </section>
