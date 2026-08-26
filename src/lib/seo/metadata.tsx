@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import type { BlogPost } from "@/content/blogPosts";
 import type { ShareSeoMeta } from "@/server/shareService";
 import {
+  BLOG_IMAGE_HEIGHT,
+  BLOG_IMAGE_WIDTH,
   BLOG_INDEX_DESCRIPTION,
   BLOG_INDEX_TITLE,
   BLOG_POSTS,
+  getBlogPostImageAlt,
+  getBlogPostImagePath,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { displayShareLabel } from "@/lib/shareName";
@@ -30,6 +34,13 @@ export function getOgImageUrl(origin: string): string {
   const url = new URL(LANDING_OG_IMAGE_PATH, `${origin.replace(/\/$/, "")}/`);
   url.searchParams.set("v", resolveOgImageVersion());
   return url.toString();
+}
+
+function getBlogPostOgImageUrl(origin: string, slug: string): string {
+  return new URL(
+    getBlogPostImagePath(slug),
+    `${origin.replace(/\/$/, "")}/`,
+  ).toString();
 }
 
 function buildOpenGraph(
@@ -166,16 +177,26 @@ export function createBlogIndexMetadata(): Metadata {
 export function createBlogPostMetadata(post: BlogPost): Metadata {
   const title = `${post.title} | 3D Box Studio`;
   const path = `/blog/${post.slug}`;
+  const origin = getSiteOrigin();
+  const imageUrl = getBlogPostOgImageUrl(origin, post.slug);
+  const imageAlt = getBlogPostImageAlt(post);
+  const ogImage = {
+    url: imageUrl,
+    width: BLOG_IMAGE_WIDTH,
+    height: BLOG_IMAGE_HEIGHT,
+    alt: imageAlt,
+    type: "image/webp",
+  };
   return {
     title,
     description: post.description,
     keywords: post.keywords,
     alternates: { canonical: path },
-    openGraph: buildOpenGraph(title, post.description, path, "article", null, {
+    openGraph: buildOpenGraph(title, post.description, path, "article", ogImage, {
       publishedTime: post.published,
       modifiedTime: post.updated ?? post.published,
     }),
-    twitter: buildTwitter(title, post.description),
+    twitter: buildTwitter(title, post.description, imageUrl),
   };
 }
 
@@ -214,6 +235,7 @@ export function BlogIndexJsonLd() {
       datePublished: post.published,
       dateModified: post.updated ?? post.published,
       url: `${origin}/blog/${post.slug}`,
+      image: getBlogPostOgImageUrl(origin, post.slug),
     })),
   };
   return (
@@ -235,6 +257,7 @@ export function BlogPostJsonLd({ post }: { post: BlogPost }) {
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
     keywords: post.keywords.join(", "),
+    image: getBlogPostOgImageUrl(origin, post.slug),
     url,
     mainEntityOfPage: url,
     author: { "@type": "Organization", name: "3D Box Studio" },

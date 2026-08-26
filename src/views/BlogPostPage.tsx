@@ -1,7 +1,12 @@
 import Link from "next/link";
 import ContentPageShell from "@/components/ContentPageShell";
 import type { BlogSection } from "@/content/blogPosts";
-import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blogPosts";
+import {
+  BLOG_POSTS,
+  getBlogPostBySlug,
+  getBlogPostImageAlt,
+  getBlogPostImagePath,
+} from "@/content/blogPosts";
 import LandingStudioCta from "@/components/LandingStudioCta";
 
 function formatDate(iso: string): string {
@@ -87,6 +92,17 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
             <p className="landing-section-intro content-page-intro">
               {post.description}
             </p>
+            <figure className="blog-post-hero-figure">
+              <img
+                className="blog-post-hero-image"
+                src={getBlogPostImagePath(post.slug)}
+                alt={getBlogPostImageAlt(post)}
+                width={1200}
+                height={800}
+                decoding="async"
+                fetchPriority="high"
+              />
+            </figure>
           </div>
         </header>
 
@@ -110,6 +126,20 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
               <ul className="blog-index-list blog-index-list--compact">
                 {related.map((item) => (
                   <li key={item.slug} className="blog-index-card">
+                    <Link
+                      href={`/blog/${item.slug}`}
+                      className="blog-index-thumb-link"
+                    >
+                      <img
+                        className="blog-index-thumb"
+                        src={getBlogPostImagePath(item.slug)}
+                        alt={getBlogPostImageAlt(item)}
+                        width={1200}
+                        height={800}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </Link>
                     <h3 className="blog-index-title">
                       <Link href={`/blog/${item.slug}`}>{item.title}</Link>
                     </h3>

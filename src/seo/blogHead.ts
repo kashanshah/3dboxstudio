@@ -1,8 +1,12 @@
 import type { BlogPost } from "../content/blogPosts";
 import {
+  BLOG_IMAGE_HEIGHT,
+  BLOG_IMAGE_WIDTH,
   BLOG_INDEX_DESCRIPTION,
   BLOG_INDEX_TITLE,
   BLOG_POSTS,
+  getBlogPostImageAlt,
+  getBlogPostImagePath,
 } from "../content/blogPosts";
 import {
   applySocialMeta,
@@ -21,6 +25,14 @@ import {
   LANDING_OG_IMAGE_WIDTH,
 } from "./landingHead";
 
+function getBlogPostImageUrl(origin: string, slug: string): string {
+  if (!origin) return getBlogPostImagePath(slug);
+  return new URL(
+    getBlogPostImagePath(slug),
+    `${origin.replace(/\/$/, "")}/`,
+  ).toString();
+}
+
 function buildBlogIndexJsonLd(origin: string) {
   return {
     "@context": "https://schema.org",
@@ -35,6 +47,7 @@ function buildBlogIndexJsonLd(origin: string) {
       datePublished: post.published,
       dateModified: post.updated ?? post.published,
       url: origin ? `${origin}/blog/${post.slug}` : `/blog/${post.slug}`,
+      image: getBlogPostImageUrl(origin, post.slug),
     })),
   };
 }
@@ -49,6 +62,7 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
     keywords: post.keywords.join(", "),
+    image: getBlogPostImageUrl(origin, post.slug),
     url,
     mainEntityOfPage: url,
     author: {
@@ -116,16 +130,18 @@ export function applyBlogPostRouteSeo(
   }
   if (origin) {
     const url = `${origin}/blog/${post.slug}`;
+    const imageUrl = getBlogPostImageUrl(origin, post.slug);
+    const imageAlt = getBlogPostImageAlt(post);
     applySocialMeta(doc, {
       title,
       description: post.description,
       url,
       type: "article",
-      imageUrl: getLandingOgImageUrl(origin),
-      imageAlt: LANDING_OG_IMAGE_ALT,
-      imageWidth: LANDING_OG_IMAGE_WIDTH,
-      imageHeight: LANDING_OG_IMAGE_HEIGHT,
-      imageType: LANDING_OG_IMAGE_TYPE,
+      imageUrl,
+      imageAlt,
+      imageWidth: BLOG_IMAGE_WIDTH,
+      imageHeight: BLOG_IMAGE_HEIGHT,
+      imageType: "image/webp",
     });
     setCanonical(doc, url);
   }
@@ -181,17 +197,19 @@ export function buildBlogPostHeadHtml(origin: string, post: BlogPost): string {
   ];
   if (origin) {
     const url = `${origin}/blog/${post.slug}`;
+    const imageUrl = getBlogPostImageUrl(origin, post.slug);
+    const imageAlt = getBlogPostImageAlt(post);
     tags.push(
       ...buildSocialMetaTags({
         title,
         description: post.description,
         url,
         type: "article",
-        imageUrl: getLandingOgImageUrl(origin),
-        imageAlt: LANDING_OG_IMAGE_ALT,
-        imageWidth: LANDING_OG_IMAGE_WIDTH,
-        imageHeight: LANDING_OG_IMAGE_HEIGHT,
-        imageType: LANDING_OG_IMAGE_TYPE,
+        imageUrl,
+        imageAlt,
+        imageWidth: BLOG_IMAGE_WIDTH,
+        imageHeight: BLOG_IMAGE_HEIGHT,
+        imageType: "image/webp",
       }),
       `<link rel="canonical" href="${escapeHtml(url)}" />`,
     );
