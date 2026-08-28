@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
 import { ShareError, createShare } from "@/server/shareService";
 import { parseShareSaveRequest } from "@/server/shareSaveRequest";
+import { enforceRateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "shares:create", { windowMs: 60 * 60 * 1000, max: 20 });
+  if (limited) return limited;
+
   try {
     const createdBy = await assertCanCreateShare(req);
     const rawBody = await req.text();

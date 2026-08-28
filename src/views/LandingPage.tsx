@@ -451,7 +451,7 @@ export default function LandingPage() {
               <section className="landing-hero" aria-labelledby="hero-heading">
                 <div className="landing-hero-copy">
                   <p className="landing-eyebrow">
-                    Free forever · Browser · WebGL · No account
+                    Free forever · Browser · WebGL · Sign in to save &amp; share
                   </p>
                   <h1 id="hero-heading" className="landing-display">
                     <span className="landing-hero-title-line">
@@ -488,7 +488,7 @@ export default function LandingPage() {
                   </div>
                   <ul className="landing-hero-meta" aria-label="Highlights">
                     <li>Free packaging designer</li>
-                    <li>No signup</li>
+                    <li>No signup to start</li>
                     <li>Cloud save &amp; share</li>
                     <li>View-only client links</li>
                     <li>Export PNG</li>
@@ -693,7 +693,7 @@ export default function LandingPage() {
                   <h3>Record presentation</h3>
                 </div>
                 <p>
-                  Record a 15-second video of the viewport with audio, then
+                  Record a 15-second video of the viewport, then
                   download the MP4 file. This is a great way to share your 3D
                   packaging simulator with your team or clients.
                 </p>

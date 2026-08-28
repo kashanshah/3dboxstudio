@@ -3,10 +3,14 @@ import { getUserByEmail, toPublicUser } from "@/server/auth/users";
 import { verifyPassword } from "@/server/auth/password";
 import { createSession, setSessionCookie } from "@/server/auth/session";
 import { isValidEmail } from "@/server/auth/validation";
+import { enforceRateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "auth:login", { windowMs: 15 * 60 * 1000, max: 10 });
+  if (limited) return limited;
+
   try {
     const body: unknown = await req.json().catch(() => null);
     const email = (body as { email?: unknown })?.email;

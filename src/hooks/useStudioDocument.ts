@@ -611,6 +611,16 @@ export function useStudioDocument({
     : `${displayShareLabel(activeShareName, activeShareId)}${isDirty ? " •" : ""}`;
 
   useEffect(() => {
+    if (viewOnly || !isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty, viewOnly]);
+
+  useEffect(() => {
     if (viewOnly) return;
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;

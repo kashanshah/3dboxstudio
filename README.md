@@ -6,7 +6,7 @@
 
 # 3D Box Studio
 
-**Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, **cloud save & share links**, and **JSON import/export** for offline backups.
+**Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup to start designing. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, **cloud save & share links** (sign in required), and **JSON import/export** for offline backups.
 
 The project is also **open source** under the MIT License—issues and PRs welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
 

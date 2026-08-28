@@ -539,9 +539,12 @@ export default function BoxDesigner({
 
   const dimHint = `Scene units: centimeters (converted from ${unit})`;
   const openingLabel = openingOptions.find((o) => o.value === opening)?.label ?? opening;
+  const loadingSharedDesign =
+    !sessionReady && Boolean(shareIdFromUrl || previewTokenFromUrl);
 
   return (
     <div className="studio-workspace">
+      {loadingSharedDesign && <StudioSaveOverlay message="Loading shared design…" />}
       {doc.saveOverlayMessage && <StudioSaveOverlay message={doc.saveOverlayMessage} />}
       <StudioMenuBar
         documentTitle={doc.documentTitle}
@@ -588,6 +591,7 @@ export default function BoxDesigner({
           {doc.statusMessage}
         </div>
       )}
+      {!loadingSharedDesign && (
       <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}>
       <div
         style={{
@@ -1138,6 +1142,7 @@ export default function BoxDesigner({
         </PanelCollapse>
       </aside>
       </div>
+      )}
       <StudioFileModals doc={doc} authUser={auth.user} onSignIn={openSignIn} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
       <StudioDialog
