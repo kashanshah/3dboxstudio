@@ -51,6 +51,18 @@ body {
   font-family: system-ui, sans-serif;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
@@ -308,17 +320,30 @@ label {
 @media (max-width: 960px) {
   .box-designer-root {
     grid-template-columns: 1fr;
-    /* Split remaining space after menu/banners: viewport ~45% of visible height, config gets the rest. */
-    grid-template-rows: minmax(160px, 45vh) minmax(160px, 1fr);
-    grid-template-rows: minmax(160px, 45dvh) minmax(160px, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .box-designer-root > * {
     min-height: 0;
   }
 
-  .box-designer-root > :first-child {
-    overflow: hidden;
+  .box-designer-root .studio-viewport-pane {
+    min-height: 0;
+    height: 100%;
+  }
+
+  .box-designer-root[data-mobile-tab="viewport"] .studio-config-panel {
+    display: none;
+  }
+
+  .box-designer-root[data-mobile-tab="design"] .studio-viewport-pane,
+  .box-designer-root[data-mobile-tab="export"] .studio-viewport-pane {
+    display: none;
+  }
+
+  .box-designer-root[data-mobile-tab="design"] .studio-mobile-pane--export,
+  .box-designer-root[data-mobile-tab="export"] .studio-mobile-pane--design {
+    display: none;
   }
 
   /* Mobile keeps the stacked layout; the drawer toggle does not apply. */
@@ -1713,6 +1738,100 @@ label {
 
   .studio-menu-submenu-trigger::after {
     display: none;
+  }
+}
+
+.studio-mobile-tabs {
+  display: none;
+  flex-shrink: 0;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--panel-border);
+  background: #0a0c10;
+}
+
+.studio-mobile-tab {
+  flex: 1;
+  min-height: 2.25rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.studio-mobile-tab[aria-selected="true"] {
+  color: var(--text);
+  border-color: rgba(59, 130, 246, 0.45);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.studio-menu-account-loading {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.studio-error-fallback {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  height: 100%;
+  padding: 24px;
+  background: linear-gradient(165deg, #0a0d14 0%, #0c1018 45%, #0a0c10 100%);
+}
+
+.studio-error-fallback--page {
+  min-height: calc(100vh - 48px);
+  min-height: calc(100dvh - 48px);
+}
+
+.studio-error-fallback-card {
+  width: min(520px, 100%);
+  padding: 22px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: rgba(12, 14, 18, 0.94);
+}
+
+.studio-error-fallback-title {
+  margin: 0 0 10px;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.studio-error-fallback-lead,
+.studio-error-fallback-hint,
+.studio-error-fallback-detail {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.studio-error-fallback-detail code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: #fca5a5;
+  word-break: break-word;
+}
+
+.studio-error-fallback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+  .studio-mobile-tabs {
+    display: flex;
+  }
+
+  .studio-config-panel {
+    overflow-y: auto;
+    min-height: 0;
   }
 }
 
