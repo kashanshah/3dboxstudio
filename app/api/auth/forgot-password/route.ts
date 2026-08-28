@@ -4,10 +4,14 @@ import { createPasswordResetToken } from "@/server/auth/passwordReset";
 import { sendPasswordResetEmail } from "@/server/email/mailer";
 import { isValidEmail } from "@/server/auth/validation";
 import { originFromRequest } from "@/server/requestOrigin";
+import { enforceRateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "auth:forgot-password", { windowMs: 60 * 60 * 1000, max: 5 });
+  if (limited) return limited;
+
   try {
     const body: unknown = await req.json().catch(() => null);
     const email = (body as { email?: unknown })?.email;

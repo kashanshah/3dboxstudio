@@ -4,10 +4,14 @@ import {
   setAdminCookie,
   verifyAdminPassword,
 } from "@/server/admin/auth";
+import { enforceRateLimit } from "@/server/rateLimit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "admin:login", { windowMs: 15 * 60 * 1000, max: 5 });
+  if (limited) return limited;
+
   try {
     const body: unknown = await req.json().catch(() => null);
     const password = (body as { password?: unknown })?.password;

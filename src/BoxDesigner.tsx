@@ -20,6 +20,7 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioDialog from "./components/studio/StudioDialog";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
+import StudioErrorBoundary from "./components/studio/StudioErrorBoundary";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
 import AuthModal from "./components/auth/AuthModal";
@@ -206,6 +207,7 @@ export default function BoxDesigner({
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
   const [applyToAllFace, setApplyToAllFace] = useState<FaceId | null>(null);
   const [showViewportHint, setShowViewportHint] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"viewport" | "design" | "export">("viewport");
 
   useEffect(() => {
     setShowViewportHint(!isViewportHintDismissed());
@@ -375,6 +377,7 @@ export default function BoxDesigner({
     viewOnly,
     capturePreviewImage,
     authUser: auth.user,
+    authLoading: auth.loading,
     onRequireSignIn: openSignIn,
   });
 
@@ -539,14 +542,18 @@ export default function BoxDesigner({
 
   const dimHint = `Scene units: centimeters (converted from ${unit})`;
   const openingLabel = openingOptions.find((o) => o.value === opening)?.label ?? opening;
+  const loadingSharedDesign =
+    !sessionReady && Boolean(shareIdFromUrl || previewTokenFromUrl);
 
   return (
     <div className="studio-workspace">
+      {loadingSharedDesign && <StudioSaveOverlay message="Loading shared design…" />}
       {doc.saveOverlayMessage && <StudioSaveOverlay message={doc.saveOverlayMessage} />}
       <StudioMenuBar
         documentTitle={doc.documentTitle}
         cloudBusy={doc.cloudBusy}
         viewOnly={doc.viewOnly}
+        authLoading={auth.loading}
         user={auth.user}
         onOpenModal={doc.setModal}
         onOpenHelpModal={setHelpModal}
@@ -588,8 +595,32 @@ export default function BoxDesigner({
           {doc.statusMessage}
         </div>
       )}
-      <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}>
+      {!loadingSharedDesign && (
+        <nav className="studio-mobile-tabs" aria-label="Studio sections" role="tablist">
+          {(
+            [
+              ["viewport", "Viewport"],
+              ["design", "Design"],
+              ["export", "Export"],
+            ] as const
+          ).map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              className="studio-mobile-tab"
+              role="tab"
+              aria-selected={mobileTab === tab}
+              onClick={() => setMobileTab(tab)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+      {!loadingSharedDesign && (
+      <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`} data-mobile-tab={mobileTab}>
       <div
+        className="studio-viewport-pane"
         style={{
           position: "relative",
           borderRight: "1px solid var(--panel-border)",
@@ -606,6 +637,7 @@ export default function BoxDesigner({
         >
           <IconPanelToggle />
         </button>
+        <StudioErrorBoundary>
         <Viewport3D
           width={sceneDims.width}
           height={sceneDims.height}
@@ -633,6 +665,7 @@ export default function BoxDesigner({
             r3fRef.current = state;
           }}
         />
+        </StudioErrorBoundary>
         {recordPhase === "countdown" && recordCountdown !== null && (
           <div
             role="status"
@@ -742,6 +775,7 @@ export default function BoxDesigner({
           )}
         </header>
 
+        <div className="studio-mobile-pane studio-mobile-pane--design">
         {viewOnly ? (
           <>
           <PanelCollapse title="Design summary">
@@ -950,65 +984,6 @@ export default function BoxDesigner({
           </>
         )}
 
-        <PanelCollapse title="Viewport capture">
-          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Export & record.</strong> PNG is a still of the 3D
-            preview on the left (not this panel). Video records that same viewport: after a 3-second countdown, capture runs up
-            to 15 seconds while you change options in the sidebar; you can stop early. A one-second end card credits{" "}
-            <strong style={{ color: "var(--text)", fontWeight: 600 }}>www.3dboxstudio.com</strong>. Output is MP4 when your
-            browser supports it, otherwise WebM.
-          </p>
-          {recordPhase === "recording" ? (
-            <>
-              <div style={{ marginBottom: "0.5rem" }}>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={stopViewportRecording}
-                  style={{ width: "100%", borderColor: "#b91c1c", color: "#fecaca" }}
-                >
-                  Stop & download video
-                </button>
-              </div>
-              <div style={{ marginBottom: "0.75rem" }}>
-                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
-                  Export viewport PNG
-                </button>
-              </div>
-            </>
-          ) : recordPhase === "countdown" ? (
-            <>
-              <div className="row-2" style={{ marginBottom: "0.5rem" }}>
-                <button type="button" className="btn btn-ghost" onClick={cancelRecordCountdown}>
-                  Cancel countdown
-                </button>
-                <span className="dim-badge" style={{ marginTop: 0, alignSelf: "center" }}>
-                  Starting in {recordCountdown}…
-                </span>
-              </div>
-              <div style={{ marginBottom: "0.75rem" }}>
-                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
-                  Export viewport PNG
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="row-1" style={{ marginBottom: "0.75rem" }}>
-              <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
-                Record presentation (15s)
-              </button>
-              <button type="button" className="btn" onClick={exportPng}>
-                Export viewport PNG
-              </button>
-            </div>
-          )}
-          {recordError && (
-            <p style={{ fontSize: "0.8rem", color: "#fca5a5", margin: "0 0 0.65rem" }} role="alert">
-              {recordError}
-            </p>
-          )}
-        </PanelCollapse>
-
         <PanelCollapse title="Viewport & lighting">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             HDRI lighting, camera zoom, and how the preview is drawn (grid, gizmo, wireframe, turntable).
@@ -1136,8 +1111,71 @@ export default function BoxDesigner({
             )}
           </div>
         </PanelCollapse>
+        </div>
+
+        <div className="studio-mobile-pane studio-mobile-pane--export">
+        <PanelCollapse title="Viewport capture">
+          <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
+            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Export & record.</strong> PNG is a still of the 3D
+            preview on the left (not this panel). Video records that same viewport: after a 3-second countdown, capture runs up
+            to 15 seconds while you change options in the sidebar; you can stop early. A one-second end card credits{" "}
+            <strong style={{ color: "var(--text)", fontWeight: 600 }}>www.3dboxstudio.com</strong>. Output is MP4 when your
+            browser supports it, otherwise WebM.
+          </p>
+          {recordPhase === "recording" ? (
+            <>
+              <div style={{ marginBottom: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={stopViewportRecording}
+                  style={{ width: "100%", borderColor: "#b91c1c", color: "#fecaca" }}
+                >
+                  Stop & download video
+                </button>
+              </div>
+              <div style={{ marginBottom: "0.75rem" }}>
+                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
+                  Export viewport PNG
+                </button>
+              </div>
+            </>
+          ) : recordPhase === "countdown" ? (
+            <>
+              <div className="row-2" style={{ marginBottom: "0.5rem" }}>
+                <button type="button" className="btn btn-ghost" onClick={cancelRecordCountdown}>
+                  Cancel countdown
+                </button>
+                <span className="dim-badge" style={{ marginTop: 0, alignSelf: "center" }}>
+                  Starting in {recordCountdown}…
+                </span>
+              </div>
+              <div style={{ marginBottom: "0.75rem" }}>
+                <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
+                  Export viewport PNG
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="row-1" style={{ marginBottom: "0.75rem" }}>
+              <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
+                Record presentation (15s)
+              </button>
+              <button type="button" className="btn" onClick={exportPng}>
+                Export viewport PNG
+              </button>
+            </div>
+          )}
+          {recordError && (
+            <p style={{ fontSize: "0.8rem", color: "#fca5a5", margin: "0 0 0.65rem" }} role="alert">
+              {recordError}
+            </p>
+          )}
+        </PanelCollapse>
+        </div>
       </aside>
       </div>
+      )}
       <StudioFileModals doc={doc} authUser={auth.user} onSignIn={openSignIn} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
       <StudioDialog

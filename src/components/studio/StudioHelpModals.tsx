@@ -10,7 +10,7 @@ export type StudioHelpModal = "about" | "share-app" | null;
 const APP_SHARE_URL = `${SITE_ORIGIN_PUBLIC}/studio`;
 const APP_SHARE_TITLE = "3D Box Studio — Free 3D Box Designer";
 const APP_SHARE_TEXT =
-  "Design folding cartons and mailer-style boxes in your browser—materials, openings, per-face artwork, and cloud share links. Free, no signup.";
+  "Design folding cartons and mailer-style boxes in your browser—materials, openings, per-face artwork, and more. Free to start designing; sign in to save and share.";
 
 type ExternalLinkProps = {
   href: string;
@@ -84,7 +84,10 @@ export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHel
           folding cartons and mailer-style boxes with PBR materials, HDRI lighting, lid and flap openings, per-face artwork,
           cloud save &amp; share links, PNG export, and JSON import/export.
         </p>
-        <p className="studio-dialog-hint">No signup required. Built for designers, brands, and printers who need a fast 3D packaging preview.</p>
+        <p className="studio-dialog-hint">
+          Design without an account. Sign in with a verified email when you want cloud save, share links, and view-only
+          client previews.
+        </p>
         <nav className="studio-about-links" aria-label="3D Box Studio links">
           <ExternalLink href={SITE_ORIGIN_PUBLIC}>Website</ExternalLink>
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/studio`}>Open studio</ExternalLink>

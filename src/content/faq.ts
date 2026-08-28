@@ -51,7 +51,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "getting-started",
     question: "Is 3D Box Studio a free 3D box maker?",
     answer:
-      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, cloud save, view-only client preview links, PNG export, or JSON import/export. No account required to start designing.",
+      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. No account is required to start designing. Sign in with a verified email when you want cloud save, share links, and view-only client preview URLs.",
   },
   {
     id: "3d-box-simulation-use",

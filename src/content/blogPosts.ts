@@ -245,7 +245,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "3D Box Studio is open source (MIT), runs entirely in the browser, and stores work locally—no account required. It is built as a 3D box maker for designers who need believable previews, not a template library with fixed SKUs. You control every face, material, and opening mode.",
+        text: "3D Box Studio is open source (MIT), runs entirely in the browser, and lets you design without an account. Sign in when you want cloud save and share links. It is built as a 3D box maker for designers who need believable previews, not a template library with fixed SKUs. You control every face, material, and opening mode.",
       },
       {
         type: "h2",

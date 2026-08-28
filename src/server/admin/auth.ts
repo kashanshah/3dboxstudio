@@ -1,14 +1,17 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { optionalEnv } from "../env";
-
 export const ADMIN_COOKIE = "sb_admin";
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
 
-/** Server-only admin password. Set ADMIN_PASSWORD in production. */
+/** Server-only admin password. Required in production; dev-only fallback otherwise. */
 export function adminPassword(): string {
-  return optionalEnv("ADMIN_PASSWORD", "3dboxstudio-admin");
+  const value = process.env.ADMIN_PASSWORD?.trim();
+  if (value) return value;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("ADMIN_PASSWORD is not configured");
+  }
+  return "3dboxstudio-admin";
 }
 
 function adminSecret(): string {

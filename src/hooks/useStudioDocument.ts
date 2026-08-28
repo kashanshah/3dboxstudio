@@ -81,6 +81,7 @@ type UseStudioDocumentOptions = {
   viewOnly?: boolean;
   capturePreviewImage?: () => Promise<ShareOgImageBlob | null>;
   authUser?: AuthUser | null;
+  authLoading?: boolean;
   onRequireSignIn?: () => void;
 };
 
@@ -103,6 +104,7 @@ export function useStudioDocument({
   viewOnly = false,
   capturePreviewImage,
   authUser = null,
+  authLoading = false,
   onRequireSignIn,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
@@ -141,6 +143,10 @@ export function useStudioDocument({
   // Cloud save/share is limited to signed-in, verified users. Returns false (and nudges
   // the user toward sign-in / verification) when access should be blocked.
   const ensureCloudAccess = useCallback((): boolean => {
+    if (authLoading) {
+      showStatus("Checking your account…", 2000);
+      return false;
+    }
     if (!authUser) {
       onRequireSignIn?.();
       return false;
@@ -150,7 +156,7 @@ export function useStudioDocument({
       return false;
     }
     return true;
-  }, [authUser, onRequireSignIn, showStatus]);
+  }, [authLoading, authUser, onRequireSignIn, showStatus]);
 
   const syncUrlToShare = useCallback((id: string | null) => {
     if (id) {
@@ -609,6 +615,16 @@ export function useStudioDocument({
   const documentTitle = viewOnly
     ? `${displayShareLabel(activeShareName, null)} · Preview`
     : `${displayShareLabel(activeShareName, activeShareId)}${isDirty ? " •" : ""}`;
+
+  useEffect(() => {
+    if (viewOnly || !isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty, viewOnly]);
 
   useEffect(() => {
     if (viewOnly) return;

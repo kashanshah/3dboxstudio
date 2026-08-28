@@ -18,6 +18,7 @@ type StudioMenuBarProps = {
   canSaveCopy: boolean;
   canSharePreview: boolean;
   sidebarOpen: boolean;
+  authLoading: boolean;
   user: AuthUser | null;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
@@ -54,6 +55,7 @@ export default function StudioMenuBar({
   canRename,
   canSaveCopy,
   canSharePreview,
+  authLoading,
   user,
   onOpenModal,
   onOpenHelpModal,
@@ -195,7 +197,7 @@ export default function StudioMenuBar({
                   type="button"
                   className="studio-menu-action"
                   role="menuitem"
-                  disabled={cloudBusy}
+                  disabled={cloudBusy || authLoading}
                   onClick={() => pickFile(onSave)}
                 >
                   <span>{cloudBusy ? "Saving…" : "Save"}</span>
@@ -207,7 +209,7 @@ export default function StudioMenuBar({
               type="button"
               className="studio-menu-action"
               role="menuitem"
-              disabled={cloudBusy}
+              disabled={cloudBusy || authLoading}
               onClick={() => pickFile(onSaveAs)}
             >
               <span>Save As…</span>
@@ -357,7 +359,11 @@ export default function StudioMenuBar({
       </div>
 
       <div className="studio-menu-item studio-menu-account-item" ref={accountRef}>
-        {user ? (
+        {authLoading ? (
+          <span className="studio-menu-trigger studio-menu-account-trigger studio-menu-account-loading" aria-busy="true">
+            Account…
+          </span>
+        ) : user ? (
           <>
             <button
               type="button"
