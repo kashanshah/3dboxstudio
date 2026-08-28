@@ -596,9 +596,6 @@ export default function BoxDesigner({
         </div>
       )}
       {!loadingSharedDesign && (
-<<<<<<< HEAD
-      <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}>
-=======
         <nav className="studio-mobile-tabs" aria-label="Studio sections" role="tablist">
           {(
             [
@@ -622,7 +619,6 @@ export default function BoxDesigner({
       )}
       {!loadingSharedDesign && (
       <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`} data-mobile-tab={mobileTab}>
->>>>>>> origin/main
       <div
         className="studio-viewport-pane"
         style={{
