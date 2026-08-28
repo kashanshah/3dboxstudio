@@ -4,6 +4,7 @@ import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import StudioLink from "../components/StudioLink";
 import {
   BUYMEACOFFEE_URL,
   GITHUB_REPO_URL,
@@ -431,14 +432,14 @@ export default function LandingPage() {
             >
               GitHub
             </a>
-            <Link
+            <StudioLink
               href="/studio"
               className="btn btn-primary landing-nav-cta"
               onClick={() => setNavOpen(false)}
             >
               Open studio
               <IconArrowRight />
-            </Link>
+            </StudioLink>
           </nav>
         </div>
       </header>
@@ -472,13 +473,13 @@ export default function LandingPage() {
                     fast 3D packaging preview without CAD or subscriptions.
                   </p>
                   <div className="landing-hero-ctas">
-                    <Link
+                    <StudioLink
                       href="/studio"
                       className="btn btn-primary landing-btn-hero-primary"
                     >
                       <span>Launch 3D studio</span>
                       <IconArrowRight />
-                    </Link>
+                    </StudioLink>
                     <a
                       href="#features"
                       className="btn landing-btn-hero-secondary"
@@ -739,7 +740,7 @@ export default function LandingPage() {
               workflows. Click any shot to open a full-size lightbox (same
               viewer as the portfolio—arrow keys to browse, Escape to close).
               Replace images with real captures from{" "}
-              <Link href="/studio">your live studio</Link> for even stronger
+              <StudioLink href="/studio">your live studio</StudioLink> for even stronger
               social proof and SEO image search coverage.
             </p>
             <div className="landing-screens">
@@ -925,13 +926,13 @@ export default function LandingPage() {
                   Open the studio and iterate on materials, openings, and
                   artwork until the packaging story clicks.
                 </p>
-                <Link
+                <StudioLink
                   href="/studio"
                   className="btn btn-primary landing-btn-hero-primary"
                 >
                   <span>Start the 3D packaging simulator</span>
                   <IconArrowRight />
-                </Link>
+                </StudioLink>
               </div>
             </div>
           </div>
@@ -968,7 +969,7 @@ export default function LandingPage() {
               <span>3D Box Studio</span>
             </div>
             <p className="landing-footer-links">
-              <Link href="/studio">Studio</Link>
+              <StudioLink href="/studio">Studio</StudioLink>
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>

@@ -28,6 +28,7 @@ import {
   STUDIO_DESCRIPTION,
   STUDIO_KEYWORDS,
   STUDIO_TITLE,
+  buildStudioJsonLd,
 } from "@/seo/studioHead";
 import { SITE_KEYWORDS_META } from "@/seo/siteKeywords";
 import { getSiteOrigin } from "@/lib/siteOrigin";
@@ -235,6 +236,16 @@ export function FaqJsonLd() {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(buildFaqJsonLd(origin)) }}
+    />
+  );
+}
+
+export function StudioJsonLd() {
+  const origin = getSiteOrigin();
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStudioJsonLd(origin)) }}
     />
   );
 }

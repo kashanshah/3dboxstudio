@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Canvas, type RootState, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls.js";
 import { PackagingBox } from "./PackagingBox";
 import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
+import { usePerformanceMode } from "../hooks/usePerformanceMode";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
 
 /** Closest / farthest the camera can orbit, as a multiple of the box's largest dimension. */
@@ -153,6 +154,7 @@ export interface Viewport3DProps {
    * Lighter shadows and no contact shadow pass while recording — reduces smear on motion.
    */
   cleanCapture?: boolean;
+  performanceMode?: boolean;
 }
 
 function Scene({
@@ -177,10 +179,19 @@ function Scene({
   snappyOrbit = false,
   recordingActive = false,
   cleanCapture = false,
+  performanceMode = false,
 }: Omit<Viewport3DProps, "showAxesGizmo" | "onCanvasReady">) {
   const maxDim = Math.max(width, height, length, 1);
   const camPos = INITIAL_VIEW_DIRECTION.clone().multiplyScalar(maxDim * INITIAL_VIEW_DISTANCE_FACTOR);
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
+  const shadowMapSize = performanceMode ? 1024 : 2048;
+  const castShadows = !cleanCapture && !performanceMode;
+  const [hdriReady, setHdriReady] = useState(false);
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setHdriReady(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   useLayoutEffect(() => {
     const cam = keyLightRef.current?.shadow.camera;
@@ -210,17 +221,22 @@ function Scene({
       <ambientLight intensity={0.35} />
       <directionalLight
         ref={keyLightRef}
-        castShadow={!cleanCapture}
+        castShadow={castShadows}
         position={[maxDim * 2.5, maxDim * 4, maxDim * 1.2]}
         intensity={1.15}
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[shadowMapSize, shadowMapSize]}
       />
       <directionalLight position={[-maxDim * 1.5, maxDim * 2, -maxDim * 2]} intensity={0.35} />
 
-      {/* Environment suspends while HDRI loads — keep the box outside so it always mounts */}
-      <Suspense fallback={null}>
-        <Environment preset={envPreset} environmentIntensity={cleanCapture ? 0.45 : 1} />
-      </Suspense>
+      {/* Environment suspends while HDRI loads — defer one frame so the box can paint first */}
+      {hdriReady && (
+        <Suspense fallback={null}>
+          <Environment
+            preset={envPreset}
+            environmentIntensity={cleanCapture ? 0.45 : performanceMode ? 0.7 : 1}
+          />
+        </Suspense>
+      )}
       <PackagingBox
         width={width}
         height={height}
@@ -236,7 +252,7 @@ function Scene({
         cleanCapture={cleanCapture}
       />
 
-      {!cleanCapture && (
+      {!cleanCapture && !performanceMode && (
         <ContactShadows opacity={0.45} scale={maxDim * 8} blur={2.4} far={maxDim * 5} position={[0, -height / 2 - 0.05, 0]} />
       )}
 
@@ -288,11 +304,14 @@ function ViewportRendererProfile({
 }
 
 export function Viewport3D(props: Viewport3DProps) {
-  const { showAxesGizmo, onCanvasReady, recordingActive = false, cleanCapture = false, ...sceneProps } = props;
+  const { showAxesGizmo, onCanvasReady, recordingActive = false, cleanCapture = false, performanceMode: performanceModeProp, ...sceneProps } = props;
+  const detectedPerformanceMode = usePerformanceMode();
+  const performanceMode = performanceModeProp ?? detectedPerformanceMode;
+
   const handleCreated = (state: RootState) => {
     state.gl.toneMapping = THREE.ACESFilmicToneMapping;
     state.gl.toneMappingExposure = 1;
-    state.gl.shadowMap.enabled = true;
+    state.gl.shadowMap.enabled = !performanceMode;
     state.gl.shadowMap.type = THREE.PCFSoftShadowMap;
     onCanvasReady?.(state);
   };
@@ -300,15 +319,15 @@ export function Viewport3D(props: Viewport3DProps) {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", minHeight: 0 }}>
       <Canvas
-        shadows
+        shadows={!performanceMode}
         frameloop={recordingActive ? "always" : "demand"}
         onCreated={handleCreated}
-        gl={{ preserveDrawingBuffer: true }}
+        gl={{ preserveDrawingBuffer: true, powerPreference: performanceMode ? "low-power" : "high-performance" }}
       >
         <ViewportRendererProfile cleanCapture={cleanCapture} />
-        <Scene {...sceneProps} recordingActive={recordingActive} cleanCapture={cleanCapture} />
+        <Scene {...sceneProps} recordingActive={recordingActive} cleanCapture={cleanCapture} performanceMode={performanceMode} />
         {showAxesGizmo && (
-          <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+          <GizmoHelper alignment="bottom-right" margin={performanceMode ? [48, 48] : [80, 80]}>
             <GizmoViewport axisColors={["#ff6b8a", "#5be7a9", "#6bb8ff"]} labelColor="white" />
           </GizmoHelper>
         )}

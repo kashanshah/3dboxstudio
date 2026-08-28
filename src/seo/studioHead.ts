@@ -19,9 +19,36 @@ export const STUDIO_TITLE =
   "Free 3D Box Maker Online — Design Cartons & Mailers | 3D Box Studio";
 
 export const STUDIO_DESCRIPTION =
-  "Open the free 3D box maker studio in your browser. Set custom dimensions, packaging materials, lid and flap openings, and per-face artwork. Save to the cloud, share view-only client previews, and export PNG mockups or JSON backups—no signup required.";
+  "Open the free 3D box maker studio in your browser. Set custom dimensions, packaging materials, lid and flap openings, and per-face artwork. Sign in to save and share designs, export PNG mockups, or download JSON backups.";
 
 export const STUDIO_KEYWORDS = SITE_KEYWORDS_META;
+
+export function buildStudioJsonLd(origin: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "3D Box Studio",
+    alternateName: "Free 3D Box Designer",
+    applicationCategory: "DesignApplication",
+    operatingSystem: "Any",
+    browserRequirements: "Requires JavaScript. WebGL recommended.",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    description: STUDIO_DESCRIPTION,
+    url: `${origin}/studio`,
+    featureList: [
+      "Custom box dimensions (mm, cm, in)",
+      "PBR packaging materials",
+      "Lid and flap opening simulation",
+      "Per-face artwork upload",
+      "HDRI lighting environments",
+      "Cloud save and share links",
+      "View-only client previews",
+      "PNG export and viewport recording",
+      "JSON import and export",
+    ],
+    keywords: STUDIO_KEYWORDS,
+  };
+}
 
 export function applyStudioRouteSeo(doc: Document, origin?: string): () => void {
   doc.title = STUDIO_TITLE;
