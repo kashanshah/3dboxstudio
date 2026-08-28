@@ -95,14 +95,14 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       open={open}
       onClose={onClose}
       footer={
-        <div className="mb-3">
+        <>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             Cancel
           </button>
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void submit()}>
             {submitLabel}
           </button>
-        </div>
+        </>
       }
     >
       <p className="studio-dialog-lead">

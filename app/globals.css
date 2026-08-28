@@ -1019,10 +1019,22 @@ label {
 .studio-dialog-footer {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 12px 18px;
   border-top: 1px solid var(--panel-border);
   background: rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 480px) {
+  .studio-dialog-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .studio-dialog-footer .btn {
+    width: 100%;
+  }
 }
 
 .studio-dialog-lead {
