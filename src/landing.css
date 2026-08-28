@@ -1825,6 +1825,63 @@
   text-decoration: underline;
 }
 
+.not-found-page {
+  padding-bottom: clamp(3rem, 8vw, 5rem);
+}
+
+.not-found-inner {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.5rem);
+  align-items: center;
+  max-width: 56rem;
+}
+
+@media (min-width: 768px) {
+  .not-found-inner {
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 3.5rem);
+  }
+}
+
+.not-found-visual {
+  margin: 0;
+  justify-self: center;
+  width: min(100%, 320px);
+}
+
+.not-found-illustration {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px;
+  box-shadow: var(--l-shadow-lg);
+  border: 1px solid var(--l-border-light);
+}
+
+.not-found-copy {
+  min-width: 0;
+}
+
+.not-found-title {
+  max-width: 14em;
+}
+
+.not-found-intro {
+  margin-top: 0.85rem;
+  margin-bottom: 0;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.not-found-links {
+  margin-top: 1.25rem;
+}
+
 .blog-index-list {
   list-style: none;
   margin: 0;
