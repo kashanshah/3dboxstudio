@@ -1,10 +1,10 @@
-import Link from "next/link";
+import StudioLink from "./StudioLink";
 
 /** Inline CTA used at the bottom of major landing sections. */
 export default function LandingStudioCta() {
   return (
     <div className="landing-section-cta">
-      <Link href="/studio" className="btn btn-primary landing-btn-hero-primary">
+      <StudioLink className="btn btn-primary landing-btn-hero-primary">
         <span>Launch 3D studio</span>
         <svg className="landing-icon-arrow" width="18" height="18" viewBox="0 0 24 24" aria-hidden>
           <path
@@ -16,7 +16,7 @@ export default function LandingStudioCta() {
             strokeLinejoin="round"
           />
         </svg>
-      </Link>
+      </StudioLink>
     </div>
   );
 }

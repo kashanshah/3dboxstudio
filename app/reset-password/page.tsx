@@ -59,7 +59,7 @@ function ResetInner() {
         </div>
         <h1 className="verify-title">Password updated</h1>
         <p className="verify-message">
-          Your password has been reset and you're now signed in. Other devices have been signed out.
+          Your password has been reset and you&apos;re now signed in. Other devices have been signed out.
         </p>
         <Link className="btn btn-primary verify-cta" href="/studio">
           Go to the studio
