@@ -2,7 +2,8 @@
 
 import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
+import LandingHeader from "../components/LandingHeader";
 import Link from "next/link";
 import StudioLink from "../components/StudioLink";
 import {
@@ -307,9 +308,6 @@ const LANDING_FEATURED_POSTS = [...BLOG_POSTS]
 
 /** Scroll past this many pixels before the main nav pins to the top of the viewport. */
 export default function LandingPage() {
-  const [navOpen, setNavOpen] = useState(false);
-  const navPanelRef = useRef<HTMLElement | null>(null);
-
   const openProductTourGallery = useCallback((startIndex: number) => {
     const slides = LANDING_PRODUCT_GALLERY.map((shot) => ({
       src: shot.src,
@@ -327,45 +325,6 @@ export default function LandingPage() {
     });
   }, []);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 880px)");
-    const syncBodyScrollLock = () => {
-      const lock = navOpen && mq.matches;
-      document.body.style.overflow = lock ? "hidden" : "";
-    };
-    syncBodyScrollLock();
-    mq.addEventListener("change", syncBodyScrollLock);
-    return () => {
-      mq.removeEventListener("change", syncBodyScrollLock);
-      document.body.style.overflow = "";
-    };
-  }, [navOpen]);
-
-  useEffect(() => {
-    if (!navOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setNavOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [navOpen]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 881px)");
-    const onWiden = () => {
-      if (mq.matches) setNavOpen(false);
-    };
-    mq.addEventListener("change", onWiden);
-    return () => mq.removeEventListener("change", onWiden);
-  }, []);
-
-  useEffect(() => {
-    if (!navOpen || !navPanelRef.current) return;
-    const first =
-      navPanelRef.current.querySelector<HTMLElement>("a[href], button");
-    queueMicrotask(() => first?.focus());
-  }, [navOpen]);
-
   return (
     <div className="landing-root">
       <div className="landing-bg-grid" aria-hidden />
@@ -376,73 +335,20 @@ export default function LandingPage() {
 
       <GithubLink />
 
-      <header
-        className={`landing-nav${navOpen ? " landing-nav--open" : ""}`}
-      >
-        <div className="landing-container landing-nav-inner">
-          <Link
-            className="landing-brand"
-            href="/"
-            onClick={() => setNavOpen(false)}
-          >
-            <LogoMark />
-            <span className="landing-brand-text">3D Box Studio</span>
-          </Link>
-          <button
-            type="button"
-            className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
-            aria-expanded={navOpen}
-            aria-controls="landing-primary-nav"
-            id="landing-nav-toggle"
-            onClick={() => setNavOpen((o) => !o)}
-            aria-label={navOpen ? "Close menu" : "Open menu"}
-          >
-            <span className="landing-nav-toggle-bars" aria-hidden>
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
-          <nav
-            ref={navPanelRef}
-            id="landing-primary-nav"
-            className={`landing-nav-links${navOpen ? " is-open" : ""}`}
-            aria-label="Primary"
-          >
-            <a href="#features" onClick={() => setNavOpen(false)}>
-              Features
-            </a>
-            <a href="#gallery" onClick={() => setNavOpen(false)}>
-              Screenshots
-            </a>
-            <a href="#showcase" onClick={() => setNavOpen(false)}>
-              Showcase
-            </a>
-            <Link href="/faq" onClick={() => setNavOpen(false)}>
-              FAQ
-            </Link>
-            <Link href="/blog" onClick={() => setNavOpen(false)}>
-              Blog
-            </Link>
-            <a
-              href={GITHUB_REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setNavOpen(false)}
-            >
-              GitHub
-            </a>
-            <StudioLink
-              href="/studio"
-              className="btn btn-primary landing-nav-cta"
-              onClick={() => setNavOpen(false)}
-            >
-              Open studio
-              <IconArrowRight />
-            </StudioLink>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader>
+        <a href="#features">Features</a>
+        <a href="#gallery">Screenshots</a>
+        <a href="#showcase">Showcase</a>
+        <Link href="/faq">FAQ</Link>
+        <Link href="/blog">Blog</Link>
+        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+          GitHub
+        </a>
+        <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
+          Open studio
+          <IconArrowRight />
+        </StudioLink>
+      </LandingHeader>
 
       <main className="landing-main">
         <div className="landing-hero-wrap">
