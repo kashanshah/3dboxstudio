@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_DOMAIN } from "../siteMeta";
+import LandingHeader from "./LandingHeader";
 import "../landing.css";
 
 function LogoMark() {
@@ -32,35 +33,27 @@ export default function ContentPageShell({
       <div className="landing-bg-orb landing-bg-orb--b" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <header className="landing-nav">
-        <div className="landing-container landing-nav-inner">
-          <Link className="landing-brand" href="/">
-            <LogoMark />
-            <span className="landing-brand-text">3D Box Studio</span>
-          </Link>
-          <nav className="landing-nav-links" aria-label="Primary">
-            <Link href="/">Home</Link>
-            <Link
-              href="/blog"
-              aria-current={activeNav === "blog" ? "page" : undefined}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/faq"
-              aria-current={activeNav === "faq" ? "page" : undefined}
-            >
-              FAQ
-            </Link>
-            <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-              GitHub
-            </a>
-            <Link href="/studio" className="btn btn-primary landing-nav-cta">
-              Open studio
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader>
+        <Link href="/">Home</Link>
+        <Link
+          href="/blog"
+          aria-current={activeNav === "blog" ? "page" : undefined}
+        >
+          Blog
+        </Link>
+        <Link
+          href="/faq"
+          aria-current={activeNav === "faq" ? "page" : undefined}
+        >
+          FAQ
+        </Link>
+        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
+          GitHub
+        </a>
+        <Link href="/studio" className="btn btn-primary landing-nav-cta">
+          Open studio
+        </Link>
+      </LandingHeader>
 
       <main className="landing-main">{children}</main>
 
