@@ -25,5 +25,5 @@
     <path fill="#c4a574" d="M140 20 L280 80 L140 140 L0 80 Z"/>
   </g>
   <rect x="72" y="480" width="1056" height="3" rx="1.5" fill="#3d9eff" opacity="0.5"/>
-  <text x="72" y="560" fill="#6b7384" font-family="system-ui,sans-serif" font-size="18">Free · No account · Runs locally in your browser</text>
+  <text x="72" y="560" fill="#6b7384" font-family="system-ui,sans-serif" font-size="18">Free · Free account · Runs locally in your browser</text>
 </svg>

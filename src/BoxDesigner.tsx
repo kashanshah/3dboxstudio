@@ -23,6 +23,7 @@ import StudioMenuBar from "./components/studio/StudioMenuBar";
 import StudioErrorBoundary from "./components/studio/StudioErrorBoundary";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
+import StudioAuthGate from "./components/studio/StudioAuthGate";
 import AuthModal from "./components/auth/AuthModal";
 import AccountSettingsModal, { type AccountSettingsTab } from "./components/auth/AccountSettingsModal";
 import { useAuth } from "./components/auth/AuthProvider";
@@ -170,6 +171,7 @@ export default function BoxDesigner({
   // editor link), so keep the id even when viewOnly; the preview route uses the token.
   const shareIdFromUrl = initialShareId;
   const previewTokenFromUrl = initialPreviewToken;
+  const requiresAccount = !shareIdFromUrl && !previewTokenFromUrl && !viewOnly;
 
   const auth = useAuth();
   const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
@@ -378,7 +380,7 @@ export default function BoxDesigner({
     capturePreviewImage,
     authUser: auth.user,
     authLoading: auth.loading,
-    onRequireSignIn: openSignIn,
+    onRequireSignIn: openSignUp,
   });
 
   const openProjects = useCallback(() => {
@@ -405,6 +407,13 @@ export default function BoxDesigner({
     const result = await auth.resendVerification();
     doc.showStatus(result.ok ? "Verification email sent. Check your inbox." : result.error, 6000);
   }, [auth, doc]);
+
+  const showAuthGate = requiresAccount && !auth.loading && !auth.user;
+
+  useEffect(() => {
+    if (!showAuthGate) return;
+    setAuthModal({ open: true, mode: "signup" });
+  }, [showAuthGate]);
 
   useEffect(() => {
     if (!shareIdFromUrl) return;
@@ -545,6 +554,20 @@ export default function BoxDesigner({
   const loadingSharedDesign =
     !sessionReady && Boolean(shareIdFromUrl || previewTokenFromUrl);
 
+  if (showAuthGate) {
+    return (
+      <div className="studio-workspace studio-workspace--auth-gate">
+        <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} />
+        <AuthModal
+          open={authModal.open}
+          initialMode={authModal.mode}
+          onClose={() => setAuthModal((s) => ({ ...s, open: false }))}
+          onSuccess={() => auth.refresh()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="studio-workspace">
       {loadingSharedDesign && <StudioSaveOverlay message="Loading shared design…" />}
@@ -581,9 +604,10 @@ export default function BoxDesigner({
         </div>
       )}
       {!doc.viewOnly && auth.user && !auth.user.emailVerified && (
-        <div className="studio-verify-banner" role="status">
+        <div className="studio-verify-banner studio-verify-banner--optional" role="status">
           <span>
-            Verify your email (<strong>{auth.user.email}</strong>) to save and share your projects.
+            Email not verified yet (<strong>{auth.user.email}</strong>). Verification is optional for now—you can
+            still save and share.
           </span>
           <button type="button" className="studio-verify-resend" onClick={() => void resendVerification()}>
             Resend email
@@ -1207,7 +1231,7 @@ export default function BoxDesigner({
         )}
       </StudioDialog>
       <StudioStartDialog
-        open={startDialogOpen && !viewOnly}
+        open={startDialogOpen && !viewOnly && Boolean(auth.user)}
         user={auth.user}
         onClose={() => setStartDialogOpen(false)}
         onCreateNew={() => setStartDialogOpen(false)}
@@ -1219,6 +1243,7 @@ export default function BoxDesigner({
           setStartDialogOpen(false);
           doc.setModal("import");
         }}
+        onRequireSignUp={openSignUp}
       />
       <AuthModal
         open={authModal.open}

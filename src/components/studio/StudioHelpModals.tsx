@@ -10,7 +10,7 @@ export type StudioHelpModal = "about" | "share-app" | null;
 const APP_SHARE_URL = `${SITE_ORIGIN_PUBLIC}/studio`;
 const APP_SHARE_TITLE = "3D Box Studio — Free 3D Box Designer";
 const APP_SHARE_TEXT =
-  "Design folding cartons and mailer-style boxes in your browser—materials, openings, per-face artwork, and more. Free to start designing; sign in to save and share.";
+  "Design folding cartons and mailer-style boxes in your browser—materials, openings, per-face artwork, and more. Free account signup required to start designing.";
 
 type ExternalLinkProps = {
   href: string;
@@ -85,8 +85,8 @@ export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHel
           cloud save &amp; share links, PNG export, and JSON import/export.
         </p>
         <p className="studio-dialog-hint">
-          Design without an account. Sign in with a verified email when you want cloud save, share links, and view-only
-          client previews.
+          Create a free account to open the studio and start designing. Email verification is optional for now.
+          Shared project links and view-only previews stay open without an account.
         </p>
         <nav className="studio-about-links" aria-label="3D Box Studio links">
           <ExternalLink href={SITE_ORIGIN_PUBLIC}>Website</ExternalLink>

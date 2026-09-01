@@ -19,7 +19,7 @@ export const STUDIO_TITLE =
   "Free 3D Box Maker Online — Design Cartons & Mailers | 3D Box Studio";
 
 export const STUDIO_DESCRIPTION =
-  "Open the free 3D box maker studio in your browser. Set custom dimensions, packaging materials, lid and flap openings, and per-face artwork. Sign in to save and share designs, export PNG mockups, or download JSON backups.";
+  "Open the free 3D box maker studio in your browser. Create a free account to start designing—set custom dimensions, packaging materials, lid and flap openings, and per-face artwork. Save and share designs, export PNG mockups, or download JSON backups. Email verification is optional for now.";
 
 export const STUDIO_KEYWORDS = SITE_KEYWORDS_META;
 

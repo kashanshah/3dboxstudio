@@ -1,3 +1,5 @@
+import { DISPOSABLE_EMAIL_ERROR, isDisposableEmail } from "./disposableEmail";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const MIN_PASSWORD_LENGTH = 8;
@@ -6,6 +8,11 @@ export const MAX_NAME_LENGTH = 80;
 
 export function isValidEmail(email: unknown): email is string {
   return typeof email === "string" && email.length <= 254 && EMAIL_RE.test(email.trim());
+}
+
+export function disposableEmailError(email: unknown): string | null {
+  if (!isValidEmail(email)) return null;
+  return isDisposableEmail(email) ? DISPOSABLE_EMAIL_ERROR : null;
 }
 
 export function passwordError(password: unknown): string | null {
