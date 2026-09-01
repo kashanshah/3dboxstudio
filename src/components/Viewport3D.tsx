@@ -16,7 +16,13 @@ import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/
 import { PackagingBox } from "./PackagingBox";
 import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
 import { usePerformanceMode } from "../hooks/usePerformanceMode";
+import type { StudioTheme } from "@/lib/studioTheme";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
+
+const VIEWPORT_GRID_COLORS: Record<StudioTheme, { section: string; cell: string; gizmo: string }> = {
+  dark: { section: "#3d4a5c", cell: "#252b36", gizmo: "#ffffff" },
+  light: { section: "#94a3b8", cell: "#cbd5e1", gizmo: "#0f172a" },
+};
 
 /** Closest / farthest the camera can orbit, as a multiple of the box's largest dimension. */
 const ORBIT_MIN_DISTANCE_FACTOR = 0.35;
@@ -155,6 +161,7 @@ export interface Viewport3DProps {
    */
   cleanCapture?: boolean;
   performanceMode?: boolean;
+  theme?: StudioTheme;
 }
 
 function Scene({
@@ -180,7 +187,9 @@ function Scene({
   recordingActive = false,
   cleanCapture = false,
   performanceMode = false,
+  theme = "dark",
 }: Omit<Viewport3DProps, "showAxesGizmo" | "onCanvasReady">) {
+  const gridColors = VIEWPORT_GRID_COLORS[theme];
   const maxDim = Math.max(width, height, length, 1);
   const camPos = INITIAL_VIEW_DIRECTION.clone().multiplyScalar(maxDim * INITIAL_VIEW_DISTANCE_FACTOR);
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
@@ -262,8 +271,8 @@ function Scene({
           fadeDistance={maxDim * 12}
           sectionSize={maxDim / 4}
           cellSize={maxDim / 20}
-          sectionColor="#3d4a5c"
-          cellColor="#252b36"
+          sectionColor={gridColors.section}
+          cellColor={gridColors.cell}
           position={[0, -height / 2 - 0.01, 0]}
         />
       )}
@@ -304,7 +313,8 @@ function ViewportRendererProfile({
 }
 
 export function Viewport3D(props: Viewport3DProps) {
-  const { showAxesGizmo, onCanvasReady, recordingActive = false, cleanCapture = false, performanceMode: performanceModeProp, ...sceneProps } = props;
+  const { showAxesGizmo, onCanvasReady, recordingActive = false, cleanCapture = false, performanceMode: performanceModeProp, theme = "dark", ...sceneProps } = props;
+  const gridColors = VIEWPORT_GRID_COLORS[theme];
   const detectedPerformanceMode = usePerformanceMode();
   const performanceMode = performanceModeProp ?? detectedPerformanceMode;
 
@@ -325,10 +335,10 @@ export function Viewport3D(props: Viewport3DProps) {
         gl={{ preserveDrawingBuffer: true, powerPreference: performanceMode ? "low-power" : "high-performance" }}
       >
         <ViewportRendererProfile cleanCapture={cleanCapture} />
-        <Scene {...sceneProps} recordingActive={recordingActive} cleanCapture={cleanCapture} performanceMode={performanceMode} />
+        <Scene {...sceneProps} theme={theme} recordingActive={recordingActive} cleanCapture={cleanCapture} performanceMode={performanceMode} />
         {showAxesGizmo && (
           <GizmoHelper alignment="bottom-right" margin={performanceMode ? [48, 48] : [80, 80]}>
-            <GizmoViewport axisColors={["#ff6b8a", "#5be7a9", "#6bb8ff"]} labelColor="white" />
+            <GizmoViewport axisColors={["#ff6b8a", "#5be7a9", "#6bb8ff"]} labelColor={gridColors.gizmo} />
           </GizmoHelper>
         )}
       </Canvas>

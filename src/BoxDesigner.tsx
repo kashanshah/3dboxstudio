@@ -20,6 +20,7 @@ import StudioFileModals from "./components/studio/StudioFileModals";
 import StudioDialog from "./components/studio/StudioDialog";
 import StudioHelpModals, { type StudioHelpModal } from "./components/studio/StudioHelpModals";
 import StudioMenuBar from "./components/studio/StudioMenuBar";
+import { useStudioTheme } from "./components/studio/StudioThemeProvider";
 import StudioErrorBoundary from "./components/studio/StudioErrorBoundary";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
@@ -172,6 +173,7 @@ export default function BoxDesigner({
   const previewTokenFromUrl = initialPreviewToken;
 
   const auth = useAuth();
+  const { theme, setTheme } = useStudioTheme();
   const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
     open: false,
     mode: "signin",
@@ -574,6 +576,8 @@ export default function BoxDesigner({
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         onOpenAccountSettings={openAccountSettings}
+        theme={theme}
+        onSetTheme={setTheme}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
@@ -619,14 +623,7 @@ export default function BoxDesigner({
       )}
       {!loadingSharedDesign && (
       <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`} data-mobile-tab={mobileTab}>
-      <div
-        className="studio-viewport-pane"
-        style={{
-          position: "relative",
-          borderRight: "1px solid var(--panel-border)",
-          background: "linear-gradient(165deg, #0a0d14 0%, #0c1018 45%, #0a0c10 100%)",
-        }}
-      >
+      <div className="studio-viewport-pane">
         <button
           type="button"
           className="studio-panel-toggle"
@@ -639,6 +636,7 @@ export default function BoxDesigner({
         </button>
         <StudioErrorBoundary>
         <Viewport3D
+          theme={theme}
           width={sceneDims.width}
           height={sceneDims.height}
           length={sceneDims.length}

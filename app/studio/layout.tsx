@@ -1,7 +1,15 @@
+import { StudioThemeShell } from "@/components/studio/StudioThemeProvider";
+import { studioThemeInitScript } from "./theme-init";
+
 export default function StudioLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="studio-shell">{children}</div>;
+  return (
+    <>
+      <script dangerouslySetInnerHTML={{ __html: studioThemeInitScript }} />
+      <StudioThemeShell>{children}</StudioThemeShell>
+    </>
+  );
 }

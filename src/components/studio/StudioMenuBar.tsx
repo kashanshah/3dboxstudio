@@ -7,6 +7,7 @@ import type { StudioHelpModal } from "./StudioHelpModals";
 import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL } from "@/siteMeta";
 import type { AuthUser } from "@/lib/authTypes";
+import type { StudioTheme } from "@/lib/studioTheme";
 
 type OpenMenu = "brand" | "file" | "view" | "help" | "account" | null;
 
@@ -35,6 +36,8 @@ type StudioMenuBarProps = {
   onOpenProjects: () => void;
   onToggleSidebar: () => void;
   onOpenAccountSettings: (tab?: "account" | "profile") => void;
+  theme: StudioTheme;
+  onSetTheme: (theme: StudioTheme) => void;
 };
 
 function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObject<HTMLElement | null>) {
@@ -73,6 +76,8 @@ export default function StudioMenuBar({
   sidebarOpen,
   onToggleSidebar,
   onOpenAccountSettings,
+  theme,
+  onSetTheme,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
@@ -291,6 +296,31 @@ export default function StudioMenuBar({
                 </button>
               </div>
             </div>
+            <div className="studio-menu-sep" role="separator" />
+            <button
+              type="button"
+              className="studio-menu-action studio-menu-check-item"
+              role="menuitemcheckbox"
+              aria-checked={theme === "dark"}
+              onClick={() => pickView(() => onSetTheme("dark"))}
+            >
+              <span className="studio-menu-check" aria-hidden>
+                {theme === "dark" ? "✓" : ""}
+              </span>
+              <span>Dark appearance</span>
+            </button>
+            <button
+              type="button"
+              className="studio-menu-action studio-menu-check-item"
+              role="menuitemcheckbox"
+              aria-checked={theme === "light"}
+              onClick={() => pickView(() => onSetTheme("light"))}
+            >
+              <span className="studio-menu-check" aria-hidden>
+                {theme === "light" ? "✓" : ""}
+              </span>
+              <span>Light appearance</span>
+            </button>
           </div>
         )}
       </div>
