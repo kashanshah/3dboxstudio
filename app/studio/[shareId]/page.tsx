@@ -21,11 +21,11 @@ export default async function StudioShareRoute({ params }: PageProps) {
   const { shareId } = await params;
   if (!isShareToken(shareId)) notFound();
 
-  // Only the verified owner can edit; everyone else opens the project read-only.
+  // Only the owner can edit; everyone else opens the project read-only.
   const [ownerId, user] = await Promise.all([getShareOwnerId(shareId), getCurrentUser()]);
   if (ownerId === undefined) notFound();
 
-  const isOwner = Boolean(user?.emailVerified && ownerId && user.id === ownerId);
+  const isOwner = Boolean(ownerId && user && user.id === ownerId);
 
   return <StudioClient initialShareId={shareId} viewOnly={!isOwner} />;
 }

@@ -140,8 +140,7 @@ export function useStudioDocument({
     window.setTimeout(() => setStatusMessage(null), ms);
   }, []);
 
-  // Cloud save/share is limited to signed-in, verified users. Returns false (and nudges
-  // the user toward sign-in / verification) when access should be blocked.
+  // Cloud save/share requires a signed-in user.
   const ensureCloudAccess = useCallback((): boolean => {
     if (authLoading) {
       showStatus("Checking your account…", 2000);
@@ -149,10 +148,6 @@ export function useStudioDocument({
     }
     if (!authUser) {
       onRequireSignIn?.();
-      return false;
-    }
-    if (!authUser.emailVerified) {
-      showStatus("Verify your email to save and share. Use the banner above to resend the link.", 6000);
       return false;
     }
     return true;

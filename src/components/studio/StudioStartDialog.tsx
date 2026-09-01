@@ -10,6 +10,7 @@ type StudioStartDialogProps = {
   onCreateNew: () => void;
   onOpenProject: () => void;
   onImport: () => void;
+  onRequireSignUp: () => void;
 };
 
 export default function StudioStartDialog({
@@ -19,7 +20,32 @@ export default function StudioStartDialog({
   onCreateNew,
   onOpenProject,
   onImport,
+  onRequireSignUp,
 }: StudioStartDialogProps) {
+  const handleCreateNew = () => {
+    if (!user) {
+      onRequireSignUp();
+      return;
+    }
+    onCreateNew();
+  };
+
+  const handleOpenProject = () => {
+    if (!user) {
+      onRequireSignUp();
+      return;
+    }
+    onOpenProject();
+  };
+
+  const handleImport = () => {
+    if (!user) {
+      onRequireSignUp();
+      return;
+    }
+    onImport();
+  };
+
   return (
     <StudioDialog
       title="3D Box Studio"
@@ -37,29 +63,27 @@ export default function StudioStartDialog({
       </p>
 
       <div className="studio-start-grid">
-        <button type="button" className="studio-start-card" onClick={onCreateNew}>
+        <button type="button" className="studio-start-card" onClick={handleCreateNew}>
           <span className="studio-start-card-title">Create a new project</span>
           <span className="studio-start-card-desc">
-            Jump straight into the designer. You can save it to the cloud once you sign in.
+            Jump straight into the designer. Your work saves to the cloud automatically.
           </span>
         </button>
 
-        <button type="button" className="studio-start-card" onClick={onOpenProject}>
+        <button type="button" className="studio-start-card" onClick={handleOpenProject}>
           <span className="studio-start-card-title">Open a project</span>
           <span className="studio-start-card-desc">
-            {user
-              ? "Browse and reopen the projects saved to your account."
-              : "Sign in to browse and reopen your saved projects."}
+            Browse and reopen the projects saved to your account.
           </span>
         </button>
       </div>
 
       <p className="studio-dialog-hint">
         Prefer working offline? You can also{" "}
-        <button type="button" className="studio-auth-switch" onClick={onImport}>
+        <button type="button" className="studio-auth-switch" onClick={handleImport}>
           import a JSON file
-        </button>
-        . Anonymous designs work fully — only cloud saving and sharing require an account.
+        </button>{" "}
+        from a previous export.
       </p>
     </StudioDialog>
   );
