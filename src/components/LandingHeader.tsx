@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import SiteNav, { type SiteNavActive } from "./SiteNav";
 
 function LogoMark() {
   return (
@@ -17,10 +18,10 @@ function LogoMark() {
 }
 
 type LandingHeaderProps = {
-  children: ReactNode;
+  activeNav?: SiteNavActive;
 };
 
-export default function LandingHeader({ children }: LandingHeaderProps) {
+export default function LandingHeader({ activeNav }: LandingHeaderProps) {
   const [navOpen, setNavOpen] = useState(false);
   const navPanelRef = useRef<HTMLElement | null>(null);
 
@@ -96,7 +97,7 @@ export default function LandingHeader({ children }: LandingHeaderProps) {
             if ((e.target as HTMLElement).closest("a")) closeNav();
           }}
         >
-          {children}
+          <SiteNav activeNav={activeNav} />
         </nav>
       </div>
     </header>

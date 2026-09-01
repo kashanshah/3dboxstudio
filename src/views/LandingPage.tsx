@@ -331,18 +331,7 @@ export default function LandingPage() {
       <div className="landing-bg-orb landing-bg-orb--c" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <LandingHeader>
-        <a href="#features">Features</a>
-        <a href="#gallery">Screenshots</a>
-        <a href="#showcase">Showcase</a>
-        <Link href="/faq">FAQ</Link>
-        <Link href="/blog">Blog</Link>
-        <Link href="/contact">Contact</Link>
-        <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
-          Open studio
-          <IconArrowRight />
-        </StudioLink>
-      </LandingHeader>
+      <LandingHeader />
 
       <main className="landing-main">
         <div className="landing-hero-wrap">

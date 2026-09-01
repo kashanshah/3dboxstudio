@@ -33,30 +33,7 @@ export default function ContentPageShell({
       <div className="landing-bg-orb landing-bg-orb--b" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <LandingHeader>
-        <Link href="/">Home</Link>
-        <Link
-          href="/blog"
-          aria-current={activeNav === "blog" ? "page" : undefined}
-        >
-          Blog
-        </Link>
-        <Link
-          href="/faq"
-          aria-current={activeNav === "faq" ? "page" : undefined}
-        >
-          FAQ
-        </Link>
-        <Link
-          href="/contact"
-          aria-current={activeNav === "contact" ? "page" : undefined}
-        >
-          Contact
-        </Link>
-        <Link href="/studio" className="btn btn-primary landing-nav-cta">
-          Open studio
-        </Link>
-      </LandingHeader>
+      <LandingHeader activeNav={activeNav} />
 
       <main className="landing-main">{children}</main>
 
