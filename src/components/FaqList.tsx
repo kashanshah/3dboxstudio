@@ -15,7 +15,7 @@ export default function FaqList({
   return (
     <div className="landing-faq">
       {items.map((item, index) => (
-        <details key={item.id} open={openFirst && index === 0}>
+        <details key={item.id} id={item.id} open={openFirst && index === 0}>
           <summary>
             {showCategory ? (
               <span className="faq-item-heading">
