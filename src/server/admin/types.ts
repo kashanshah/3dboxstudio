@@ -46,6 +46,7 @@ export type AdminDesignRow = {
   isAnonymous: boolean;
   hasOgImage: boolean;
   faceImageCount: number;
+  thumbnailUrl: string | null;
 };
 
 export type PaginatedResult<T> = {

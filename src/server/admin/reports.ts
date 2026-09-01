@@ -1,4 +1,5 @@
 import { getSql } from "../db";
+import { buildShareThumbnailUrl } from "../shareService";
 import type { AdminDesignRow, AdminStats, AdminUserRow, PaginatedResult } from "./types";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -62,6 +63,7 @@ function mapDesignRow(row: DesignDbRow): AdminDesignRow {
     isAnonymous: !row.user_id,
     hasOgImage: Boolean(row.og_image_key),
     faceImageCount: countFaceImages(row.images),
+    thumbnailUrl: buildShareThumbnailUrl(row.og_image_key, row.updated_at),
   };
 }
 
