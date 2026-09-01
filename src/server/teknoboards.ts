@@ -8,7 +8,7 @@ export function teknoboardsApiKey(): string | null {
 }
 
 export function teknoboardsFormId(): string | null {
-  return process.env.TEKNOBOARDS_FORM_ID?.trim() || null;
+  return process.env.TEKNOBOARDS_FORM_ID?.trim() || "www.3dboxstudio.com/contact";
 }
 
 export function teknoboardsConfigError(): string | null {

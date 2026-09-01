@@ -136,7 +136,7 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
       <div className="contact-form-grid">
         <div className="contact-field">
           <label htmlFor="contact-topic">Topic</label>
-          <select id="contact-topic" name="topic" required defaultValue="">
+          <select id="contact-topic" name="topic" required defaultValue={CONTACT_TOPICS[0].value}>
             <option value="" disabled>
               Select a topic
             </option>
