@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { verifyPassword } from "@/server/auth/password";
 import { getCurrentUserRow } from "@/server/auth/session";
-import { EmailInUseError, normalizeEmail, toPublicUser, updateUserEmail } from "@/server/auth/users";
+import { EmailInUseError, normalizeEmail, toPublicUser, updateUserEmail, userHasPassword } from "@/server/auth/users";
 import { createVerificationToken } from "@/server/auth/verification";
-import { isValidEmail } from "@/server/auth/validation";
+import { isValidEmail, disposableEmailError } from "@/server/auth/validation";
 import { sendEmailChangeVerificationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 
@@ -24,18 +24,24 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
     }
 
-    if (typeof currentPassword !== "string" || !currentPassword) {
-      return NextResponse.json({ error: "Enter your current password to confirm this change." }, { status: 400 });
+    const disposableError = disposableEmailError(newEmail);
+    if (disposableError) {
+      return NextResponse.json({ error: disposableError }, { status: 400 });
+    }
+
+    if (userHasPassword(user)) {
+      if (typeof currentPassword !== "string" || !currentPassword) {
+        return NextResponse.json({ error: "Enter your current password to confirm this change." }, { status: 400 });
+      }
+      const currentOk = await verifyPassword(currentPassword, user.password_hash!);
+      if (!currentOk) {
+        return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
+      }
     }
 
     const normalized = normalizeEmail(newEmail as string);
     if (normalized === user.email) {
       return NextResponse.json({ error: "That is already your email address." }, { status: 400 });
-    }
-
-    const currentOk = await verifyPassword(currentPassword, user.password_hash);
-    if (!currentOk) {
-      return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 });
     }
 
     let updated;

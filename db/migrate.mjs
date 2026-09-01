@@ -99,7 +99,7 @@ await sql`
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     name TEXT,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     email_verified_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
@@ -146,3 +146,34 @@ console.log("OK: password_reset_tokens table is ready.");
 await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`;
 await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id)`;
 console.log("OK: shared_designs.user_id column is ready.");
+
+await sql`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`;
+console.log("OK: users.password_hash is nullable for OAuth accounts.");
+
+await sql`
+  CREATE TABLE IF NOT EXISTS oauth_accounts (
+    provider TEXT NOT NULL,
+    provider_account_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (provider, provider_account_id)
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_oauth_accounts_user ON oauth_accounts (user_id)`;
+console.log("OK: oauth_accounts table is ready.");
+
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_method TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_source TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_medium TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_campaign TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_term TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_content TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_landing_page TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_landing_type TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_conversion_page TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_referrer TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_meta JSONB`;
+await sql`CREATE INDEX IF NOT EXISTS idx_users_utm_source ON users (utm_source) WHERE utm_source IS NOT NULL`;
+await sql`CREATE INDEX IF NOT EXISTS idx_users_signup_method ON users (signup_method) WHERE signup_method IS NOT NULL`;
+await sql`CREATE INDEX IF NOT EXISTS idx_users_signup_landing_type ON users (signup_landing_type) WHERE signup_landing_type IS NOT NULL`;
+console.log("OK: users signup attribution columns are ready.");

@@ -17,7 +17,7 @@ import {
   updateRecentDesignName,
   type RecentDesignEntry,
 } from "@/lib/recentDesigns";
-import { displayShareLabel, normalizeShareName, shareNameError } from "@/lib/shareName";
+import { displayShareLabel, DEFAULT_UNTITLED_SHARE_NAME, normalizeShareName, shareNameError } from "@/lib/shareName";
 import { uploadShareOgImageToCloud, type ShareOgImageBlob } from "@/lib/shareOgImage";
 import type { AuthUser } from "@/lib/authTypes";
 
@@ -129,6 +129,11 @@ export function useStudioDocument({
   const importInputRef = useRef<HTMLInputElement>(null);
   const bootstrapDone = useRef(false);
   const skipDirtyOnce = useRef(false);
+  const activeShareIdRef = useRef<string | null>(initialShareId);
+  const autoSaveInFlightRef = useRef(false);
+  const autoSaveQueuedRef = useRef(false);
+
+  activeShareIdRef.current = activeShareId;
 
   const markClean = useCallback(() => {
     skipDirtyOnce.current = true;
@@ -140,8 +145,7 @@ export function useStudioDocument({
     window.setTimeout(() => setStatusMessage(null), ms);
   }, []);
 
-  // Cloud save/share is limited to signed-in, verified users. Returns false (and nudges
-  // the user toward sign-in / verification) when access should be blocked.
+  // Cloud save/share requires a signed-in user.
   const ensureCloudAccess = useCallback((): boolean => {
     if (authLoading) {
       showStatus("Checking your account…", 2000);
@@ -149,10 +153,6 @@ export function useStudioDocument({
     }
     if (!authUser) {
       onRequireSignIn?.();
-      return false;
-    }
-    if (!authUser.emailVerified) {
-      showStatus("Verify your email to save and share. Use the banner above to resend the link.", 6000);
       return false;
     }
     return true;
@@ -333,7 +333,7 @@ export function useStudioDocument({
   const saveCloud = useCallback(async () => {
     if (viewOnly) return;
     if (!ensureCloudAccess()) return;
-    if (!activeShareId) {
+    if (!activeShareIdRef.current) {
       openSaveAsModal();
       return;
     }
@@ -349,8 +349,9 @@ export function useStudioDocument({
         }
       }
 
+      const shareId = activeShareIdRef.current;
       const json = await serializeDesign(buildPersistState());
-      const res = await fetch(`/api/shares/${encodeURIComponent(activeShareId)}`, {
+      const res = await fetch(`/api/shares/${encodeURIComponent(shareId)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: json,
@@ -361,10 +362,10 @@ export function useStudioDocument({
       if (result.name !== undefined) setActiveShareName(normalizeShareName(result.name));
       if (result.previewToken) setActivePreviewToken(result.previewToken);
 
-      const ogUpdatedAt = await uploadOgPreviewIfPresent(activeShareId, preview, setSaveOverlayMessage);
+      const ogUpdatedAt = await uploadOgPreviewIfPresent(shareId, preview, setSaveOverlayMessage);
       setPreviewCacheVersion(ogUpdatedAt ?? readShareUpdatedAt(result));
       setIsDirty(false);
-      rememberRecent(activeShareId, "saved", undefined, result.name ?? activeShareName);
+      rememberRecent(shareId, "saved", undefined, result.name ?? activeShareName);
       showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
@@ -372,7 +373,78 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [activeShareId, activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess]);
+  }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess]);
+
+  const autoSaveCloud = useCallback(async () => {
+    if (viewOnly) return;
+    if (!ensureCloudAccess()) return;
+
+    if (autoSaveInFlightRef.current) {
+      autoSaveQueuedRef.current = true;
+      return;
+    }
+    autoSaveInFlightRef.current = true;
+    setCloudBusy(true);
+
+    try {
+      const json = await serializeDesign(buildPersistState());
+      const existingId = activeShareIdRef.current;
+
+      if (!existingId) {
+        const res = await fetch("/api/shares", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Share-Name": DEFAULT_UNTITLED_SHARE_NAME,
+          },
+          body: json,
+        });
+        const data: unknown = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
+        const { id, url, name, previewToken, updatedAt } = parseShareResult(data);
+        const resolvedName = normalizeShareName(name ?? DEFAULT_UNTITLED_SHARE_NAME);
+        setActiveShareId(id);
+        activeShareIdRef.current = id;
+        setActivePreviewToken(previewToken ?? null);
+        setActiveShareName(resolvedName);
+        setPreviewCacheVersion(toShareCacheVersion(updatedAt));
+        syncUrlToShare(id);
+        rememberRecent(id, "saved", url, resolvedName);
+      } else {
+        const res = await fetch(`/api/shares/${encodeURIComponent(existingId)}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: json,
+        });
+        const data: unknown = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(readApiError(data, "Could not save design."));
+        const result = parseShareResult(data);
+        if (result.name !== undefined) setActiveShareName(normalizeShareName(result.name));
+        if (result.previewToken) setActivePreviewToken(result.previewToken);
+        setPreviewCacheVersion(readShareUpdatedAt(result));
+        rememberRecent(existingId, "saved", undefined, result.name ?? activeShareName);
+      }
+
+      setIsDirty(false);
+    } catch (e) {
+      showStatus(e instanceof Error ? e.message : "Auto-save failed.", 6000);
+    } finally {
+      setCloudBusy(false);
+      autoSaveInFlightRef.current = false;
+      if (autoSaveQueuedRef.current) {
+        autoSaveQueuedRef.current = false;
+        void autoSaveCloud();
+      }
+    }
+  }, [
+    activeShareName,
+    buildPersistState,
+    ensureCloudAccess,
+    rememberRecent,
+    showStatus,
+    syncUrlToShare,
+    viewOnly,
+  ]);
 
   const saveCloudAs = useCallback(async () => {
     if (!ensureCloudAccess()) return;
@@ -679,6 +751,7 @@ export function useStudioDocument({
     importInputRef,
     documentTitle,
     saveCloud,
+    autoSaveCloud,
     saveCloudAs,
     openSaveAsModal,
     openSaveCopyModal,

@@ -1,4 +1,6 @@
 import type { AdminStats } from "@/server/admin/types";
+import { landingTypeLabel } from "@/lib/landingClassification";
+import AdminAnalyticsCharts from "./AdminAnalyticsCharts";
 
 type ActivityChartProps = {
   title: string;
@@ -33,6 +35,39 @@ function ActivityChart({ title, data }: ActivityChartProps) {
               <span>{data[data.length - 1]?.date}</span>
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type BreakdownListProps = {
+  title: string;
+  data: { label: string; count: number }[];
+};
+
+function BreakdownList({
+  title,
+  data,
+  labelFormatter,
+}: BreakdownListProps & { labelFormatter?: (label: string) => string }) {
+  return (
+    <div className="admin-panel">
+      <div className="admin-panel-header">
+        <h2>{title}</h2>
+      </div>
+      <div style={{ padding: "0.75rem 1.1rem 1rem" }}>
+        {data.length === 0 ? (
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>No signups in the last 30 days.</p>
+        ) : (
+          <ul className="admin-breakdown-list">
+            {data.map((row) => (
+              <li key={row.label}>
+                <span>{labelFormatter ? labelFormatter(row.label) : row.label}</span>
+                <strong>{row.count.toLocaleString()}</strong>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>
@@ -90,7 +125,21 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
         <ActivityChart title="Signups (last 30 days)" data={stats.activity.signupsByDay} />
         <ActivityChart title="Designs created (last 30 days)" data={stats.activity.designsByDay} />
+        <BreakdownList title="Signups by UTM source (30d)" data={stats.activity.signupsBySource} />
+        <BreakdownList title="Signups by method (30d)" data={stats.activity.signupsByMethod} />
+        <BreakdownList
+          title="First landing page (30d)"
+          data={stats.activity.signupsByLandingType}
+          labelFormatter={(label) => (label === "(unknown)" ? label : landingTypeLabel(label))}
+        />
+        <BreakdownList
+          title="Signup page (30d)"
+          data={stats.activity.signupsByConversionType}
+          labelFormatter={(label) => (label === "(unknown)" ? label : landingTypeLabel(label))}
+        />
       </div>
+
+      <AdminAnalyticsCharts />
     </>
   );
 }

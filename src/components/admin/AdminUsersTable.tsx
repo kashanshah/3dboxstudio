@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AdminUserRow } from "@/server/admin/types";
+import { formatLandingSummary } from "@/lib/landingClassification";
 
 type AdminUsersTableProps = {
   users: AdminUserRow[];
@@ -27,6 +28,26 @@ function pageHref(page: number, search?: string): string {
   return qs ? `/admin/users?${qs}` : "/admin/users";
 }
 
+function formatSourceLabel(user: AdminUserRow): string {
+  if (user.utmSource) {
+    const medium = user.utmMedium ? ` / ${user.utmMedium}` : "";
+    return `${user.utmSource}${medium}`;
+  }
+  if (user.signupReferrer) return user.signupReferrer;
+  return "—";
+}
+
+function formatFirstLanding(user: AdminUserRow): string {
+  return formatLandingSummary(user.signupLandingType, user.signupLandingPage, null);
+}
+
+function formatConversionPage(user: AdminUserRow): string {
+  if (!user.signupConversionPage) return "—";
+  const classified = user.signupConversionPage;
+  if (classified === "/studio" || classified.startsWith("/studio/")) return "Studio";
+  return classified;
+}
+
 export default function AdminUsersTable({ users, page, totalPages, total, search }: AdminUsersTableProps) {
   return (
     <>
@@ -34,7 +55,7 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
         <input
           type="search"
           name="search"
-          placeholder="Search by email or name…"
+          placeholder="Search by email, name, UTM source, or campaign…"
           defaultValue={search ?? ""}
           aria-label="Search users"
         />
@@ -53,6 +74,10 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
               <tr>
                 <th>Email</th>
                 <th>Name</th>
+                <th>First landed</th>
+                <th>Converted on</th>
+                <th>Traffic source</th>
+                <th>Signup</th>
                 <th>Verified</th>
                 <th>Designs</th>
                 <th>Views</th>
@@ -62,7 +87,7 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ color: "var(--muted)" }}>
+                  <td colSpan={10} style={{ color: "var(--muted)" }}>
                     No users found.
                   </td>
                 </tr>
@@ -71,6 +96,10 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
                   <tr key={user.id}>
                     <td>{user.email}</td>
                     <td>{user.name ?? "—"}</td>
+                    <td title={user.signupLandingPage ?? undefined}>{formatFirstLanding(user)}</td>
+                    <td title={user.signupConversionPage ?? undefined}>{formatConversionPage(user)}</td>
+                    <td>{formatSourceLabel(user)}</td>
+                    <td>{user.signupMethod ?? "—"}</td>
                     <td>
                       <span className={`admin-badge ${user.emailVerified ? "admin-badge--ok" : "admin-badge--warn"}`}>
                         {user.emailVerified ? "Verified" : "Pending"}

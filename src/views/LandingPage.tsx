@@ -6,30 +6,13 @@ import { useCallback } from "react";
 import LandingHeader from "../components/LandingHeader";
 import Link from "next/link";
 import StudioLink from "../components/StudioLink";
-import {
-  BUYMEACOFFEE_URL,
-  SITE_DOMAIN,
-  SITE_ORIGIN_PUBLIC,
-} from "../siteMeta";
 import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";
 import FaqList from "../components/FaqList";
+import SiteFooter from "../components/SiteFooter";
 import { BLOG_POSTS, getBlogPostImageAlt, getBlogPostImagePath } from "../content/blogPosts";
 import { FAQ_ITEMS, getLandingFaqItems } from "../content/faq";
 import "../landing.css";
-
-function LogoMark() {
-  return (
-    <img
-      className="landing-logo-mark"
-      src="/logo-mark.svg"
-      width={34}
-      height={34}
-      alt=""
-      decoding="async"
-    />
-  );
-}
 
 function IconViewport() {
   return (
@@ -331,17 +314,7 @@ export default function LandingPage() {
       <div className="landing-bg-orb landing-bg-orb--c" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <LandingHeader>
-        <a href="#features">Features</a>
-        <a href="#gallery">Screenshots</a>
-        <a href="#showcase">Showcase</a>
-        <Link href="/faq">FAQ</Link>
-        <Link href="/blog">Blog</Link>
-        <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
-          Open studio
-          <IconArrowRight />
-        </StudioLink>
-      </LandingHeader>
+      <LandingHeader />
 
       <main className="landing-main">
         <div className="landing-hero-wrap">
@@ -388,7 +361,7 @@ export default function LandingPage() {
                   </div>
                   <ul className="landing-hero-meta" aria-label="Highlights">
                     <li>Free packaging designer</li>
-                    <li>No signup to start</li>
+                    <li>Free account to start</li>
                     <li>Cloud save &amp; share</li>
                     <li>View-only client links</li>
                     <li>Export PNG</li>
@@ -674,6 +647,7 @@ export default function LandingPage() {
 
         <section
           className="landing-section landing-section--step gradient-section"
+          id="steps"
           aria-labelledby="steps-heading"
         >
           <div className="landing-container">
@@ -837,79 +811,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="landing-footer">
-        <section
-          className="landing-section landing-section--kw"
-          aria-labelledby="kw-heading"
-        >
-          <div className="landing-container">
-            <h2 id="kw-heading" className="visually-hidden">
-              Related topics
-            </h2>
-            <p className="landing-kw">
-              <strong>Popular searches:</strong> 3D box studio, 3D box designer,
-              3D box maker, 3D box design maker, 3D box simulation, 3D packaging
-              simulator, free box designer online, online box mockup generator,
-              free packaging mockup generator, Pacdora alternative, product box
-              mockup, folding carton mockup, tuck end box mockup, carton 3D
-              preview, mailer box mockup, corrugated box simulator, gift box
-              mockup, ecommerce box mockup, kraft box mockup, structural
-              packaging preview, packaging visualization tool, retail carton
-              preview, CPG packaging review, small business packaging design.
-            </p>
-          </div>
-        </section>
-
-        <div className="landing-container">
-          <div className="landing-footer-inner">
-            <div className="landing-footer-brand">
-              <LogoMark />
-              <span>3D Box Studio</span>
-            </div>
-            <p className="landing-footer-links">
-              <StudioLink href="/studio">Studio</StudioLink>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <Link href="/blog">Blog</Link>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <Link href="/faq">FAQ</Link>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <a href="#features">Features</a>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <a href="#gallery">Screenshots</a>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <a href="#showcase">Showcase</a>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <a
-                href={BUYMEACOFFEE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Buy me a coffee
-              </a>
-            </p>
-            <p className="landing-footer-tag">
-              Free 3D box designer & maker · {SITE_DOMAIN} · 3D box simulation
-              in your browser.
-            </p>
-            <p className="landing-footer-tip">
-              Canonical:{" "}
-              <span className="landing-mono">{SITE_ORIGIN_PUBLIC}</span>
-            </p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter showTopicSection />
     </div>
   );
 }

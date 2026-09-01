@@ -51,7 +51,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "getting-started",
     question: "Is 3D Box Studio a free 3D box maker?",
     answer:
-      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. No account is required to start designing. Sign in with a verified email when you want cloud save, share links, and view-only client preview URLs.",
+      "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. Create a free account to open the studio and start designing. Email verification is optional for now—you can save, share, and export right after signing up.",
   },
   {
     id: "3d-box-simulation-use",
@@ -86,14 +86,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "privacy",
     question: "Where is my data stored?",
     answer:
-      "While you work, your design stays in the browser session. When you use File → Save or Save As, images upload to AWS S3 and configuration is stored in a Postgres database. You receive a share link you can reopen or send to others. Nothing is saved to the cloud until you explicitly save.",
+      "While you work, your design stays in the browser session. When you upload face artwork, the studio auto-saves to the cloud as “Untitled” (rename anytime via File → Rename). Images upload to AWS S3 and configuration is stored in a Postgres database. You can also save manually with File → Save (⌘S).",
   },
   {
     id: "cloud-share",
     category: "export",
     question: "How do cloud save and share links work?",
     answer:
-      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>/preview/…</code>). Editor links use <code>/studio/…</code> and are not exposed in preview mode.",
+      "Uploading face artwork auto-saves your design to the cloud as “Untitled”. Use File → Rename to change the name. File → Save (⌘S) updates an existing project; File → Save As creates a copy with a new link. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>/preview/…</code>). Editor links use <code>/studio/…</code> and are not exposed in preview mode.",
   },
   {
     id: "view-only-preview",
@@ -194,11 +194,11 @@ export const FAQ_ITEMS: FaqItem[] = [
       "Yes. Set retail carton dimensions and upload artwork to each face to simulate tuck end and folding carton proportions. The tool focuses on visual scale and graphic placement—not engineering every glue tab or tuck flap for production.",
   },
   {
-    id: "no-account-required",
+    id: "account-required",
     category: "getting-started",
-    question: "Can I create a 3D box mockup without signing up?",
+    question: "Do I need an account to use 3D Box Studio?",
     answer:
-      "Yes. Open the studio and start designing immediately—no account, email, or credit card required. Create an optional account only when you want cloud save, share links, and view-only client preview URLs.",
+      "Yes. Create a free account to open the studio and start a new design. Email verification is optional for now—you can save, share, and export right after signing up. Shared project links and view-only previews remain available without an account.",
   },
   {
     id: "unboxing-video",

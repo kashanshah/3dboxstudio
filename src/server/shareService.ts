@@ -160,6 +160,12 @@ function buildOgImagePublicUrl(ogImageKey: string | null, cacheVersion: number |
   return appendShareCacheVersion(publicUrlForKey(ogImageKey), cacheVersion);
 }
 
+/** Public thumbnail URL for a saved design's viewport OG image. */
+export function buildShareThumbnailUrl(ogImageKey: string | null, updatedAt: string | Date): string | null {
+  const cacheVersion = toShareCacheVersion(typeof updatedAt === "string" ? updatedAt : updatedAt.toISOString());
+  return buildOgImagePublicUrl(ogImageKey, cacheVersion);
+}
+
 function buildPreviewCanonicalPath(previewToken: string, cacheVersion: number | null): string {
   return appendShareCacheVersion(`/preview/${previewToken}`, cacheVersion);
 }
@@ -223,17 +229,14 @@ export async function listUserProjects(userId: string): Promise<ProjectSummary[]
     updated_at: string;
   }[];
 
-  return rows.map((row) => {
-    const cacheVersion = toShareCacheVersion(row.updated_at);
-    return {
+  return rows.map((row) => ({
       id: row.id,
       previewToken: row.preview_token,
       name: row.name ?? null,
       updatedAt: row.updated_at,
       createdAt: row.created_at,
-      thumbnailUrl: buildOgImagePublicUrl(row.og_image_key, cacheVersion),
-    };
-  });
+      thumbnailUrl: buildShareThumbnailUrl(row.og_image_key, row.updated_at),
+    }));
 }
 
 /** Returns the owner user id for a project, or undefined if it does not exist / expired. */

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import SiteNav, { type SiteNavActive } from "./SiteNav";
 
 function LogoMark() {
   return (
@@ -17,14 +18,41 @@ function LogoMark() {
 }
 
 type LandingHeaderProps = {
-  children: ReactNode;
+  activeNav?: SiteNavActive;
 };
 
-export default function LandingHeader({ children }: LandingHeaderProps) {
+export default function LandingHeader({ activeNav }: LandingHeaderProps) {
   const [navOpen, setNavOpen] = useState(false);
+  const [navHeight, setNavHeight] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
   const navPanelRef = useRef<HTMLElement | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
 
   const closeNav = () => setNavOpen(false);
+
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const measure = () => setNavHeight(header.offsetHeight);
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(header);
+    window.addEventListener("resize", measure);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [navOpen]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 880px)");
@@ -66,39 +94,51 @@ export default function LandingHeader({ children }: LandingHeaderProps) {
   }, [navOpen]);
 
   return (
-    <header className={`landing-nav${navOpen ? " landing-nav--open" : ""}`}>
-      <div className="landing-container landing-nav-inner">
-        <Link className="landing-brand" href="/" onClick={closeNav}>
-          <LogoMark />
-          <span className="landing-brand-text">3D Box Studio</span>
-        </Link>
-        <button
-          type="button"
-          className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
-          aria-expanded={navOpen}
-          aria-controls="landing-primary-nav"
-          id="landing-nav-toggle"
-          onClick={() => setNavOpen((o) => !o)}
-          aria-label={navOpen ? "Close menu" : "Open menu"}
-        >
-          <span className="landing-nav-toggle-bars" aria-hidden>
-            <span />
-            <span />
-            <span />
-          </span>
-        </button>
-        <nav
-          ref={navPanelRef}
-          id="landing-primary-nav"
-          className={`landing-nav-links${navOpen ? " is-open" : ""}`}
-          aria-label="Primary"
-          onClick={(e) => {
-            if ((e.target as HTMLElement).closest("a")) closeNav();
-          }}
-        >
-          {children}
-        </nav>
-      </div>
-    </header>
+    <>
+      <header
+        ref={headerRef}
+        className={`landing-nav${scrolled ? " landing-nav--scrolled" : ""}${
+          navOpen ? " landing-nav--open" : ""
+        }`}
+      >
+        <div className="landing-container landing-nav-inner">
+          <Link className="landing-brand" href="/" onClick={closeNav}>
+            <LogoMark />
+            <span className="landing-brand-text">3D Box Studio</span>
+          </Link>
+          <button
+            type="button"
+            className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
+            aria-expanded={navOpen}
+            aria-controls="landing-primary-nav"
+            id="landing-nav-toggle"
+            onClick={() => setNavOpen((o) => !o)}
+            aria-label={navOpen ? "Close menu" : "Open menu"}
+          >
+            <span className="landing-nav-toggle-bars" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+          <nav
+            ref={navPanelRef}
+            id="landing-primary-nav"
+            className={`landing-nav-links${navOpen ? " is-open" : ""}`}
+            aria-label="Primary"
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("a")) closeNav();
+            }}
+          >
+            <SiteNav activeNav={activeNav} />
+          </nav>
+        </div>
+      </header>
+      <div
+        className="landing-nav-spacer"
+        style={{ height: navHeight || undefined }}
+        aria-hidden
+      />
+    </>
   );
 }

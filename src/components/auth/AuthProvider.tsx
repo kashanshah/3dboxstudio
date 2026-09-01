@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthActionResult, AuthUser } from "@/lib/authTypes";
+import { trackSignup, trackStudioActivated, type SignupAnalytics } from "@/lib/analytics";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -23,6 +24,7 @@ type AuthContextValue = {
   updateProfile: (name: string) => Promise<AuthActionResult>;
   updateEmail: (newEmail: string, currentPassword: string) => Promise<AuthActionResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthActionResult>;
+  signInWithGoogle: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -38,6 +40,7 @@ function readUser(data: unknown): AuthUser | null {
     email: u.email,
     name: typeof u.name === "string" ? u.name : null,
     emailVerified: Boolean(u.emailVerified),
+    hasPassword: Boolean(u.hasPassword),
     createdAt: typeof u.createdAt === "string" ? u.createdAt : "",
   };
 }
@@ -47,6 +50,23 @@ function readError(data: unknown, fallback: string): string {
     return (data as { error: string }).error;
   }
   return fallback;
+}
+
+function readSignupAnalytics(data: unknown): SignupAnalytics | null {
+  if (typeof data !== "object" || data === null) return null;
+  const analytics = (data as { signupAnalytics?: unknown }).signupAnalytics;
+  if (typeof analytics !== "object" || analytics === null) return null;
+  const a = analytics as Record<string, unknown>;
+  if (a.method !== "email" && a.method !== "google") return null;
+  return {
+    method: a.method,
+    utmSource: typeof a.utmSource === "string" ? a.utmSource : null,
+    utmMedium: typeof a.utmMedium === "string" ? a.utmMedium : null,
+    utmCampaign: typeof a.utmCampaign === "string" ? a.utmCampaign : null,
+    landingType: typeof a.landingType === "string" ? a.landingType : null,
+    landingPage: typeof a.landingPage === "string" ? a.landingPage : null,
+    conversionPage: typeof a.conversionPage === "string" ? a.conversionPage : null,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -104,11 +124,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          conversionPage: typeof window !== "undefined" ? window.location.pathname : "/studio",
+        }),
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not create your account.") };
       setUser(readUser(data));
+      const analytics = readSignupAnalytics(data);
+      if (analytics) {
+        trackSignup(analytics);
+        trackStudioActivated("email");
+      }
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Please try again." };
@@ -193,10 +223,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not change your password.") };
+      const nextUser = readUser(data);
+      if (nextUser) setUser(nextUser);
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Please try again." };
     }
+  }, []);
+
+  const signInWithGoogle = useCallback(() => {
+    window.location.href = "/api/auth/google";
   }, []);
 
   return (
@@ -213,6 +249,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateProfile,
         updateEmail,
         changePassword,
+        signInWithGoogle,
       }}
     >
       {children}

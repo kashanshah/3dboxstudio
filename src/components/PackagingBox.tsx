@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo } from "react";
+import { useThree } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
@@ -74,6 +75,7 @@ function FacePlane({
   textureRotationDeg?: number;
   cleanCapture?: boolean;
 }) {
+  const invalidate = useThree((state) => state.invalidate);
   const map = useLoadedTexture(url);
   const inset = Math.max(0.06, Math.min(args[0], args[1]) * 0.04);
   const innerMat = getInnerLinerMaterial();
@@ -113,7 +115,8 @@ function FacePlane({
   useEffect(() => {
     mat.map = map ?? null;
     mat.needsUpdate = true;
-  }, [map, mat]);
+    invalidate();
+  }, [map, mat, invalidate]);
 
   useEffect(() => {
     if (!map) return;

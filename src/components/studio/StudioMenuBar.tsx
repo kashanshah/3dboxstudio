@@ -21,6 +21,8 @@ type StudioMenuBarProps = {
   sidebarOpen: boolean;
   authLoading: boolean;
   user: AuthUser | null;
+  /** Sign-in gate: brand, help, and account only (no file/view/title chrome). */
+  authGate?: boolean;
   onOpenModal: (modal: StudioFileModal) => void;
   onOpenHelpModal: (modal: StudioHelpModal) => void;
   onSave: () => void;
@@ -78,6 +80,7 @@ export default function StudioMenuBar({
   onOpenAccountSettings,
   themePreference,
   onSetThemePreference,
+  authGate = false,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
@@ -129,8 +132,8 @@ export default function StudioMenuBar({
           <img
             className="studio-menu-brand-logo"
             src="/logo-mark.svg"
-            width={18}
-            height={18}
+            width={24}
+            height={24}
             alt=""
             decoding="async"
           />
@@ -162,6 +165,7 @@ export default function StudioMenuBar({
         )}
       </div>
 
+      {!authGate && (
       <div className="studio-menu-item" ref={fileRef}>
         <button
           type="button"
@@ -260,7 +264,9 @@ export default function StudioMenuBar({
           </div>
         )}
       </div>
+      )}
 
+      {!authGate && (
       <div className="studio-menu-item" ref={viewRef}>
         <button
           type="button"
@@ -336,8 +342,9 @@ export default function StudioMenuBar({
           </div>
         )}
       </div>
+      )}
 
-      {viewOnly && <span className="studio-menu-preview-badge">View-only preview</span>}
+      {!authGate && viewOnly && <span className="studio-menu-preview-badge">View-only preview</span>}
 
       <div className="studio-menu-item" ref={helpRef}>
         <button
@@ -367,10 +374,20 @@ export default function StudioMenuBar({
             >
               <span>Share 3D Box Studio with friends</span>
             </button>
+            <div className="studio-menu-sep" role="separator" />
+            <Link
+              className="studio-menu-action studio-menu-action--link"
+              role="menuitem"
+              href="/contact"
+              onClick={closeMenus}
+            >
+              <span>Contact</span>
+            </Link>
           </div>
         )}
       </div>
 
+      {!authGate && (
       <div className="studio-doc-title-wrap">
         <div className="studio-doc-title" title={documentTitle}>
           {documentTitle}
@@ -388,6 +405,9 @@ export default function StudioMenuBar({
           </button>
         )}
       </div>
+      )}
+
+      {authGate ? <div className="studio-menu-auth-gate-spacer" aria-hidden /> : null}
 
       <div className="studio-menu-item studio-menu-account-item" ref={accountRef}>
         {authLoading ? (

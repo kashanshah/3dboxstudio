@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import BuyMeACoffeeWidget from "@/components/BuyMeACoffeeWidget";
+import AttributionCapture from "@/components/AttributionCapture";
 import { createLandingMetadata } from "@/lib/seo/metadata";
 import "./globals.css";
 
@@ -59,6 +61,9 @@ export default function RootLayout({
     >
       <body>
         {children}
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
         <GoogleAnalytics />
         <VercelAnalytics />
         <BuyMeACoffeeWidget />

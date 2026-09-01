@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AuthUser } from "@/lib/authTypes";
-import { shareNameError } from "@/lib/shareName";
+import { DEFAULT_UNTITLED_SHARE_NAME, shareNameError } from "@/lib/shareName";
 import StudioDialog from "./StudioDialog";
 
 type ProjectSummary = {
@@ -20,6 +20,8 @@ type StudioProjectsPanelProps = {
   onSignIn: () => void;
   onOpenProject: (id: string) => void;
   onStatus: (message: string) => void;
+  emptyMessage?: string;
+  listClassName?: string;
 };
 
 function formatUpdated(iso: string): string {
@@ -34,6 +36,8 @@ export default function StudioProjectsPanel({
   onSignIn,
   onOpenProject,
   onStatus,
+  emptyMessage = "You haven't saved any projects yet. Design a box, then use File → Save As to store it here.",
+  listClassName = "studio-projects-list",
 }: StudioProjectsPanelProps) {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(false);
@@ -167,14 +171,14 @@ export default function StudioProjectsPanel({
   if (projects.length === 0) {
     return (
       <p className="studio-dialog-hint">
-        You haven&apos;t saved any projects yet. Design a box, then use <strong>File → Save As</strong> to store it here.
+        {emptyMessage}
       </p>
     );
   }
 
   return (
     <>
-      <ul className="studio-projects-list">
+      <ul className={listClassName}>
         {projects.map((project) => (
           <li key={project.id} className="studio-projects-item">
             <div className="studio-projects-thumb" aria-hidden>
@@ -186,7 +190,7 @@ export default function StudioProjectsPanel({
               )}
             </div>
             <div className="studio-projects-main">
-              <span className="studio-projects-name">{project.name ?? "Untitled design"}</span>
+              <span className="studio-projects-name">{project.name ?? DEFAULT_UNTITLED_SHARE_NAME}</span>
               <span className="studio-projects-meta">Updated {formatUpdated(project.updatedAt)}</span>
             </div>
             <div className="studio-projects-actions">

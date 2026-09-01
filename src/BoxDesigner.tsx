@@ -10,6 +10,9 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { googleAuthErrorMessage } from "@/lib/authErrors";
+import { trackSignup, trackStudioActivated } from "@/lib/analytics";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -24,12 +27,14 @@ import { useStudioTheme } from "./components/studio/StudioThemeProvider";
 import StudioErrorBoundary from "./components/studio/StudioErrorBoundary";
 import StudioSaveOverlay from "./components/studio/StudioSaveOverlay";
 import StudioStartDialog from "./components/studio/StudioStartDialog";
+import StudioAuthGate from "./components/studio/StudioAuthGate";
 import AuthModal from "./components/auth/AuthModal";
 import AccountSettingsModal, { type AccountSettingsTab } from "./components/auth/AccountSettingsModal";
 import { useAuth } from "./components/auth/AuthProvider";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
+import { DEFAULT_UNTITLED_SHARE_NAME } from "@/lib/shareName";
 import { Viewport3D, INITIAL_ZOOM_FRACTION } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { BOX_TEMPLATES, getBoxTemplate } from "./boxTemplates";
@@ -171,9 +176,13 @@ export default function BoxDesigner({
   // editor link), so keep the id even when viewOnly; the preview route uses the token.
   const shareIdFromUrl = initialShareId;
   const previewTokenFromUrl = initialPreviewToken;
+  const requiresAccount = !shareIdFromUrl && !previewTokenFromUrl && !viewOnly;
 
   const auth = useAuth();
   const { preference: themePreference, resolvedTheme, setPreference: setThemePreference } = useStudioTheme();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
     open: false,
     mode: "signin",
@@ -192,6 +201,7 @@ export default function BoxDesigner({
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
+  const pendingAutoSaveRef = useRef(false);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
   const [opening, setOpening] = useState<OpeningStyle>("closed");
@@ -380,7 +390,7 @@ export default function BoxDesigner({
     capturePreviewImage,
     authUser: auth.user,
     authLoading: auth.loading,
-    onRequireSignIn: openSignIn,
+    onRequireSignIn: openSignUp,
   });
 
   const openProjects = useCallback(() => {
@@ -407,6 +417,45 @@ export default function BoxDesigner({
     const result = await auth.resendVerification();
     doc.showStatus(result.ok ? "Verification email sent. Check your inbox." : result.error, 6000);
   }, [auth, doc]);
+
+  const showAuthGate = requiresAccount && !auth.loading && !auth.user;
+
+  useEffect(() => {
+    if (!showAuthGate || oauthError) return;
+    setAuthModal({ open: true, mode: "signup" });
+  }, [showAuthGate, oauthError]);
+
+  useEffect(() => {
+    const message = googleAuthErrorMessage(searchParams.get("auth_error"));
+    if (!message) return;
+    setOauthError(message);
+    router.replace("/studio", { scroll: false });
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (searchParams.get("auth") !== "google" || !auth.user) return;
+    const welcome = searchParams.get("welcome") === "1";
+    if (welcome) {
+      trackSignup({
+        method: "google",
+        utmSource: searchParams.get("sa_source"),
+        utmMedium: searchParams.get("sa_medium"),
+        utmCampaign: searchParams.get("sa_campaign"),
+        landingType: searchParams.get("sa_landing_type"),
+        landingPage: searchParams.get("sa_landing_page"),
+        conversionPage: "/studio",
+      });
+      trackStudioActivated("google");
+    }
+    doc.showStatus(welcome ? "Welcome! Your account is ready." : "Signed in with Google.", 5000);
+    router.replace("/studio", { scroll: false });
+  }, [searchParams, auth.user, doc.showStatus, router]);
+
+  useEffect(() => {
+    if (doc.viewOnly || !pendingAutoSaveRef.current) return;
+    pendingAutoSaveRef.current = false;
+    void doc.autoSaveCloud();
+  }, [faceFiles, doc.autoSaveCloud, doc.viewOnly]);
 
   useEffect(() => {
     if (!shareIdFromUrl) return;
@@ -461,6 +510,7 @@ export default function BoxDesigner({
   }, []);
 
   const setFile = useCallback((id: FaceId, file: File | null) => {
+    if (file) pendingAutoSaveRef.current = true;
     setFaceFiles((prev) => ({ ...prev, [id]: file }));
     if (!file) {
       setTextureRotationDeg((prev) => {
@@ -491,6 +541,7 @@ export default function BoxDesigner({
     (id: FaceId) => {
       const f = faceFiles[id];
       if (!f) return;
+      pendingAutoSaveRef.current = true;
       const next: Partial<Record<FaceId, File | null>> = {};
       const targets: FaceId[] = splitTop ? [...ALL_FACES.filter((x) => x !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES;
       targets.forEach((k) => {
@@ -547,6 +598,52 @@ export default function BoxDesigner({
   const loadingSharedDesign =
     !sessionReady && Boolean(shareIdFromUrl || previewTokenFromUrl);
 
+  if (showAuthGate) {
+    return (
+      <div className="studio-workspace studio-workspace--auth-gate">
+        <StudioMenuBar
+          authGate
+          documentTitle=""
+          cloudBusy={false}
+          viewOnly={false}
+          authLoading={auth.loading}
+          user={null}
+          canRename={false}
+          canSaveCopy={false}
+          canSharePreview={false}
+          sidebarOpen={false}
+          onOpenModal={() => {}}
+          onOpenHelpModal={setHelpModal}
+          onSave={() => {}}
+          onSaveAs={() => {}}
+          onSaveCopy={() => {}}
+          onRename={() => {}}
+          onSharePreview={() => {}}
+          onCopyPreviewLink={() => {}}
+          onNew={() => {}}
+          onSignIn={openSignIn}
+          onSignUp={openSignUp}
+          onSignOut={() => {}}
+          onOpenProjects={() => {}}
+          onToggleSidebar={() => {}}
+          onOpenAccountSettings={() => {}}
+          themePreference={themePreference}
+          onSetThemePreference={setThemePreference}
+        />
+        <div className="studio-auth-gate-body">
+          <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} oauthError={oauthError} />
+        </div>
+        <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} />
+        <AuthModal
+          open={authModal.open}
+          initialMode={authModal.mode}
+          onClose={() => setAuthModal((s) => ({ ...s, open: false }))}
+          onSuccess={() => auth.refresh()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="studio-workspace">
       {loadingSharedDesign && <StudioSaveOverlay message="Loading shared design…" />}
@@ -585,9 +682,10 @@ export default function BoxDesigner({
         </div>
       )}
       {!doc.viewOnly && auth.user && !auth.user.emailVerified && (
-        <div className="studio-verify-banner" role="status">
+        <div className="studio-verify-banner studio-verify-banner--optional" role="status">
           <span>
-            Verify your email (<strong>{auth.user.email}</strong>) to save and share your projects.
+            Email not verified yet (<strong>{auth.user.email}</strong>). Verification is optional for now—you can
+            still save and share.
           </span>
           <button type="button" className="studio-verify-resend" onClick={() => void resendVerification()}>
             Resend email
@@ -780,7 +878,7 @@ export default function BoxDesigner({
             <dl className="studio-preview-summary">
               <div>
                 <dt>Name</dt>
-                <dd>{doc.activeShareName ?? "Untitled design"}</dd>
+                <dd>{doc.activeShareName ?? DEFAULT_UNTITLED_SHARE_NAME}</dd>
               </div>
               <div>
                 <dt>Dimensions</dt>
@@ -1205,18 +1303,21 @@ export default function BoxDesigner({
         )}
       </StudioDialog>
       <StudioStartDialog
-        open={startDialogOpen && !viewOnly}
+        open={startDialogOpen && !viewOnly && Boolean(auth.user)}
         user={auth.user}
         onClose={() => setStartDialogOpen(false)}
         onCreateNew={() => setStartDialogOpen(false)}
-        onOpenProject={() => {
+        onOpenProject={(id) => {
           setStartDialogOpen(false);
-          openProjects();
+          void doc.openProject(id);
         }}
         onImport={() => {
           setStartDialogOpen(false);
           doc.setModal("import");
         }}
+        onRequireSignUp={openSignUp}
+        onSignIn={openSignIn}
+        onStatus={(message) => doc.showStatus(message, 5000)}
       />
       <AuthModal
         open={authModal.open}

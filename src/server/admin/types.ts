@@ -18,6 +18,10 @@ export type AdminStats = {
   activity: {
     signupsByDay: { date: string; count: number }[];
     designsByDay: { date: string; count: number }[];
+    signupsBySource: { label: string; count: number }[];
+    signupsByMethod: { label: string; count: number }[];
+    signupsByLandingType: { label: string; count: number }[];
+    signupsByConversionType: { label: string; count: number }[];
   };
 };
 
@@ -29,6 +33,14 @@ export type AdminUserRow = {
   createdAt: string;
   designCount: number;
   totalViews: number;
+  signupMethod: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  signupLandingPage: string | null;
+  signupLandingType: string | null;
+  signupConversionPage: string | null;
+  signupReferrer: string | null;
 };
 
 export type AdminDesignRow = {
@@ -46,6 +58,7 @@ export type AdminDesignRow = {
   isAnonymous: boolean;
   hasOgImage: boolean;
   faceImageCount: number;
+  thumbnailUrl: string | null;
 };
 
 export type PaginatedResult<T> = {
@@ -54,4 +67,38 @@ export type PaginatedResult<T> = {
   page: number;
   pageSize: number;
   totalPages: number;
+};
+
+export type AdminAnalyticsGranularity = "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+
+export type AdminAnalyticsSeriesPoint = {
+  periodStart: string;
+  label: string;
+  signupsEmail: number;
+  signupsGoogle: number;
+  signupsVerified: number;
+  signupsUnverified: number;
+  verifications: number;
+  usersWithFirstDesign: number;
+  designsCreated: number;
+};
+
+export type AdminAnalytics = {
+  granularity: AdminAnalyticsGranularity;
+  buckets: number;
+  rangeStart: string;
+  rangeEnd: string;
+  summary: {
+    signups: number;
+    signupsEmail: number;
+    signupsGoogle: number;
+    signupsVerified: number;
+    signupsUnverified: number;
+    verifications: number;
+    usersWithFirstDesign: number;
+    designsCreated: number;
+    usersWithDesignTotal: number;
+    usersWithoutDesignTotal: number;
+  };
+  series: AdminAnalyticsSeriesPoint[];
 };

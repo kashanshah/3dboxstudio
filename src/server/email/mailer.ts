@@ -112,12 +112,14 @@ export async function sendAdminNewRegistrationEmail(user: {
   email: string;
   name: string | null;
   createdAt: string;
+  attributionSummary?: string;
 }): Promise<void> {
   const to = adminAlertEmail();
   const safeEmail = escapeHtml(user.email);
   const safeName = user.name ? escapeHtml(user.name) : "—";
   const safeId = escapeHtml(user.id);
   const safeCreated = escapeHtml(user.createdAt);
+  const safeAttribution = user.attributionSummary ? escapeHtml(user.attributionSummary) : null;
   const html = `
     <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
       <h1 style="font-size: 20px; margin: 0 0 16px;">New registration</h1>
@@ -139,10 +141,20 @@ export async function sendAdminNewRegistrationEmail(user: {
           <td style="padding: 6px 0; color: #64748b;">Created</td>
           <td style="padding: 6px 0;">${safeCreated}</td>
         </tr>
+        ${
+          safeAttribution
+            ? `<tr>
+          <td style="padding: 6px 0; color: #64748b;">Traffic</td>
+          <td style="padding: 6px 0;">${safeAttribution}</td>
+        </tr>`
+            : ""
+        }
       </table>
     </div>
   `;
-  const text = `New registration on 3D Box Studio\n\nName: ${user.name ?? "—"}\nEmail: ${user.email}\nUser ID: ${user.id}\nCreated: ${user.createdAt}`;
+  const text = `New registration on 3D Box Studio\n\nName: ${user.name ?? "—"}\nEmail: ${user.email}\nUser ID: ${user.id}\nCreated: ${user.createdAt}${
+    user.attributionSummary ? `\nTraffic: ${user.attributionSummary}` : ""
+  }`;
   await sendEmail({
     to,
     subject: `New registration · ${user.email}`,
