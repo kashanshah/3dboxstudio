@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import StudioLink from "./StudioLink";
@@ -12,6 +12,27 @@ import {
   FOOTER_INDUSTRY_LINKS,
   FOOTER_TOPIC_LINKS,
 } from "../content/footerLinks";
+
+const FOOTER_ACCORDION_MQ = "(max-width: 980px)";
+
+/** Closed <details> hide content in the UA stylesheet; CSS cannot force them open on desktop. */
+function useFooterAccordionMode() {
+  useEffect(() => {
+    const mq = window.matchMedia(FOOTER_ACCORDION_MQ);
+    const sync = () => {
+      document
+        .querySelectorAll<HTMLDetailsElement>(".site-footer-accordion, .site-footer-topics-accordion")
+        .forEach((el) => {
+          if (mq.matches) el.removeAttribute("open");
+          else el.setAttribute("open", "");
+        });
+    };
+
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+}
 
 function LogoMark() {
   return (
@@ -39,7 +60,7 @@ type FooterAccordionSectionProps = {
 function FooterAccordionSection({ title, ariaLabel, children }: FooterAccordionSectionProps) {
   return (
     <nav className="site-footer-col" aria-label={ariaLabel}>
-      <details className="site-footer-accordion">
+      <details className="site-footer-accordion" open>
         <summary className="site-footer-accordion-summary">
           <span className="site-footer-col-title">{title}</span>
         </summary>
@@ -57,6 +78,7 @@ type SiteFooterProps = {
 export default function SiteFooter({ showTopicSection = false }: SiteFooterProps) {
   const pathname = usePathname();
   const year = new Date().getFullYear();
+  useFooterAccordionMode();
 
   return (
     <footer className="landing-footer site-footer">
@@ -141,7 +163,7 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
         </div>
 
         {showTopicSection && (
-          <details className="site-footer-topics site-footer-topics-accordion">
+          <details className="site-footer-topics site-footer-topics-accordion" open>
             <summary className="site-footer-topics-summary">
               <span className="site-footer-topics-title">Popular packaging topics</span>
             </summary>
