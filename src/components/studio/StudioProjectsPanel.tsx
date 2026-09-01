@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { AuthUser } from "@/lib/authTypes";
-import { shareNameError } from "@/lib/shareName";
+import { DEFAULT_UNTITLED_SHARE_NAME, shareNameError } from "@/lib/shareName";
 import StudioDialog from "./StudioDialog";
 
 type ProjectSummary = {
@@ -186,7 +186,7 @@ export default function StudioProjectsPanel({
               )}
             </div>
             <div className="studio-projects-main">
-              <span className="studio-projects-name">{project.name ?? "Untitled design"}</span>
+              <span className="studio-projects-name">{project.name ?? DEFAULT_UNTITLED_SHARE_NAME}</span>
               <span className="studio-projects-meta">Updated {formatUpdated(project.updatedAt)}</span>
             </div>
             <div className="studio-projects-actions">

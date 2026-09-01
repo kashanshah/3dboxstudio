@@ -30,6 +30,7 @@ import { useAuth } from "./components/auth/AuthProvider";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
+import { DEFAULT_UNTITLED_SHARE_NAME } from "@/lib/shareName";
 import { Viewport3D, INITIAL_ZOOM_FRACTION } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
 import { BOX_TEMPLATES, getBoxTemplate } from "./boxTemplates";
@@ -192,6 +193,7 @@ export default function BoxDesigner({
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
+  const pendingAutoSaveRef = useRef(false);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
   const [opening, setOpening] = useState<OpeningStyle>("closed");
@@ -408,6 +410,12 @@ export default function BoxDesigner({
     doc.showStatus(result.ok ? "Verification email sent. Check your inbox." : result.error, 6000);
   }, [auth, doc]);
 
+  useEffect(() => {
+    if (doc.viewOnly || !pendingAutoSaveRef.current) return;
+    pendingAutoSaveRef.current = false;
+    void doc.autoSaveCloud();
+  }, [faceFiles, doc.autoSaveCloud, doc.viewOnly]);
+
   const showAuthGate = requiresAccount && !auth.loading && !auth.user;
 
   useEffect(() => {
@@ -468,6 +476,7 @@ export default function BoxDesigner({
   }, []);
 
   const setFile = useCallback((id: FaceId, file: File | null) => {
+    if (file) pendingAutoSaveRef.current = true;
     setFaceFiles((prev) => ({ ...prev, [id]: file }));
     if (!file) {
       setTextureRotationDeg((prev) => {
@@ -498,6 +507,7 @@ export default function BoxDesigner({
     (id: FaceId) => {
       const f = faceFiles[id];
       if (!f) return;
+      pendingAutoSaveRef.current = true;
       const next: Partial<Record<FaceId, File | null>> = {};
       const targets: FaceId[] = splitTop ? [...ALL_FACES.filter((x) => x !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES;
       targets.forEach((k) => {
@@ -806,7 +816,7 @@ export default function BoxDesigner({
             <dl className="studio-preview-summary">
               <div>
                 <dt>Name</dt>
-                <dd>{doc.activeShareName ?? "Untitled design"}</dd>
+                <dd>{doc.activeShareName ?? DEFAULT_UNTITLED_SHARE_NAME}</dd>
               </div>
               <div>
                 <dt>Dimensions</dt>

@@ -86,14 +86,14 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "privacy",
     question: "Where is my data stored?",
     answer:
-      "While you work, your design stays in the browser session. When you use File → Save or Save As, images upload to AWS S3 and configuration is stored in a Postgres database. You receive a share link you can reopen or send to others. Nothing is saved to the cloud until you explicitly save.",
+      "While you work, your design stays in the browser session. When you upload face artwork, the studio auto-saves to the cloud as “Untitled” (rename anytime via File → Rename). Images upload to AWS S3 and configuration is stored in a Postgres database. You can also save manually with File → Save (⌘S).",
   },
   {
     id: "cloud-share",
     category: "export",
     question: "How do cloud save and share links work?",
     answer:
-      "Use File → Save As to upload your design and create a new share link. Use File → Save (⌘S) to update an existing link without creating a duplicate. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>/preview/…</code>). Editor links use <code>/studio/…</code> and are not exposed in preview mode.",
+      "Uploading face artwork auto-saves your design to the cloud as “Untitled”. Use File → Rename to change the name. File → Save (⌘S) updates an existing project; File → Save As creates a copy with a new link. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (<code>/preview/…</code>). Editor links use <code>/studio/…</code> and are not exposed in preview mode.",
   },
   {
     id: "view-only-preview",
