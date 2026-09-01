@@ -3,7 +3,7 @@ import { verifyPassword } from "@/server/auth/password";
 import { getCurrentUserRow } from "@/server/auth/session";
 import { EmailInUseError, normalizeEmail, toPublicUser, updateUserEmail } from "@/server/auth/users";
 import { createVerificationToken } from "@/server/auth/verification";
-import { isValidEmail } from "@/server/auth/validation";
+import { isValidEmail, disposableEmailError } from "@/server/auth/validation";
 import { sendEmailChangeVerificationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 
@@ -22,6 +22,11 @@ export async function PATCH(req: Request) {
 
     if (!isValidEmail(newEmail)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    }
+
+    const disposableError = disposableEmailError(newEmail);
+    if (disposableError) {
+      return NextResponse.json({ error: disposableError }, { status: 400 });
     }
 
     if (typeof currentPassword !== "string" || !currentPassword) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createUser, getUserByEmail, normalizeEmail, toPublicUser } from "@/server/auth/users";
 import { createSession, setSessionCookie } from "@/server/auth/session";
 import { createVerificationToken } from "@/server/auth/verification";
-import { isValidEmail, normalizeName, passwordError } from "@/server/auth/validation";
+import { isValidEmail, normalizeName, passwordError, disposableEmailError } from "@/server/auth/validation";
 import { sendAdminNewRegistrationEmail, sendVerificationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 import { enforceRateLimit } from "@/server/rateLimit";
@@ -21,6 +21,10 @@ export async function POST(req: Request) {
 
     if (!isValidEmail(email)) {
       return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+    }
+    const disposableError = disposableEmailError(email);
+    if (disposableError) {
+      return NextResponse.json({ error: disposableError }, { status: 400 });
     }
     const pwError = passwordError(password);
     if (pwError) {

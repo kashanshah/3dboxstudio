@@ -107,9 +107,9 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
     >
       <p className="studio-dialog-lead">
         {mode === "signin"
-          ? "Sign in to open, save, and share your projects."
+          ? "Sign in to open the studio, save, and share your projects."
           : mode === "signup"
-            ? "Create a free account to save your projects to the cloud. We'll email you a link to verify your address."
+            ? "Create a free account to start designing. We'll send a verification link—confirming your email is optional for now."
             : "Enter your account email and we'll send you a link to choose a new password."}
       </p>
 

@@ -8,16 +8,12 @@ export async function getShareCreatorId(_req: Request): Promise<string | null> {
 }
 
 /**
- * Guards write access to shares/projects. Requires a signed-in, email-verified user
- * and returns their id. Anonymous users can design locally but cannot save/share.
+ * Guards write access to shares/projects. Requires a signed-in user and returns their id.
  */
 export async function assertCanCreateShare(_req: Request): Promise<string> {
   const user = await getCurrentUser();
   if (!user) {
     throw new ShareError("Please sign in to save or share designs.", 401);
-  }
-  if (!user.emailVerified) {
-    throw new ShareError("Please verify your email to save or share designs.", 403);
   }
   return user.id;
 }

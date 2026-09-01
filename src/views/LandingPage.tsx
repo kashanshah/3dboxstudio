@@ -388,7 +388,7 @@ export default function LandingPage() {
                   </div>
                   <ul className="landing-hero-meta" aria-label="Highlights">
                     <li>Free packaging designer</li>
-                    <li>No signup to start</li>
+                    <li>Free account to start</li>
                     <li>Cloud save &amp; share</li>
                     <li>View-only client links</li>
                     <li>Export PNG</li>

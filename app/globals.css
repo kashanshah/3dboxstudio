@@ -1265,6 +1265,81 @@ label {
   font-size: 0.78rem;
 }
 
+.studio-verify-banner--optional {
+  background: rgba(107, 115, 132, 0.12);
+  border-bottom-color: rgba(107, 115, 132, 0.25);
+  color: #b8c0cc;
+}
+
+.studio-verify-banner--optional .studio-verify-resend {
+  border-color: rgba(107, 115, 132, 0.45);
+  color: #c8d0dc;
+}
+
+.studio-verify-banner--optional .studio-verify-resend:hover {
+  background: rgba(107, 115, 132, 0.18);
+}
+
+.studio-workspace--auth-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  background: linear-gradient(165deg, #0a0d14 0%, #0c1018 45%, #0a0c10 100%);
+}
+
+.studio-auth-gate {
+  width: 100%;
+  max-width: 560px;
+  padding: 2rem 1.25rem;
+}
+
+.studio-auth-gate-card {
+  padding: 2rem 1.75rem;
+  border-radius: 14px;
+  border: 1px solid var(--panel-border);
+  background: rgba(12, 14, 18, 0.85);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+.studio-auth-gate-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7384;
+}
+
+.studio-auth-gate-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: #f0f2f5;
+}
+
+.studio-auth-gate-lead {
+  margin: 0 0 1.5rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #9aa3b2;
+}
+
+.studio-auth-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.studio-auth-gate-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #6b7384;
+}
+
 .studio-verify-resend {
   border: 1px solid rgba(251, 191, 36, 0.5);
   background: transparent;
