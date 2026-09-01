@@ -64,3 +64,37 @@ export type PaginatedResult<T> = {
   pageSize: number;
   totalPages: number;
 };
+
+export type AdminAnalyticsGranularity = "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
+
+export type AdminAnalyticsSeriesPoint = {
+  periodStart: string;
+  label: string;
+  signupsEmail: number;
+  signupsGoogle: number;
+  signupsVerified: number;
+  signupsUnverified: number;
+  verifications: number;
+  usersWithFirstDesign: number;
+  designsCreated: number;
+};
+
+export type AdminAnalytics = {
+  granularity: AdminAnalyticsGranularity;
+  buckets: number;
+  rangeStart: string;
+  rangeEnd: string;
+  summary: {
+    signups: number;
+    signupsEmail: number;
+    signupsGoogle: number;
+    signupsVerified: number;
+    signupsUnverified: number;
+    verifications: number;
+    usersWithFirstDesign: number;
+    designsCreated: number;
+    usersWithDesignTotal: number;
+    usersWithoutDesignTotal: number;
+  };
+  series: AdminAnalyticsSeriesPoint[];
+};
