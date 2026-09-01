@@ -79,9 +79,10 @@ export default function AccountSettingsModal({
   };
 
   const savePassword = async () => {
+    if (!user) return;
     setError(null);
     setSuccess(null);
-    if (!currentPassword) {
+    if (user.hasPassword && !currentPassword) {
       setError("Enter your current password.");
       return;
     }
@@ -103,8 +104,8 @@ export default function AccountSettingsModal({
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setSuccess("Password changed.");
-    onStatus?.("Password changed.");
+    setSuccess(user.hasPassword ? "Password changed." : "Password set.");
+    onStatus?.(user.hasPassword ? "Password changed." : "Password set.");
   };
 
   const handleResend = async () => {
@@ -122,6 +123,7 @@ export default function AccountSettingsModal({
   };
 
   const saveEmail = async () => {
+    if (!user) return;
     setError(null);
     setSuccess(null);
     const trimmedEmail = newEmail.trim();
@@ -129,7 +131,7 @@ export default function AccountSettingsModal({
       setError("Enter a new email address.");
       return;
     }
-    if (!emailPassword) {
+    if (user.hasPassword && !emailPassword) {
       setError("Enter your current password to confirm this change.");
       return;
     }
@@ -216,7 +218,9 @@ export default function AccountSettingsModal({
                 <>
                   <h4 className="studio-settings-subsection-title">Change email</h4>
                   <p className="studio-dialog-hint studio-settings-section-lead">
-                    Enter a new address and your current password. We&apos;ll send a verification link to the new email.
+                    {user.hasPassword
+                      ? "Enter a new address and your current password. We'll send a verification link to the new email."
+                      : "Enter a new address. We'll send a verification link to the new email."}
                   </p>
 
                   <label className="studio-dialog-label" htmlFor="settings-new-email">
@@ -236,24 +240,28 @@ export default function AccountSettingsModal({
                     }}
                   />
 
-                  <label className="studio-dialog-label" htmlFor="settings-email-password">
-                    Current password
-                  </label>
-                  <input
-                    id="settings-email-password"
-                    className="studio-dialog-input"
-                    type="password"
-                    autoComplete="current-password"
-                    value={emailPassword}
-                    onChange={(e) => {
-                      setEmailPassword(e.target.value);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") void saveEmail();
-                    }}
-                  />
+                  {user.hasPassword && (
+                    <>
+                      <label className="studio-dialog-label" htmlFor="settings-email-password">
+                        Current password
+                      </label>
+                      <input
+                        id="settings-email-password"
+                        className="studio-dialog-input"
+                        type="password"
+                        autoComplete="current-password"
+                        value={emailPassword}
+                        onChange={(e) => {
+                          setEmailPassword(e.target.value);
+                          setError(null);
+                          setSuccess(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") void saveEmail();
+                        }}
+                      />
+                    </>
+                  )}
 
                   <div className="studio-settings-actions">
                     <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveEmail()}>
@@ -348,11 +356,16 @@ export default function AccountSettingsModal({
               aria-labelledby="settings-tab-password"
               className="studio-settings-section"
             >
-              <h3 className="studio-settings-section-title">Change password</h3>
+              <h3 className="studio-settings-section-title">
+                {user.hasPassword ? "Change password" : "Set a password"}
+              </h3>
               <p className="studio-dialog-hint studio-settings-section-lead">
-                Choose a strong password you do not use on other sites.
+                {user.hasPassword
+                  ? "Choose a strong password you do not use on other sites."
+                  : "Add a password if you also want to sign in with email."}
               </p>
 
+              {user.hasPassword && (
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-current-password">
                 Current password
@@ -370,6 +383,7 @@ export default function AccountSettingsModal({
                 }}
               />
               </div>
+              )}
 
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-new-password">
@@ -412,7 +426,7 @@ export default function AccountSettingsModal({
               </div>
               <div className="studio-settings-actions">
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void savePassword()}>
-                  {busy ? "Updating…" : "Change password"}
+                  {busy ? "Updating…" : user.hasPassword ? "Change password" : "Set password"}
                 </button>
               </div>
             </div>

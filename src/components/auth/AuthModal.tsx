@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import StudioDialog from "../studio/StudioDialog";
 import { useAuth } from "./AuthProvider";
+import GoogleSignInButton from "./GoogleSignInButton";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
@@ -112,6 +113,15 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
             ? "Create a free account to start designing. We'll send a verification link—confirming your email is optional for now."
             : "Enter your account email and we'll send you a link to choose a new password."}
       </p>
+
+      {mode !== "forgot" && (
+        <>
+          <GoogleSignInButton disabled={busy} />
+          <div className="studio-auth-divider" role="separator">
+            <span>or</span>
+          </div>
+        </>
+      )}
 
       {mode === "signup" && (
         <div className="mb-3">

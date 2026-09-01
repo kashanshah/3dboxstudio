@@ -99,7 +99,7 @@ await sql`
     id TEXT PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     name TEXT,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
     email_verified_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )
@@ -146,3 +146,18 @@ console.log("OK: password_reset_tokens table is ready.");
 await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`;
 await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id)`;
 console.log("OK: shared_designs.user_id column is ready.");
+
+await sql`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`;
+console.log("OK: users.password_hash is nullable for OAuth accounts.");
+
+await sql`
+  CREATE TABLE IF NOT EXISTS oauth_accounts (
+    provider TEXT NOT NULL,
+    provider_account_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (provider, provider_account_id)
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_oauth_accounts_user ON oauth_accounts (user_id)`;
+console.log("OK: oauth_accounts table is ready.");

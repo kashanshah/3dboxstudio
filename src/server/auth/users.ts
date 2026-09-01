@@ -8,7 +8,7 @@ export type UserRow = {
   id: string;
   email: string;
   name: string | null;
-  password_hash: string;
+  password_hash: string | null;
   email_verified_at: string | null;
   created_at: string;
 };
@@ -18,8 +18,13 @@ export type PublicUser = {
   email: string;
   name: string | null;
   emailVerified: boolean;
+  hasPassword: boolean;
   createdAt: string;
 };
+
+export function userHasPassword(row: Pick<UserRow, "password_hash">): boolean {
+  return Boolean(row.password_hash);
+}
 
 export function toPublicUser(row: UserRow): PublicUser {
   return {
@@ -27,6 +32,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     email: row.email,
     name: row.name,
     emailVerified: Boolean(row.email_verified_at),
+    hasPassword: userHasPassword(row),
     createdAt: row.created_at,
   };
 }

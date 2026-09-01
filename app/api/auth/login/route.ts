@@ -21,8 +21,17 @@ export async function POST(req: Request) {
     }
 
     const user = await getUserByEmail(email as string);
-    const ok = user ? await verifyPassword(password, user.password_hash) : false;
-    if (!user || !ok) {
+    if (!user) {
+      return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
+    }
+    if (!user.password_hash) {
+      return NextResponse.json(
+        { error: "This account uses Google sign-in. Continue with Google instead." },
+        { status: 401 }
+      );
+    }
+    const ok = await verifyPassword(password, user.password_hash);
+    if (!ok) {
       return NextResponse.json({ error: "Incorrect email or password." }, { status: 401 });
     }
 

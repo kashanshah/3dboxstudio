@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 type StudioAuthGateProps = {
   onSignUp: () => void;
   onSignIn: () => void;
+  oauthError?: string | null;
 };
 
-export default function StudioAuthGate({ onSignUp, onSignIn }: StudioAuthGateProps) {
+export default function StudioAuthGate({ onSignUp, onSignIn, oauthError }: StudioAuthGateProps) {
   return (
     <div className="studio-auth-gate" role="region" aria-labelledby="studio-auth-gate-title">
       <div className="studio-auth-gate-card">
@@ -20,12 +22,18 @@ export default function StudioAuthGate({ onSignUp, onSignIn }: StudioAuthGatePro
           per-face artwork. Save to the cloud, share preview links, and export PNG mockups.
           Email verification is optional for now.
         </p>
+        {oauthError && (
+          <p className="studio-auth-gate-error" role="alert">
+            {oauthError}
+          </p>
+        )}
         <div className="studio-auth-gate-actions">
+          <GoogleSignInButton className="studio-auth-gate-google" />
           <button type="button" className="btn btn-primary" onClick={onSignUp}>
             Create free account
           </button>
           <button type="button" className="btn btn-ghost" onClick={onSignIn}>
-            Sign in
+            Sign in with email
           </button>
         </div>
         <p className="studio-auth-gate-hint">
