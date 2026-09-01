@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 type StudioAuthGateProps = {
   onSignUp: () => void;
   onSignIn: () => void;
@@ -29,6 +31,11 @@ export default function StudioAuthGate({ onSignUp, onSignIn }: StudioAuthGatePro
         <p className="studio-auth-gate-hint">
           Shared project links and view-only previews stay open without an account.
           Temporary email addresses (YOPmail, Mailinator, etc.) are not accepted.
+        </p>
+        <p className="studio-auth-gate-home">
+          <Link href="/" className="studio-auth-gate-home-link">
+            ← Back to homepage
+          </Link>
         </p>
       </div>
     </div>

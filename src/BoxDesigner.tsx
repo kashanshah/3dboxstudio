@@ -567,7 +567,37 @@ export default function BoxDesigner({
   if (showAuthGate) {
     return (
       <div className="studio-workspace studio-workspace--auth-gate">
-        <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} />
+        <StudioMenuBar
+          authGate
+          documentTitle=""
+          cloudBusy={false}
+          viewOnly={false}
+          authLoading={auth.loading}
+          user={null}
+          canRename={false}
+          canSaveCopy={false}
+          canSharePreview={false}
+          sidebarOpen={false}
+          onOpenModal={() => {}}
+          onOpenHelpModal={setHelpModal}
+          onSave={() => {}}
+          onSaveAs={() => {}}
+          onSaveCopy={() => {}}
+          onRename={() => {}}
+          onSharePreview={() => {}}
+          onCopyPreviewLink={() => {}}
+          onNew={() => {}}
+          onSignIn={openSignIn}
+          onSignUp={openSignUp}
+          onSignOut={() => {}}
+          onOpenProjects={() => {}}
+          onToggleSidebar={() => {}}
+          onOpenAccountSettings={() => {}}
+        />
+        <div className="studio-auth-gate-body">
+          <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} />
+        </div>
+        <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} />
         <AuthModal
           open={authModal.open}
           initialMode={authModal.mode}
