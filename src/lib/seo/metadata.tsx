@@ -12,6 +12,7 @@ import {
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
+import { PRIVACY_PAGE_DESCRIPTION, PRIVACY_PAGE_TITLE } from "@/content/privacy";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
@@ -189,6 +190,17 @@ export function createContactMetadata(): Metadata {
     alternates: { canonical: "/contact" },
     openGraph: buildOpenGraph(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION, "/contact"),
     twitter: buildTwitter(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION),
+  };
+}
+
+export function createPrivacyMetadata(): Metadata {
+  return {
+    title: absoluteTitle(PRIVACY_PAGE_TITLE),
+    description: PRIVACY_PAGE_DESCRIPTION,
+    keywords: SITE_KEYWORDS_META.split(", "),
+    alternates: { canonical: "/privacy" },
+    openGraph: buildOpenGraph(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION, "/privacy"),
+    twitter: buildTwitter(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION),
   };
 }
 

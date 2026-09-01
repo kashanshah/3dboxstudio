@@ -2462,3 +2462,42 @@ input.faq-search-input:focus {
   max-width: 34em;
 }
 
+/* Legal pages (privacy, terms) */
+.legal-page-body {
+  max-width: 42rem;
+}
+
+.legal-page-h2 {
+  font-family: var(--landing-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin: 2rem 0 0.75rem;
+  color: var(--l-text);
+}
+
+.legal-page-h2:first-child {
+  margin-top: 0;
+}
+
+.legal-page-p,
+.legal-page-ul {
+  margin: 0 0 1rem;
+  color: var(--l-text-muted);
+  line-height: 1.68;
+}
+
+.legal-page-ul {
+  padding-left: 1.25rem;
+}
+
+.legal-page-ul li + li {
+  margin-top: 0.35rem;
+}
+
+.legal-page-contact {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--l-border-light);
+}
+

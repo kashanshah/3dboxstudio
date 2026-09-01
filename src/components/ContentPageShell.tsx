@@ -65,6 +65,10 @@ export default function ContentPageShell({
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>
+              <Link href="/privacy">Privacy</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
               <a href={BUYMEACOFFEE_URL} target="_blank" rel="noopener noreferrer">
                 Buy me a coffee
               </a>

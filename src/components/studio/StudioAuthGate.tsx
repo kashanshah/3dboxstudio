@@ -20,7 +20,6 @@ export default function StudioAuthGate({ onSignUp, onSignIn, oauthError }: Studi
         <p className="studio-auth-gate-lead">
           Sign up to open the 3D box designer—set dimensions, materials, openings, and
           per-face artwork. Save to the cloud, share preview links, and export PNG mockups.
-          Email verification is optional for now.
         </p>
         {oauthError && (
           <p className="studio-auth-gate-error" role="alert">
@@ -28,7 +27,7 @@ export default function StudioAuthGate({ onSignUp, onSignIn, oauthError }: Studi
           </p>
         )}
         <div className="studio-auth-gate-actions">
-          <GoogleSignInButton className="studio-auth-gate-google" />
+          <GoogleSignInButton className="studio-auth-gate-google mb-3" />
           <button type="button" className="btn btn-primary" onClick={onSignUp}>
             Create free account
           </button>

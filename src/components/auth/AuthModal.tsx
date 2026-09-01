@@ -116,8 +116,8 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
 
       {mode !== "forgot" && (
         <>
-          <GoogleSignInButton disabled={busy} />
-          <div className="studio-auth-divider" role="separator">
+          <GoogleSignInButton className="mb-5" disabled={busy} />
+          <div className="block studio-auth-divider mb-3" role="separator">
             <span>or</span>
           </div>
         </>
@@ -148,6 +148,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
         id="auth-email"
         className="studio-dialog-input"
         type="email"
+        required
         autoComplete="email"
         placeholder="you@example.com"
         value={email}
