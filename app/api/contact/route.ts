@@ -3,6 +3,7 @@ import { getSiteOrigin } from "@/lib/siteOrigin";
 import { CONTACT_TOPICS, type ContactTopic } from "@/content/contact";
 import { enforceRateLimit } from "@/server/rateLimit";
 import { isValidEmail } from "@/server/auth/validation";
+import { turnstileConfigError, verifyTurnstileToken } from "@/server/turnstile";
 import {
   teknoboardsApiKey,
   teknoboardsConfigError,
@@ -20,6 +21,7 @@ type ContactBody = {
   topic?: unknown;
   subject?: unknown;
   message?: unknown;
+  turnstileToken?: unknown;
 };
 
 function cleanText(value: unknown, maxLen: number): string | null {
@@ -35,6 +37,11 @@ export async function POST(req: Request) {
     max: 5,
   });
   if (limited) return limited;
+
+  const captchaError = turnstileConfigError();
+  if (captchaError) {
+    return NextResponse.json({ ok: false, error: captchaError }, { status: 503 });
+  }
 
   const apiKey = teknoboardsApiKey();
   const formId = teknoboardsFormId();
@@ -74,6 +81,11 @@ export async function POST(req: Request) {
     }
     if (!message) {
       return NextResponse.json({ ok: false, error: "Enter a message." }, { status: 400 });
+    }
+
+    const captcha = await verifyTurnstileToken(body?.turnstileToken, req);
+    if (!captcha.ok) {
+      return NextResponse.json({ ok: false, error: captcha.error }, { status: 403 });
     }
 
     const origin = getSiteOrigin();

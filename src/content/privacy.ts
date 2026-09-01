@@ -41,7 +41,7 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
   { type: "h2", text: "Contact form" },
   {
     type: "p",
-    text: "If you submit our contact form, we collect the information you provide (such as your name, email address, topic, subject, and message). Submissions are processed through TeknoBoards (teknoffice.com) on our behalf and delivered to us so we can respond.",
+    text: "If you submit our contact form, we collect the information you provide (such as your name, email address, topic, subject, and message). Submissions are processed through TeknoBoards (teknoffice.com) on our behalf and delivered to us so we can respond. We use Cloudflare Turnstile to help prevent automated spam before a message is sent.",
   },
   { type: "h2", text: "Usage analytics" },
   {
@@ -62,13 +62,14 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
     items: [
       "Session cookie (sb_session) — keeps you signed in when you use an account. HttpOnly, secure in production.",
       "Analytics — third-party analytics providers may set their own cookies or use similar technologies when enabled.",
+      "Cloudflare Turnstile — a third-party script loads on the contact form to verify that submissions come from a person.",
       "Buy Me a Coffee widget — a third-party script may load when you interact with our support widget.",
     ],
   },
   { type: "h2", text: "Server logs and abuse prevention" },
   {
     type: "p",
-    text: "Our servers and hosting provider may log technical data such as IP address, request time, and user agent for security, debugging, and rate limiting (for example, on sign-in, password reset, and contact form submissions).",
+    text: "Our servers and hosting provider may log technical data such as IP address, request time, and user agent for security, debugging, and rate limiting (for example, on sign-in, password reset, and contact form submissions). Contact form submissions are also checked with Cloudflare Turnstile to reduce spam and automated abuse.",
   },
   { type: "h2", text: "How we use information" },
   {
@@ -101,6 +102,7 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       "Neon — database hosting.",
       "Resend — transactional email delivery.",
       "Google — OAuth sign-in and, when enabled, Google Analytics.",
+      "Cloudflare — Turnstile bot protection on the contact form.",
       "TeknoBoards — contact form processing.",
     ],
   },

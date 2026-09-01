@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { CONTACT_TOPICS } from "@/content/contact";
+import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 
 type ContactFormProps = {
   initialStatus?: "idle" | "success" | "error";
@@ -20,11 +21,20 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
     initialStatus === "error" ? "Something went wrong. Please try again." : null,
   );
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setStatus("idle");
+
+    if (!turnstileToken) {
+      setStatus("error");
+      setError("Please complete the verification and try again.");
+      return;
+    }
+
     setLoading(true);
 
     const form = e.currentTarget;
@@ -35,6 +45,7 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
       topic: String(data.get("topic") ?? ""),
       subject: String(data.get("subject") ?? ""),
       message: String(data.get("message") ?? ""),
+      turnstileToken,
     };
 
     try {
@@ -53,14 +64,19 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
       if (!res.ok || body.ok === false) {
         setStatus("error");
         setError(body.error ?? "Could not send your message. Please try again.");
+        setTurnstileToken(null);
+        turnstileRef.current?.reset();
         return;
       }
 
       setStatus("success");
+      setTurnstileToken(null);
       form.reset();
     } catch {
       setStatus("error");
       setError("Could not send your message. Please check your connection and try again.");
+      setTurnstileToken(null);
+      turnstileRef.current?.reset();
     } finally {
       setLoading(false);
     }
@@ -172,6 +188,8 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
           placeholder="Tell us how we can help…"
         />
       </div>
+
+      <TurnstileWidget ref={turnstileRef} onToken={setTurnstileToken} />
 
       <div className="contact-form-actions">
         <button className="btn btn-primary" type="submit" disabled={loading}>

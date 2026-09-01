@@ -2777,6 +2777,14 @@ input.faq-search-input:focus {
   margin-top: 0.25rem;
 }
 
+.contact-turnstile {
+  min-height: 65px;
+}
+
+.contact-turnstile > div {
+  width: 100%;
+}
+
 .contact-form-note {
   margin: 0;
   font-size: 0.9rem;
