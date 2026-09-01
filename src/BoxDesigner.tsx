@@ -423,13 +423,6 @@ export default function BoxDesigner({
     void doc.autoSaveCloud();
   }, [faceFiles, doc.autoSaveCloud, doc.viewOnly]);
 
-  const showAuthGate = requiresAccount && !auth.loading && !auth.user;
-
-  useEffect(() => {
-    if (!showAuthGate) return;
-    setAuthModal({ open: true, mode: "signup" });
-  }, [showAuthGate]);
-
   useEffect(() => {
     if (!shareIdFromUrl) return;
 
