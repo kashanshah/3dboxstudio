@@ -2761,6 +2761,24 @@ input.faq-search-input:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+.contact-field input[aria-invalid="true"],
+.contact-field select[aria-invalid="true"],
+.contact-field textarea[aria-invalid="true"] {
+  border-color: rgba(220, 38, 38, 0.45);
+}
+
+.contact-field input[aria-invalid="true"]:focus,
+.contact-field select[aria-invalid="true"]:focus,
+.contact-field textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.contact-field-error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #991b1b;
+}
+
 .contact-form-actions {
   display: grid;
   gap: 0.75rem;
