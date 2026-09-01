@@ -130,6 +130,16 @@ body {
   font-family: system-ui, sans-serif;
 }
 
+html[data-studio-theme="light"] .studio-loading {
+  background: #eef2f8;
+  color: #64748b;
+}
+
+html[data-studio-theme="light"] body {
+  background: #eef2f8;
+  color: #0f172a;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

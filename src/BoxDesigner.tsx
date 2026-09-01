@@ -173,7 +173,7 @@ export default function BoxDesigner({
   const previewTokenFromUrl = initialPreviewToken;
 
   const auth = useAuth();
-  const { theme, setTheme } = useStudioTheme();
+  const { preference: themePreference, resolvedTheme, setPreference: setThemePreference } = useStudioTheme();
   const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
     open: false,
     mode: "signin",
@@ -576,8 +576,8 @@ export default function BoxDesigner({
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         onOpenAccountSettings={openAccountSettings}
-        theme={theme}
-        onSetTheme={setTheme}
+        themePreference={themePreference}
+        onSetThemePreference={setThemePreference}
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
@@ -636,7 +636,7 @@ export default function BoxDesigner({
         </button>
         <StudioErrorBoundary>
         <Viewport3D
-          theme={theme}
+          theme={resolvedTheme}
           width={sceneDims.width}
           height={sceneDims.height}
           length={sceneDims.length}

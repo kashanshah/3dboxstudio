@@ -4,36 +4,34 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import {
-  readStoredStudioTheme,
+  readInitialResolvedStudioTheme,
+  readInitialStudioThemePreference,
+  readSystemPrefersDark,
+  resolveStudioTheme,
   STUDIO_THEME_COLORS,
-  storeStudioTheme,
+  storeStudioThemePreference,
   type StudioTheme,
+  type StudioThemePreference,
 } from "@/lib/studioTheme";
 
 type StudioThemeContextValue = {
-  theme: StudioTheme;
-  setTheme: (theme: StudioTheme) => void;
-  toggleTheme: () => void;
+  preference: StudioThemePreference;
+  resolvedTheme: StudioTheme;
+  setPreference: (preference: StudioThemePreference) => void;
 };
 
 const StudioThemeContext = createContext<StudioThemeContextValue | null>(null);
 
-function resolveInitialTheme(): StudioTheme {
-  if (typeof document === "undefined") return "dark";
-  const stored = readStoredStudioTheme();
-  if (stored) return stored;
-  if (document.documentElement.dataset.studioTheme === "light") return "light";
-  return "dark";
-}
-
-function syncStudioTheme(theme: StudioTheme) {
+function syncResolvedTheme(theme: StudioTheme, preference: StudioThemePreference) {
   document.documentElement.dataset.studioTheme = theme;
+  document.documentElement.dataset.studioThemePreference = preference;
   document.querySelectorAll<HTMLElement>(".studio-shell").forEach((el) => {
     el.dataset.studioTheme = theme;
   });
@@ -45,41 +43,50 @@ function syncStudioTheme(theme: StudioTheme) {
 }
 
 export function StudioThemeShell({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<StudioTheme>("dark");
+  const [preference, setPreferenceState] = useState<StudioThemePreference>(readInitialStudioThemePreference);
+  const [resolvedTheme, setResolvedTheme] = useState<StudioTheme>(readInitialResolvedStudioTheme);
 
   useLayoutEffect(() => {
-    const initial = resolveInitialTheme();
-    setThemeState(initial);
-    syncStudioTheme(initial);
+    const initialPreference = readInitialStudioThemePreference();
+    const initialResolved = readInitialResolvedStudioTheme();
+    setPreferenceState(initialPreference);
+    setResolvedTheme(initialResolved);
+    syncResolvedTheme(initialResolved, initialPreference);
   }, []);
 
-  const setTheme = useCallback((next: StudioTheme) => {
-    setThemeState(next);
-    storeStudioTheme(next);
-    syncStudioTheme(next);
-  }, []);
+  useEffect(() => {
+    if (preference !== "system") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const applySystemTheme = () => {
+      const next = resolveStudioTheme("system", media.matches);
+      setResolvedTheme(next);
+      syncResolvedTheme(next, "system");
+    };
+    applySystemTheme();
+    media.addEventListener("change", applySystemTheme);
+    return () => media.removeEventListener("change", applySystemTheme);
+  }, [preference]);
 
-  const toggleTheme = useCallback(() => {
-    setThemeState((current) => {
-      const next = current === "dark" ? "light" : "dark";
-      storeStudioTheme(next);
-      syncStudioTheme(next);
-      return next;
-    });
+  const setPreference = useCallback((nextPreference: StudioThemePreference) => {
+    const nextResolved = resolveStudioTheme(nextPreference, readSystemPrefersDark());
+    setPreferenceState(nextPreference);
+    setResolvedTheme(nextResolved);
+    storeStudioThemePreference(nextPreference);
+    syncResolvedTheme(nextResolved, nextPreference);
   }, []);
 
   const value = useMemo(
     () => ({
-      theme,
-      setTheme,
-      toggleTheme,
+      preference,
+      resolvedTheme,
+      setPreference,
     }),
-    [setTheme, theme, toggleTheme]
+    [preference, resolvedTheme, setPreference]
   );
 
   return (
     <StudioThemeContext.Provider value={value}>
-      <div className="studio-shell" data-studio-theme={theme} suppressHydrationWarning>
+      <div className="studio-shell" data-studio-theme={resolvedTheme} suppressHydrationWarning>
         {children}
       </div>
     </StudioThemeContext.Provider>
