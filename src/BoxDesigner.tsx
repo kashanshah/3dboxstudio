@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
+import { trackSignup, trackStudioActivated } from "@/lib/analytics";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -432,6 +433,15 @@ export default function BoxDesigner({
   useEffect(() => {
     if (searchParams.get("auth") !== "google" || !auth.user) return;
     const welcome = searchParams.get("welcome") === "1";
+    if (welcome) {
+      trackSignup({
+        method: "google",
+        utmSource: searchParams.get("sa_source"),
+        utmMedium: searchParams.get("sa_medium"),
+        utmCampaign: searchParams.get("sa_campaign"),
+      });
+      trackStudioActivated("google");
+    }
     doc.showStatus(welcome ? "Welcome! Your account is ready." : "Signed in with Google.", 5000);
     router.replace("/studio", { scroll: false });
   }, [searchParams, auth.user, doc.showStatus, router]);

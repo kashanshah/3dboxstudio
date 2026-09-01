@@ -18,6 +18,8 @@ export type AdminStats = {
   activity: {
     signupsByDay: { date: string; count: number }[];
     designsByDay: { date: string; count: number }[];
+    signupsBySource: { label: string; count: number }[];
+    signupsByMethod: { label: string; count: number }[];
   };
 };
 
@@ -29,6 +31,12 @@ export type AdminUserRow = {
   createdAt: string;
   designCount: number;
   totalViews: number;
+  signupMethod: string | null;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  signupLandingPage: string | null;
+  signupReferrer: string | null;
 };
 
 export type AdminDesignRow = {

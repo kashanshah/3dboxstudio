@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthActionResult, AuthUser } from "@/lib/authTypes";
+import { trackSignup, trackStudioActivated, type SignupAnalytics } from "@/lib/analytics";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -49,6 +50,20 @@ function readError(data: unknown, fallback: string): string {
     return (data as { error: string }).error;
   }
   return fallback;
+}
+
+function readSignupAnalytics(data: unknown): SignupAnalytics | null {
+  if (typeof data !== "object" || data === null) return null;
+  const analytics = (data as { signupAnalytics?: unknown }).signupAnalytics;
+  if (typeof analytics !== "object" || analytics === null) return null;
+  const a = analytics as Record<string, unknown>;
+  if (a.method !== "email" && a.method !== "google") return null;
+  return {
+    method: a.method,
+    utmSource: typeof a.utmSource === "string" ? a.utmSource : null,
+    utmMedium: typeof a.utmMedium === "string" ? a.utmMedium : null,
+    utmCampaign: typeof a.utmCampaign === "string" ? a.utmCampaign : null,
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -111,6 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not create your account.") };
       setUser(readUser(data));
+      const analytics = readSignupAnalytics(data);
+      if (analytics) {
+        trackSignup(analytics);
+        trackStudioActivated("email");
+      }
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Please try again." };

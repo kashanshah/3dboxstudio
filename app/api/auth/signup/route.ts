@@ -6,6 +6,7 @@ import { isValidEmail, normalizeName, passwordError, disposableEmailError } from
 import { sendAdminNewRegistrationEmail, sendVerificationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 import { enforceRateLimit } from "@/server/rateLimit";
+import { attachSignupAttribution, attributionSummaryForEmail } from "@/server/auth/signupAttribution";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,8 @@ export async function POST(req: Request) {
 
     const user = await createUser(email as string, password as string, name);
 
+    const { attribution, analytics } = await attachSignupAttribution(user.id, "email");
+
     const token = await createSession(user.id);
     await setSessionCookie(token);
 
@@ -59,13 +62,14 @@ export async function POST(req: Request) {
         email: user.email,
         name: user.name,
         createdAt: user.created_at,
+        attributionSummary: attributionSummaryForEmail("email", attribution),
       });
     } catch (adminMailErr) {
       console.error("Failed to send admin registration alert:", adminMailErr);
       // Signup must not fail if the admin alert cannot be delivered.
     }
 
-    return NextResponse.json({ user: toPublicUser(user) });
+    return NextResponse.json({ user: toPublicUser(user), signupAnalytics: analytics });
   } catch (e) {
     console.error("POST /api/auth/signup failed:", e);
     return NextResponse.json({ error: "Could not create your account. Please try again." }, { status: 500 });

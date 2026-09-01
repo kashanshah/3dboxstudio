@@ -122,6 +122,23 @@ export async function getAdminStats(): Promise<AdminStats> {
     ORDER BY day ASC
   `) as DailyCountRow[];
 
+  const signupsBySource = (await sql`
+    SELECT COALESCE(NULLIF(TRIM(utm_source), ''), '(direct / unknown)') AS label, COUNT(*)::int AS count
+    FROM users
+    WHERE created_at >= NOW() - INTERVAL '30 days'
+    GROUP BY 1
+    ORDER BY count DESC, label ASC
+    LIMIT 8
+  `) as { label: string; count: number }[];
+
+  const signupsByMethod = (await sql`
+    SELECT COALESCE(NULLIF(TRIM(signup_method), ''), '(unknown)') AS label, COUNT(*)::int AS count
+    FROM users
+    WHERE created_at >= NOW() - INTERVAL '30 days'
+    GROUP BY 1
+    ORDER BY count DESC, label ASC
+  `) as { label: string; count: number }[];
+
   return {
     users: {
       total: userStats?.total ?? 0,
@@ -142,6 +159,14 @@ export async function getAdminStats(): Promise<AdminStats> {
     activity: {
       signupsByDay: mapDailyCounts(signupsByDay),
       designsByDay: mapDailyCounts(designsByDay),
+      signupsBySource: signupsBySource.map((row) => ({
+        label: row.label,
+        count: Number(row.count) || 0,
+      })),
+      signupsByMethod: signupsByMethod.map((row) => ({
+        label: row.label,
+        count: Number(row.count) || 0,
+      })),
     },
   };
 }
@@ -177,12 +202,20 @@ export async function listAdminUsers(options?: {
           u.name,
           u.email_verified_at,
           u.created_at,
+          u.signup_method,
+          u.utm_source,
+          u.utm_medium,
+          u.utm_campaign,
+          u.signup_landing_page,
+          u.signup_referrer,
           COUNT(sd.id)::int AS design_count,
           COALESCE(SUM(sd.view_count), 0)::int AS total_views
         FROM users u
         LEFT JOIN shared_designs sd ON sd.user_id = u.id
         WHERE LOWER(u.email) LIKE ${searchPattern}
            OR LOWER(COALESCE(u.name, '')) LIKE ${searchPattern}
+           OR LOWER(COALESCE(u.utm_source, '')) LIKE ${searchPattern}
+           OR LOWER(COALESCE(u.utm_campaign, '')) LIKE ${searchPattern}
         GROUP BY u.id
         ORDER BY u.created_at DESC
         LIMIT ${pageSize} OFFSET ${offset}
@@ -192,6 +225,12 @@ export async function listAdminUsers(options?: {
         name: string | null;
         email_verified_at: string | null;
         created_at: string;
+        signup_method: string | null;
+        utm_source: string | null;
+        utm_medium: string | null;
+        utm_campaign: string | null;
+        signup_landing_page: string | null;
+        signup_referrer: string | null;
         design_count: number;
         total_views: number;
       }[])
@@ -202,6 +241,12 @@ export async function listAdminUsers(options?: {
           u.name,
           u.email_verified_at,
           u.created_at,
+          u.signup_method,
+          u.utm_source,
+          u.utm_medium,
+          u.utm_campaign,
+          u.signup_landing_page,
+          u.signup_referrer,
           COUNT(sd.id)::int AS design_count,
           COALESCE(SUM(sd.view_count), 0)::int AS total_views
         FROM users u
@@ -215,6 +260,12 @@ export async function listAdminUsers(options?: {
         name: string | null;
         email_verified_at: string | null;
         created_at: string;
+        signup_method: string | null;
+        utm_source: string | null;
+        utm_medium: string | null;
+        utm_campaign: string | null;
+        signup_landing_page: string | null;
+        signup_referrer: string | null;
         design_count: number;
         total_views: number;
       }[]);
@@ -227,6 +278,12 @@ export async function listAdminUsers(options?: {
     createdAt: row.created_at,
     designCount: row.design_count,
     totalViews: row.total_views,
+    signupMethod: row.signup_method,
+    utmSource: row.utm_source,
+    utmMedium: row.utm_medium,
+    utmCampaign: row.utm_campaign,
+    signupLandingPage: row.signup_landing_page,
+    signupReferrer: row.signup_referrer,
   }));
 
   return {

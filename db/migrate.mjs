@@ -161,3 +161,16 @@ await sql`
 `;
 await sql`CREATE INDEX IF NOT EXISTS idx_oauth_accounts_user ON oauth_accounts (user_id)`;
 console.log("OK: oauth_accounts table is ready.");
+
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_method TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_source TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_medium TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_campaign TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_term TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS utm_content TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_landing_page TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_referrer TEXT`;
+await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS signup_meta JSONB`;
+await sql`CREATE INDEX IF NOT EXISTS idx_users_utm_source ON users (utm_source) WHERE utm_source IS NOT NULL`;
+await sql`CREATE INDEX IF NOT EXISTS idx_users_signup_method ON users (signup_method) WHERE signup_method IS NOT NULL`;
+console.log("OK: users signup attribution columns are ready.");

@@ -27,6 +27,15 @@ function pageHref(page: number, search?: string): string {
   return qs ? `/admin/users?${qs}` : "/admin/users";
 }
 
+function formatSourceLabel(user: AdminUserRow): string {
+  if (user.utmSource) {
+    const medium = user.utmMedium ? ` / ${user.utmMedium}` : "";
+    return `${user.utmSource}${medium}`;
+  }
+  if (user.signupReferrer) return user.signupReferrer;
+  return "—";
+}
+
 export default function AdminUsersTable({ users, page, totalPages, total, search }: AdminUsersTableProps) {
   return (
     <>
@@ -34,7 +43,7 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
         <input
           type="search"
           name="search"
-          placeholder="Search by email or name…"
+          placeholder="Search by email, name, UTM source, or campaign…"
           defaultValue={search ?? ""}
           aria-label="Search users"
         />
@@ -53,6 +62,8 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
               <tr>
                 <th>Email</th>
                 <th>Name</th>
+                <th>Signup</th>
+                <th>Source</th>
                 <th>Verified</th>
                 <th>Designs</th>
                 <th>Views</th>
@@ -62,7 +73,7 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
             <tbody>
               {users.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ color: "var(--muted)" }}>
+                  <td colSpan={8} style={{ color: "var(--muted)" }}>
                     No users found.
                   </td>
                 </tr>
@@ -71,6 +82,8 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
                   <tr key={user.id}>
                     <td>{user.email}</td>
                     <td>{user.name ?? "—"}</td>
+                    <td>{user.signupMethod ?? "—"}</td>
+                    <td title={user.signupLandingPage ?? undefined}>{formatSourceLabel(user)}</td>
                     <td>
                       <span className={`admin-badge ${user.emailVerified ? "admin-badge--ok" : "admin-badge--warn"}`}>
                         {user.emailVerified ? "Verified" : "Pending"}

@@ -8,6 +8,7 @@ import {
 } from "@/server/auth/google";
 import { createSession, setSessionCookie } from "@/server/auth/session";
 import { findOrCreateGoogleUser } from "@/server/auth/oauth";
+import { attachSignupAttribution, attributionSummaryForEmail } from "@/server/auth/signupAttribution";
 import { sendAdminNewRegistrationEmail } from "@/server/email/mailer";
 import { originFromRequest } from "@/server/requestOrigin";
 
@@ -55,6 +56,14 @@ export async function GET(req: Request) {
     const profile = await exchangeGoogleCode(client, code, config.clientId);
     const { user, isNew } = await findOrCreateGoogleUser(profile);
 
+    let signupAttribution = null;
+    let signupAnalytics = null;
+    if (isNew) {
+      const attached = await attachSignupAttribution(user.id, "google");
+      signupAttribution = attached.attribution;
+      signupAnalytics = attached.analytics;
+    }
+
     const token = await createSession(user.id);
     await setSessionCookie(token);
 
@@ -65,6 +74,7 @@ export async function GET(req: Request) {
           email: user.email,
           name: user.name,
           createdAt: user.created_at,
+          attributionSummary: attributionSummaryForEmail("google", signupAttribution),
         });
       } catch (adminMailErr) {
         console.error("Failed to send admin registration alert for Google signup:", adminMailErr);
@@ -74,7 +84,12 @@ export async function GET(req: Request) {
     const origin = originFromRequest(req);
     const redirectUrl = new URL("/studio", origin);
     redirectUrl.searchParams.set("auth", "google");
-    if (isNew) redirectUrl.searchParams.set("welcome", "1");
+    if (isNew) {
+      redirectUrl.searchParams.set("welcome", "1");
+      if (signupAnalytics?.utmSource) redirectUrl.searchParams.set("sa_source", signupAnalytics.utmSource);
+      if (signupAnalytics?.utmMedium) redirectUrl.searchParams.set("sa_medium", signupAnalytics.utmMedium);
+      if (signupAnalytics?.utmCampaign) redirectUrl.searchParams.set("sa_campaign", signupAnalytics.utmCampaign);
+    }
     return NextResponse.redirect(redirectUrl.toString());
   } catch (e) {
     console.error("GET /api/auth/google/callback failed:", e);
