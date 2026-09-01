@@ -6,7 +6,16 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT,
   password_hash TEXT,
   email_verified_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  signup_method TEXT,
+  utm_source TEXT,
+  utm_medium TEXT,
+  utm_campaign TEXT,
+  utm_term TEXT,
+  utm_content TEXT,
+  signup_landing_page TEXT,
+  signup_referrer TEXT,
+  signup_meta JSONB
 );
 
 CREATE TABLE IF NOT EXISTS oauth_accounts (
