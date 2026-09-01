@@ -332,6 +332,15 @@ export default function StudioMenuBar({
             >
               <span>Share 3D Box Studio with friends</span>
             </button>
+            <div className="studio-menu-sep" role="separator" />
+            <Link
+              className="studio-menu-action studio-menu-action--link"
+              role="menuitem"
+              href="/contact"
+              onClick={closeMenus}
+            >
+              <span>Contact</span>
+            </Link>
           </div>
         )}
       </div>
