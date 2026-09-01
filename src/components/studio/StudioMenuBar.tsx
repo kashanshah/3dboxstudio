@@ -7,6 +7,7 @@ import type { StudioHelpModal } from "./StudioHelpModals";
 import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL } from "@/siteMeta";
 import type { AuthUser } from "@/lib/authTypes";
+import type { StudioThemePreference } from "@/lib/studioTheme";
 
 type OpenMenu = "brand" | "file" | "view" | "help" | "account" | null;
 
@@ -37,6 +38,8 @@ type StudioMenuBarProps = {
   onOpenProjects: () => void;
   onToggleSidebar: () => void;
   onOpenAccountSettings: (tab?: "account" | "profile") => void;
+  themePreference: StudioThemePreference;
+  onSetThemePreference: (preference: StudioThemePreference) => void;
 };
 
 function useCloseOnOutsideClick(open: boolean, onClose: () => void, ref: RefObject<HTMLElement | null>) {
@@ -75,6 +78,8 @@ export default function StudioMenuBar({
   sidebarOpen,
   onToggleSidebar,
   onOpenAccountSettings,
+  themePreference,
+  onSetThemePreference,
   authGate = false,
 }: StudioMenuBarProps) {
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
@@ -297,6 +302,43 @@ export default function StudioMenuBar({
                 </button>
               </div>
             </div>
+            <div className="studio-menu-sep" role="separator" />
+            <button
+              type="button"
+              className="studio-menu-action studio-menu-check-item"
+              role="menuitemcheckbox"
+              aria-checked={themePreference === "system"}
+              onClick={() => pickView(() => onSetThemePreference("system"))}
+            >
+              <span className="studio-menu-check" aria-hidden>
+                {themePreference === "system" ? "✓" : ""}
+              </span>
+              <span>Use system setting</span>
+            </button>
+            <button
+              type="button"
+              className="studio-menu-action studio-menu-check-item"
+              role="menuitemcheckbox"
+              aria-checked={themePreference === "dark"}
+              onClick={() => pickView(() => onSetThemePreference("dark"))}
+            >
+              <span className="studio-menu-check" aria-hidden>
+                {themePreference === "dark" ? "✓" : ""}
+              </span>
+              <span>Dark appearance</span>
+            </button>
+            <button
+              type="button"
+              className="studio-menu-action studio-menu-check-item"
+              role="menuitemcheckbox"
+              aria-checked={themePreference === "light"}
+              onClick={() => pickView(() => onSetThemePreference("light"))}
+            >
+              <span className="studio-menu-check" aria-hidden>
+                {themePreference === "light" ? "✓" : ""}
+              </span>
+              <span>Light appearance</span>
+            </button>
           </div>
         )}
       </div>
