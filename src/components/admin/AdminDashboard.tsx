@@ -1,4 +1,5 @@
 import type { AdminStats } from "@/server/admin/types";
+import AdminAnalyticsCharts from "./AdminAnalyticsCharts";
 
 type ActivityChartProps = {
   title: string;
@@ -122,6 +123,8 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
         <BreakdownList title="Signups by UTM source (30d)" data={stats.activity.signupsBySource} />
         <BreakdownList title="Signups by method (30d)" data={stats.activity.signupsByMethod} />
       </div>
+
+      <AdminAnalyticsCharts />
     </>
   );
 }

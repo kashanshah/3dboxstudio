@@ -97,7 +97,7 @@ export default function LandingHeader({ activeNav }: LandingHeaderProps) {
     <>
       <header
         ref={headerRef}
-        className={`landing-nav landing-nav--affixed${scrolled ? " landing-nav--scrolled" : ""}${
+        className={`landing-nav${scrolled ? " landing-nav--scrolled" : ""}${
           navOpen ? " landing-nav--open" : ""
         }`}
       >
