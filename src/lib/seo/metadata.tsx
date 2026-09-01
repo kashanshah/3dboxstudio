@@ -11,6 +11,7 @@ import {
   getBlogPostImagePath,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
+import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
@@ -177,6 +178,17 @@ export function createFaqMetadata(): Metadata {
     alternates: { canonical: "/faq" },
     openGraph: buildOpenGraph(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION, "/faq"),
     twitter: buildTwitter(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION),
+  };
+}
+
+export function createContactMetadata(): Metadata {
+  return {
+    title: absoluteTitle(CONTACT_PAGE_TITLE),
+    description: CONTACT_PAGE_DESCRIPTION,
+    keywords: SITE_KEYWORDS_META.split(", "),
+    alternates: { canonical: "/contact" },
+    openGraph: buildOpenGraph(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION, "/contact"),
+    twitter: buildTwitter(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION),
   };
 }
 

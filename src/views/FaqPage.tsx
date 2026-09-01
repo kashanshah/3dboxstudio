@@ -26,8 +26,9 @@ export default function FaqPage() {
         <div className="landing-container">
           <FaqExplorer />
           <p className="content-page-more">
-            Still have questions? Read our{" "}
-            <Link href="/blog">packaging guides</Link> or{" "}
+            Still have questions?{" "}
+            <Link href="/contact">Contact us</Link>, read our{" "}
+            <Link href="/blog">packaging guides</Link>, or{" "}
             <Link href="/faq">browse the full FAQ</Link>.
           </p>
           <LandingStudioCta />

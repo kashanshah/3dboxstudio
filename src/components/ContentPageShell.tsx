@@ -19,7 +19,7 @@ function LogoMark() {
 
 type ContentPageShellProps = {
   children: ReactNode;
-  activeNav?: "blog" | "faq";
+  activeNav?: "blog" | "faq" | "contact";
 };
 
 export default function ContentPageShell({
@@ -46,6 +46,12 @@ export default function ContentPageShell({
           aria-current={activeNav === "faq" ? "page" : undefined}
         >
           FAQ
+        </Link>
+        <Link
+          href="/contact"
+          aria-current={activeNav === "contact" ? "page" : undefined}
+        >
+          Contact
         </Link>
         <Link href="/studio" className="btn btn-primary landing-nav-cta">
           Open studio
@@ -75,6 +81,10 @@ export default function ContentPageShell({
                 ·
               </span>
               <Link href="/faq">FAQ</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
+              <Link href="/contact">Contact</Link>
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>

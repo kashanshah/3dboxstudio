@@ -2249,3 +2249,216 @@ input.faq-search-input:focus {
 .landing-faq-more {
   margin-top: 1.35rem;
 }
+
+/* Contact page */
+.landing-section--contact {
+  padding-bottom: clamp(3rem, 8vw, 5rem);
+}
+
+.contact-layout {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  align-items: start;
+}
+
+@media (min-width: 960px) {
+  .contact-layout {
+    grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+  }
+}
+
+.contact-aside {
+  display: grid;
+  gap: 1rem;
+}
+
+.contact-info-card {
+  border: 1px solid var(--l-border-light);
+  border-radius: 16px;
+  background: var(--l-surface);
+  padding: 1.15rem 1.2rem;
+  box-shadow: var(--l-shadow);
+}
+
+.contact-info-card--muted {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.04), var(--l-surface));
+}
+
+.contact-info-card h2,
+.contact-info-card h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--landing-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.contact-info-card p {
+  margin: 0;
+  color: var(--l-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.contact-info-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--l-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.contact-info-list li + li {
+  margin-top: 0.45rem;
+}
+
+.contact-info-list a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-info-list a:hover {
+  text-decoration: underline;
+}
+
+.contact-form-panel {
+  border: 1px solid var(--l-border-light);
+  border-radius: 20px;
+  background: var(--l-surface);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  box-shadow: var(--l-shadow-lg);
+}
+
+.contact-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.contact-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .contact-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.contact-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.contact-field label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--l-text);
+}
+
+.contact-field input,
+.contact-field select,
+.contact-field textarea {
+  width: 100%;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid var(--l-border-light);
+  border-radius: 12px;
+  background: var(--l-surface);
+  color: var(--l-text);
+  font: inherit;
+  line-height: 1.4;
+  box-shadow: var(--l-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contact-field textarea {
+  resize: vertical;
+  min-height: 9rem;
+}
+
+.contact-field input::placeholder,
+.contact-field textarea::placeholder {
+  color: var(--l-text-soft);
+}
+
+.contact-field input:hover,
+.contact-field select:hover,
+.contact-field textarea:hover {
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.contact-field input:focus,
+.contact-field select:focus,
+.contact-field textarea:focus {
+  outline: none;
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.contact-form-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.contact-form-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--l-text-muted);
+}
+
+.contact-form-note a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contact-form-note a:hover {
+  text-decoration: underline;
+}
+
+.contact-form-error {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  background: rgba(254, 226, 226, 0.55);
+  color: #991b1b;
+  font-size: 0.92rem;
+}
+
+.contact-form-success {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  text-align: left;
+}
+
+.contact-form-success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+.contact-form-success h2 {
+  margin: 0;
+  font-family: var(--landing-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.contact-form-success p {
+  margin: 0;
+  color: var(--l-text-muted);
+  line-height: 1.55;
+  max-width: 34em;
+}
+

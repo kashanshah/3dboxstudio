@@ -337,6 +337,7 @@ export default function LandingPage() {
         <a href="#showcase">Showcase</a>
         <Link href="/faq">FAQ</Link>
         <Link href="/blog">Blog</Link>
+        <Link href="/contact">Contact</Link>
         <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
           Open studio
           <IconArrowRight />
@@ -876,6 +877,10 @@ export default function LandingPage() {
                 ·
               </span>
               <Link href="/faq">FAQ</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
+              <Link href="/contact">Contact</Link>
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>
