@@ -676,6 +676,60 @@ label {
   z-index: 55;
 }
 
+/* Roomier top bar on desktop — clearer menus, filename, and profile control. */
+@media (min-width: 641px) {
+  .studio-menu-bar {
+    height: 44px;
+    padding: 0 16px;
+    gap: 4px;
+    font-size: 0.875rem;
+  }
+
+  .studio-menu-trigger {
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .studio-menu-brand {
+    gap: 8px;
+  }
+
+  .studio-menu-brand-logo {
+    width: 22px;
+    height: 22px;
+  }
+
+  .studio-doc-title-wrap {
+    max-width: min(480px, 42vw);
+    gap: 4px;
+  }
+
+  .studio-doc-title {
+    font-size: 0.84rem;
+    padding: 0 10px;
+  }
+
+  .studio-doc-rename-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .studio-menu-account-item {
+    margin-left: 8px;
+  }
+
+  .studio-account-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.78rem;
+  }
+
+  .studio-menu-preview-badge {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+}
+
 .studio-menu-item {
   position: relative;
 }

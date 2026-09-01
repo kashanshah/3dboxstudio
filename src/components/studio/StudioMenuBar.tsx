@@ -124,8 +124,8 @@ export default function StudioMenuBar({
           <img
             className="studio-menu-brand-logo"
             src="/logo-mark.svg"
-            width={18}
-            height={18}
+            width={22}
+            height={22}
             alt=""
             decoding="async"
           />
