@@ -8,8 +8,6 @@
 
 **Free packaging box designer** in your browser at [3dboxstudio.com](https://3dboxstudio.com)—no signup to start designing. Preview folding cartons and mailer-style boxes in **WebGL**: dimensions (mm / cm / in), PBR material presets, lid / split-top / door openings, per-face artwork with rotation, HDRI lighting, viewport PNG export, optional **15s viewport recording**, **cloud save & share links** (sign in required), and **JSON import/export** for offline backups.
 
-The project is also **open source** under the MIT License—issues and PRs welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
-
 ## Stack
 
 - [Next.js](https://nextjs.org/) (App Router, static generation + SSR)
@@ -42,14 +40,10 @@ Create a `.env` file (see `.env.example`) and set:
 
 Share links are created from **File → Save** or **Save As** in the studio. Designs upload to S3; config is stored in Neon Postgres. Viewing a share at `/studio/{id}` is public; restricting share creation to registered users can be added later in `src/server/shareAuth.ts`.
 
-## License & contributing
-
-Licensed under the [MIT License](./LICENSE). Issues and pull requests are welcome on [GitHub](https://github.com/kashanshah/3dboxstudio).
-
 ## Support the project
 
 If this tool saves you time, you can help fund hosting and continued development via [**Buy Me a Coffee**](https://buymeacoffee.com/kashanshah). A floating widget is included on the site.
 
 ## Credits
 
-Maintained by **Syed Kashan Ali Shah** ([@kashanshah](https://github.com/kashanshah)).
+Maintained by **Syed Kashan Ali Shah**.

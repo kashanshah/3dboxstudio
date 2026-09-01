@@ -142,7 +142,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "comparison",
     question: "Is 3D Box Studio a free Pacdora alternative?",
     answer:
-      "For quick 3D box mockups and client previews, yes. Pacdora offers a large dieline template library, print-ready exports, and 4K campaign renders. 3D Box Studio is a free, open-source browser tool focused on interactive 3D simulation—custom dimensions, per-face artwork, material presets, and PNG export—without subscriptions or credits. Use Pacdora when you need production dielines; use 3D Box Studio when you need fast visual validation.",
+      "For quick 3D box mockups and client previews, yes. Pacdora offers a large dieline template library, print-ready exports, and 4K campaign renders. 3D Box Studio is a free browser tool focused on interactive 3D simulation—custom dimensions, per-face artwork, material presets, and PNG export—without subscriptions or credits. Use Pacdora when you need production dielines; use 3D Box Studio when you need fast visual validation.",
   },
   {
     id: "download-required",
@@ -163,7 +163,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     category: "getting-started",
     question: "Can I use exported mockups commercially?",
     answer:
-      "Yes. PNG and MP4 exports from your own designs are yours to use in client work, marketing, e-commerce listings, and presentations. 3D Box Studio is open source under the MIT license. Always ensure your uploaded artwork and logos are properly licensed for commercial use.",
+      "Yes. PNG and MP4 exports from your own designs are yours to use in client work, marketing, e-commerce listings, and presentations. Always ensure your uploaded artwork and logos are properly licensed for commercial use.",
   },
   {
     id: "custom-dimensions",
@@ -171,13 +171,6 @@ export const FAQ_ITEMS: FaqItem[] = [
     question: "Can I set custom box dimensions in millimeters, centimeters, or inches?",
     answer:
       "Yes. Enter any width, height, and depth in millimeters, centimeters, or inches. The 3D preview updates in real time so you can compare standard retail sizes, custom mailers, or shipper boxes without being locked to template dimensions.",
-  },
-  {
-    id: "open-source",
-    category: "overview",
-    question: "Is 3D Box Studio open source?",
-    answer:
-      "Yes. The project is MIT-licensed and available on GitHub. You can self-host, contribute features, or inspect the code. The public instance at 3dboxstudio.com is free to use with no account required to start designing.",
   },
   {
     id: "folding-carton-explainer",

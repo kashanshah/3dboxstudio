@@ -145,7 +145,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "3D Box Studio is a free, open-source 3D box designer with PBR materials, HDRI lighting, per-face artwork upload, and JSON export. No signup required—open the studio, set your dimensions, and start iterating in minutes.",
+        text: "3D Box Studio is a free 3D box designer with PBR materials, HDRI lighting, per-face artwork upload, and JSON export. No signup required—open the studio, set your dimensions, and start iterating in minutes.",
       },
     ],
   },
@@ -245,7 +245,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "3D Box Studio is open source (MIT), runs entirely in the browser, and lets you design without an account. Sign in when you want cloud save and share links. It is built as a 3D box maker for designers who need believable previews, not a template library with fixed SKUs. You control every face, material, and opening mode.",
+        text: "3D Box Studio runs entirely in the browser and lets you design without an account. Sign in when you want cloud save and share links. It is built as a 3D box maker for designers who need believable previews, not a template library with fixed SKUs. You control every face, material, and opening mode.",
       },
       {
         type: "h2",
@@ -825,7 +825,7 @@ export const BLOG_POSTS: BlogPost[] = [
           "Use Pacdora when you need print-ready dielines in AI, PDF, or DXF and a large template catalog",
           "Use a free 3D box mockup tool when you need client approval, e-commerce listing shots, or internal reviews",
           "Use Pacdora for photorealistic 4K campaign renders with complex box structures",
-          "Use a browser simulator when you want open-source, MIT-licensed software with JSON export",
+          "Use a browser simulator when you want free online software with JSON export",
         ],
       },
       {

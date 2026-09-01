@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_DOMAIN } from "../siteMeta";
+import { BUYMEACOFFEE_URL, SITE_DOMAIN } from "../siteMeta";
 import LandingHeader from "./LandingHeader";
 import "../landing.css";
 
@@ -47,9 +47,6 @@ export default function ContentPageShell({
         >
           FAQ
         </Link>
-        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-          GitHub
-        </a>
         <Link href="/studio" className="btn btn-primary landing-nav-cta">
           Open studio
         </Link>
@@ -81,18 +78,12 @@ export default function ContentPageShell({
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>
-              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-                GitHub
-              </a>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
               <a href={BUYMEACOFFEE_URL} target="_blank" rel="noopener noreferrer">
                 Buy me a coffee
               </a>
             </p>
             <p className="landing-footer-tag">
-              Free 3D box designer & maker · {SITE_DOMAIN} · open source (MIT).
+              Free 3D box designer & maker · {SITE_DOMAIN}.
             </p>
           </div>
         </div>
