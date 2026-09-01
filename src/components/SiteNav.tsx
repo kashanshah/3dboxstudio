@@ -40,6 +40,7 @@ export default function SiteNav({ activeNav }: SiteNavProps) {
 
   return (
     <>
+      <Link href="/">Home</Link>
       <Link href={sectionHref(pathname, "#features")}>Features</Link>
       <Link href={sectionHref(pathname, "#gallery")}>Screenshots</Link>
       <Link href={sectionHref(pathname, "#showcase")}>Showcase</Link>

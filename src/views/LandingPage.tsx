@@ -877,6 +877,10 @@ export default function LandingPage() {
               <span className="landing-footer-dot" aria-hidden>
                 ·
               </span>
+              <Link href="/terms">Terms</Link>
+              <span className="landing-footer-dot" aria-hidden>
+                ·
+              </span>
               <a href="#features">Features</a>
               <span className="landing-footer-dot" aria-hidden>
                 ·

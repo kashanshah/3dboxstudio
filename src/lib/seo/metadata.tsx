@@ -13,6 +13,7 @@ import {
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
 import { PRIVACY_PAGE_DESCRIPTION, PRIVACY_PAGE_TITLE } from "@/content/privacy";
+import { TERMS_PAGE_DESCRIPTION, TERMS_PAGE_TITLE } from "@/content/terms";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
@@ -201,6 +202,17 @@ export function createPrivacyMetadata(): Metadata {
     alternates: { canonical: "/privacy" },
     openGraph: buildOpenGraph(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION, "/privacy"),
     twitter: buildTwitter(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION),
+  };
+}
+
+export function createTermsMetadata(): Metadata {
+  return {
+    title: absoluteTitle(TERMS_PAGE_TITLE),
+    description: TERMS_PAGE_DESCRIPTION,
+    keywords: SITE_KEYWORDS_META.split(", "),
+    alternates: { canonical: "/terms" },
+    openGraph: buildOpenGraph(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION, "/terms"),
+    twitter: buildTwitter(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION),
   };
 }
 
