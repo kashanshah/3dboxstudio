@@ -8,7 +8,6 @@ import Link from "next/link";
 import StudioLink from "../components/StudioLink";
 import {
   BUYMEACOFFEE_URL,
-  GITHUB_REPO_URL,
   SITE_DOMAIN,
   SITE_ORIGIN_PUBLIC,
 } from "../siteMeta";
@@ -18,7 +17,6 @@ import FaqList from "../components/FaqList";
 import { BLOG_POSTS, getBlogPostImageAlt, getBlogPostImagePath } from "../content/blogPosts";
 import { FAQ_ITEMS, getLandingFaqItems } from "../content/faq";
 import "../landing.css";
-import GithubLink from "../components/GithubLink";
 
 function LogoMark() {
   return (
@@ -333,17 +331,12 @@ export default function LandingPage() {
       <div className="landing-bg-orb landing-bg-orb--c" aria-hidden />
       <div className="landing-noise" aria-hidden />
 
-      <GithubLink />
-
       <LandingHeader>
         <a href="#features">Features</a>
         <a href="#gallery">Screenshots</a>
         <a href="#showcase">Showcase</a>
         <Link href="/faq">FAQ</Link>
         <Link href="/blog">Blog</Link>
-        <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer">
-          GitHub
-        </a>
         <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
           Open studio
           <IconArrowRight />
@@ -400,7 +393,6 @@ export default function LandingPage() {
                     <li>View-only client links</li>
                     <li>Export PNG</li>
                     <li>JSON import/export</li>
-                    <li>Open source (MIT)</li>
                   </ul>
                 </div>
                 <figure className="landing-hero-visual">
@@ -900,16 +892,6 @@ export default function LandingPage() {
                 ·
               </span>
               <a
-                href={GITHUB_REPO_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                GitHub
-              </a>
-              <span className="landing-footer-dot" aria-hidden>
-                ·
-              </span>
-              <a
                 href={BUYMEACOFFEE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -919,7 +901,7 @@ export default function LandingPage() {
             </p>
             <p className="landing-footer-tag">
               Free 3D box designer & maker · {SITE_DOMAIN} · 3D box simulation
-              in your browser · open source (MIT).
+              in your browser.
             </p>
             <p className="landing-footer-tip">
               Canonical:{" "}

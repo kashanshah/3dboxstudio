@@ -28,14 +28,7 @@ export default function FaqPage() {
           <p className="content-page-more">
             Still have questions? Read our{" "}
             <Link href="/blog">packaging guides</Link> or{" "}
-            <a
-              href="https://github.com/kashanshah/3dboxstudio/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              open a GitHub issue
-            </a>
-            .
+            <Link href="/faq">browse the full FAQ</Link>.
           </p>
           <LandingStudioCta />
         </div>

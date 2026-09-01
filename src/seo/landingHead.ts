@@ -5,7 +5,7 @@ export const LANDING_TITLE =
   "Free 3D Box Designer & Packaging Mockup Generator | 3D Box Studio";
 
 export const LANDING_DESCRIPTION =
-  "Free online 3D box designer and packaging mockup generator. Create folding carton and mailer mockups in your browser—custom dimensions, PBR materials, lid & flap openings, per-face artwork, cloud save, client preview links, PNG & JSON export. No signup. Open source.";
+  "Free online 3D box designer and packaging mockup generator. Create folding carton and mailer mockups in your browser—custom dimensions, PBR materials, lid & flap openings, per-face artwork, cloud save, client preview links, PNG & JSON export. No signup required.";
 
 export const LANDING_KEYWORDS = SITE_KEYWORDS_META;
 

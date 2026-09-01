@@ -1,17 +1,10 @@
 {
   "name": "3dboxstudio",
-  "private": false,
+  "private": true,
   "version": "1.0.0",
   "type": "module",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "author": "Syed Kashan Ali Shah",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kashanshah/3dboxstudio.git"
-  },
-  "bugs": {
-    "url": "https://github.com/kashanshah/3dboxstudio/issues"
-  },
   "homepage": "https://3dboxstudio.com",
   "scripts": {
     "dev": "next dev",

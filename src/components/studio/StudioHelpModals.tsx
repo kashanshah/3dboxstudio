@@ -3,7 +3,7 @@
 import { useCallback, useState, type ReactNode } from "react";
 import StudioDialog from "./StudioDialog";
 import { IconExternalLink } from "./StudioIcons";
-import { BUYMEACOFFEE_URL, GITHUB_REPO_URL, SITE_ORIGIN_PUBLIC } from "@/siteMeta";
+import { BUYMEACOFFEE_URL, SITE_ORIGIN_PUBLIC } from "@/siteMeta";
 
 export type StudioHelpModal = "about" | "share-app" | null;
 
@@ -80,7 +80,7 @@ export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHel
         }
       >
         <p className="studio-dialog-lead">
-          <strong>3D Box Studio</strong> is a free, open-source packaging box designer that runs in your browser. Preview
+          <strong>3D Box Studio</strong> is a free packaging box designer that runs in your browser. Preview
           folding cartons and mailer-style boxes with PBR materials, HDRI lighting, lid and flap openings, per-face artwork,
           cloud save &amp; share links, PNG export, and JSON import/export.
         </p>
@@ -93,7 +93,6 @@ export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHel
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/studio`}>Open studio</ExternalLink>
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/faq`}>FAQ</ExternalLink>
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/blog`}>Blog</ExternalLink>
-          <ExternalLink href={GITHUB_REPO_URL}>GitHub repository</ExternalLink>
           <ExternalLink href={BUYMEACOFFEE_URL}>Buy me a coffee</ExternalLink>
         </nav>
       </StudioDialog>

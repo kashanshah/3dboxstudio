@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import type { StudioFileModal } from "@/hooks/useStudioDocument";
 import type { StudioHelpModal } from "./StudioHelpModals";
 import { IconExternalLink, IconRename } from "./StudioIcons";
-import { BUYMEACOFFEE_URL, GITHUB_REPO_URL } from "@/siteMeta";
+import { BUYMEACOFFEE_URL } from "@/siteMeta";
 import type { AuthUser } from "@/lib/authTypes";
 
 type OpenMenu = "brand" | "file" | "view" | "help" | "account" | null;
@@ -142,17 +142,6 @@ export default function StudioMenuBar({
               <span>Home</span>
             </Link>
             <div className="studio-menu-sep" role="separator" />
-            <a
-              className="studio-menu-action studio-menu-action--link"
-              role="menuitem"
-              href={GITHUB_REPO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={closeMenus}
-            >
-              <span>View on GitHub</span>
-              <IconExternalLink />
-            </a>
             <a
               className="studio-menu-action studio-menu-action--link"
               role="menuitem"
