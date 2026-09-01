@@ -23,6 +23,7 @@ type AuthContextValue = {
   updateProfile: (name: string) => Promise<AuthActionResult>;
   updateEmail: (newEmail: string, currentPassword: string) => Promise<AuthActionResult>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<AuthActionResult>;
+  signInWithGoogle: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -38,6 +39,7 @@ function readUser(data: unknown): AuthUser | null {
     email: u.email,
     name: typeof u.name === "string" ? u.name : null,
     emailVerified: Boolean(u.emailVerified),
+    hasPassword: Boolean(u.hasPassword),
     createdAt: typeof u.createdAt === "string" ? u.createdAt : "",
   };
 }
@@ -193,10 +195,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not change your password.") };
+      const nextUser = readUser(data);
+      if (nextUser) setUser(nextUser);
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Please try again." };
     }
+  }, []);
+
+  const signInWithGoogle = useCallback(() => {
+    window.location.href = "/api/auth/google";
   }, []);
 
   return (
@@ -213,6 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateProfile,
         updateEmail,
         changePassword,
+        signInWithGoogle,
       }}
     >
       {children}

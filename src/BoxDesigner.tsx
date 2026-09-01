@@ -10,6 +10,8 @@ import {
   type ReactNode,
   type SyntheticEvent,
 } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { googleAuthErrorMessage } from "@/lib/authErrors";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -175,6 +177,9 @@ export default function BoxDesigner({
   const requiresAccount = !shareIdFromUrl && !previewTokenFromUrl && !viewOnly;
 
   const auth = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const [authModal, setAuthModal] = useState<{ open: boolean; mode: "signin" | "signup" }>({
     open: false,
     mode: "signin",
@@ -413,9 +418,23 @@ export default function BoxDesigner({
   const showAuthGate = requiresAccount && !auth.loading && !auth.user;
 
   useEffect(() => {
-    if (!showAuthGate) return;
+    if (!showAuthGate || oauthError) return;
     setAuthModal({ open: true, mode: "signup" });
-  }, [showAuthGate]);
+  }, [showAuthGate, oauthError]);
+
+  useEffect(() => {
+    const message = googleAuthErrorMessage(searchParams.get("auth_error"));
+    if (!message) return;
+    setOauthError(message);
+    router.replace("/studio", { scroll: false });
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (searchParams.get("auth") !== "google" || !auth.user) return;
+    const welcome = searchParams.get("welcome") === "1";
+    doc.showStatus(welcome ? "Welcome! Your account is ready." : "Signed in with Google.", 5000);
+    router.replace("/studio", { scroll: false });
+  }, [searchParams, auth.user, doc.showStatus, router]);
 
   useEffect(() => {
     if (doc.viewOnly || !pendingAutoSaveRef.current) return;
@@ -595,7 +614,7 @@ export default function BoxDesigner({
           onOpenAccountSettings={() => {}}
         />
         <div className="studio-auth-gate-body">
-          <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} />
+          <StudioAuthGate onSignUp={openSignUp} onSignIn={openSignIn} oauthError={oauthError} />
         </div>
         <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} />
         <AuthModal
