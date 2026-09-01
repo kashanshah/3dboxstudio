@@ -86,6 +86,7 @@ export default function AdminDesignsTable({
           <table className="admin-table">
             <thead>
               <tr>
+                <th>Preview</th>
                 <th>Name</th>
                 <th>Owner</th>
                 <th>Views</th>
@@ -98,13 +99,31 @@ export default function AdminDesignsTable({
             <tbody>
               {designs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ color: "var(--muted)" }}>
+                  <td colSpan={8} style={{ color: "var(--muted)" }}>
                     No designs found.
                   </td>
                 </tr>
               ) : (
                 designs.map((design) => (
                   <tr key={design.id}>
+                    <td>
+                      <a
+                        className="admin-design-thumb"
+                        href={studioSharePath(design.id)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Open ${design.name ?? "Untitled"} in studio`}
+                      >
+                        {design.thumbnailUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={design.thumbnailUrl} alt="" loading="lazy" />
+                        ) : (
+                          <span className="admin-design-thumb-empty" aria-hidden>
+                            3D
+                          </span>
+                        )}
+                      </a>
+                    </td>
                     <td>
                       <div>{design.name ?? "Untitled"}</div>
                       <div className="admin-mono" style={{ color: "var(--muted)", marginTop: "0.2rem" }}>
