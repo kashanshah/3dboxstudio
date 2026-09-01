@@ -3,6 +3,11 @@ import { getSiteOrigin } from "@/lib/siteOrigin";
 import { CONTACT_TOPICS, type ContactTopic } from "@/content/contact";
 import { enforceRateLimit } from "@/server/rateLimit";
 import { isValidEmail } from "@/server/auth/validation";
+import {
+  teknoboardsApiKey,
+  teknoboardsConfigError,
+  teknoboardsFormId,
+} from "@/server/teknoboards";
 
 export const runtime = "nodejs";
 
@@ -31,13 +36,17 @@ export async function POST(req: Request) {
   });
   if (limited) return limited;
 
-  const apiKey = process.env.TEKNOBOARDS_API_KEY?.trim();
-  const formId = process.env.TEKNOBOARDS_FORM_ID?.trim();
-  if (!apiKey || !formId) {
-    return NextResponse.json(
-      { ok: false, error: "Contact form is not configured yet. Please try again later." },
-      { status: 503 },
-    );
+  const apiKey = teknoboardsApiKey();
+  const formId = teknoboardsFormId();
+  const configError = teknoboardsConfigError();
+  if (!apiKey || !formId || configError) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("POST /api/contact: missing TeknoBoards config", {
+        hasApiKey: Boolean(apiKey),
+        hasFormId: Boolean(formId),
+      });
+    }
+    return NextResponse.json({ ok: false, error: configError }, { status: 503 });
   }
 
   try {
