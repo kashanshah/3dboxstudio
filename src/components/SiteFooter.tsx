@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import StudioLink from "./StudioLink";
@@ -27,6 +28,25 @@ function LogoMark() {
 
 function sectionHref(pathname: string, hash: string): string {
   return pathname === "/" ? hash : `/${hash}`;
+}
+
+type FooterAccordionSectionProps = {
+  title: string;
+  ariaLabel: string;
+  children: ReactNode;
+};
+
+function FooterAccordionSection({ title, ariaLabel, children }: FooterAccordionSectionProps) {
+  return (
+    <nav className="site-footer-col" aria-label={ariaLabel}>
+      <details className="site-footer-accordion">
+        <summary className="site-footer-accordion-summary">
+          <span className="site-footer-col-title">{title}</span>
+        </summary>
+        <div className="site-footer-accordion-panel">{children}</div>
+      </details>
+    </nav>
+  );
 }
 
 type SiteFooterProps = {
@@ -57,8 +77,7 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
             </StudioLink>
           </div>
 
-          <nav className="site-footer-col" aria-label="Product">
-            <h2 className="site-footer-col-title">Product</h2>
+          <FooterAccordionSection title="Product" ariaLabel="Product">
             <ul className="site-footer-links">
               <li>
                 <StudioLink href="/studio">3D box studio</StudioLink>
@@ -79,10 +98,9 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
                 <Link href={sectionHref(pathname, "#guides")}>Packaging guides</Link>
               </li>
             </ul>
-          </nav>
+          </FooterAccordionSection>
 
-          <nav className="site-footer-col" aria-label="Packaging guides">
-            <h2 className="site-footer-col-title">Guides &amp; tools</h2>
+          <FooterAccordionSection title="Guides & tools" ariaLabel="Packaging guides">
             <ul className="site-footer-links">
               <li>
                 <Link href="/blog">All packaging articles</Link>
@@ -93,10 +111,9 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
                 </li>
               ))}
             </ul>
-          </nav>
+          </FooterAccordionSection>
 
-          <nav className="site-footer-col" aria-label="Help and industries">
-            <h2 className="site-footer-col-title">Help &amp; industries</h2>
+          <FooterAccordionSection title="Help & support" ariaLabel="Help and support">
             <ul className="site-footer-links">
               <li>
                 <Link href="/faq">FAQ ({FAQ_ITEMS.length} answers)</Link>
@@ -110,7 +127,9 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
                 <Link href="/contact">Contact support</Link>
               </li>
             </ul>
-            <h3 className="site-footer-subtitle">Industry mockups</h3>
+          </FooterAccordionSection>
+
+          <FooterAccordionSection title="Industry mockups" ariaLabel="Industry packaging guides">
             <ul className="site-footer-links">
               {FOOTER_INDUSTRY_LINKS.map((item) => (
                 <li key={item.slug}>
@@ -118,28 +137,30 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
                 </li>
               ))}
             </ul>
-          </nav>
+          </FooterAccordionSection>
         </div>
 
         {showTopicSection && (
-          <section className="site-footer-topics" aria-labelledby="footer-topics-heading">
-            <h2 id="footer-topics-heading" className="site-footer-topics-title">
-              Popular packaging topics
-            </h2>
-            <p className="site-footer-topics-lead">
-              Quick links for teams searching for a free 3D box design maker, carton simulator, or
-              online packaging mockup generator.
-            </p>
-            <ul className="site-footer-topic-pills">
-              {FOOTER_TOPIC_LINKS.map((topic) => (
-                <li key={topic.label}>
-                  <Link href={topic.href} className="site-footer-topic-pill">
-                    {topic.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <details className="site-footer-topics site-footer-topics-accordion">
+            <summary className="site-footer-topics-summary">
+              <span className="site-footer-topics-title">Popular packaging topics</span>
+            </summary>
+            <div className="site-footer-topics-panel">
+              <p className="site-footer-topics-lead">
+                Quick links for teams searching for a free 3D box design maker, carton simulator, or
+                online packaging mockup generator.
+              </p>
+              <ul className="site-footer-topic-pills">
+                {FOOTER_TOPIC_LINKS.map((topic) => (
+                  <li key={topic.label}>
+                    <Link href={topic.href} className="site-footer-topic-pill">
+                      {topic.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </details>
         )}
 
         <div className="site-footer-bottom">
