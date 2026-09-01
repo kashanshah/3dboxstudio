@@ -20,6 +20,8 @@ export type AdminStats = {
     designsByDay: { date: string; count: number }[];
     signupsBySource: { label: string; count: number }[];
     signupsByMethod: { label: string; count: number }[];
+    signupsByLandingType: { label: string; count: number }[];
+    signupsByConversionType: { label: string; count: number }[];
   };
 };
 
@@ -36,6 +38,8 @@ export type AdminUserRow = {
   utmMedium: string | null;
   utmCampaign: string | null;
   signupLandingPage: string | null;
+  signupLandingType: string | null;
+  signupConversionPage: string | null;
   signupReferrer: string | null;
 };
 

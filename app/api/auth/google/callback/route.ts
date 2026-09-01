@@ -59,7 +59,7 @@ export async function GET(req: Request) {
     let signupAttribution = null;
     let signupAnalytics = null;
     if (isNew) {
-      const attached = await attachSignupAttribution(user.id, "google");
+      const attached = await attachSignupAttribution(user.id, "google", { conversionPage: "/studio" });
       signupAttribution = attached.attribution;
       signupAnalytics = attached.analytics;
     }
@@ -74,7 +74,7 @@ export async function GET(req: Request) {
           email: user.email,
           name: user.name,
           createdAt: user.created_at,
-          attributionSummary: attributionSummaryForEmail("google", signupAttribution),
+          attributionSummary: attributionSummaryForEmail("google", signupAttribution, "/studio"),
         });
       } catch (adminMailErr) {
         console.error("Failed to send admin registration alert for Google signup:", adminMailErr);
@@ -89,6 +89,8 @@ export async function GET(req: Request) {
       if (signupAnalytics?.utmSource) redirectUrl.searchParams.set("sa_source", signupAnalytics.utmSource);
       if (signupAnalytics?.utmMedium) redirectUrl.searchParams.set("sa_medium", signupAnalytics.utmMedium);
       if (signupAnalytics?.utmCampaign) redirectUrl.searchParams.set("sa_campaign", signupAnalytics.utmCampaign);
+      if (signupAnalytics?.landingType) redirectUrl.searchParams.set("sa_landing_type", signupAnalytics.landingType);
+      if (signupAnalytics?.landingPage) redirectUrl.searchParams.set("sa_landing_page", signupAnalytics.landingPage);
     }
     return NextResponse.redirect(redirectUrl.toString());
   } catch (e) {
