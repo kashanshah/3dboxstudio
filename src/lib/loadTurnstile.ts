@@ -4,21 +4,11 @@ type TurnstileApi = NonNullable<Window["turnstile"]>;
 
 let loader: Promise<TurnstileApi> | null = null;
 
-function waitForApi(turnstile: TurnstileApi): Promise<TurnstileApi> {
-  return new Promise((resolve) => {
-    if (typeof turnstile.ready !== "function") {
-      resolve(turnstile);
-      return;
-    }
-    turnstile.ready(() => resolve(turnstile));
-  });
-}
-
 export function loadTurnstile(): Promise<TurnstileApi> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Turnstile is browser-only"));
   }
-  if (window.turnstile) return waitForApi(window.turnstile);
+  if (window.turnstile) return Promise.resolve(window.turnstile);
   if (loader) return loader;
 
   loader = new Promise((resolve, reject) => {
@@ -32,7 +22,9 @@ export function loadTurnstile(): Promise<TurnstileApi> {
         fail();
         return;
       }
-      void waitForApi(window.turnstile).then(resolve, fail);
+      // Script onload is enough. Do not call turnstile.ready() — Cloudflare throws
+      // if the tag was loaded with async/defer: "Remove async/defer ... before using turnstile.ready()".
+      resolve(window.turnstile);
     };
 
     const existing = document.querySelector<HTMLScriptElement>(
@@ -40,7 +32,7 @@ export function loadTurnstile(): Promise<TurnstileApi> {
     );
     if (existing) {
       if (window.turnstile) {
-        void waitForApi(window.turnstile).then(resolve, fail);
+        resolve(window.turnstile);
         return;
       }
       existing.addEventListener("load", onReady, { once: true });
