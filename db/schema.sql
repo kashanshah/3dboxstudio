@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
   utm_term TEXT,
   utm_content TEXT,
   signup_landing_page TEXT,
+  signup_landing_type TEXT,
+  signup_conversion_page TEXT,
   signup_referrer TEXT,
   signup_meta JSONB
 );

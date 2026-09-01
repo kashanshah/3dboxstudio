@@ -63,6 +63,9 @@ function readSignupAnalytics(data: unknown): SignupAnalytics | null {
     utmSource: typeof a.utmSource === "string" ? a.utmSource : null,
     utmMedium: typeof a.utmMedium === "string" ? a.utmMedium : null,
     utmCampaign: typeof a.utmCampaign === "string" ? a.utmCampaign : null,
+    landingType: typeof a.landingType === "string" ? a.landingType : null,
+    landingPage: typeof a.landingPage === "string" ? a.landingPage : null,
+    conversionPage: typeof a.conversionPage === "string" ? a.conversionPage : null,
   };
 }
 
@@ -121,7 +124,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          conversionPage: typeof window !== "undefined" ? window.location.pathname : "/studio",
+        }),
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not create your account.") };

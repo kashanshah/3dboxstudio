@@ -5,6 +5,9 @@ export type SignupAnalyticsParams = {
   utmSource?: string | null;
   utmMedium?: string | null;
   utmCampaign?: string | null;
+  landingType?: string | null;
+  landingPage?: string | null;
+  conversionPage?: string | null;
 };
 
 export type SignupAnalytics = SignupAnalyticsParams;
@@ -20,6 +23,9 @@ export function trackSignup(params: SignupAnalyticsParams): void {
     ...(params.utmSource ? { campaign_source: params.utmSource } : {}),
     ...(params.utmMedium ? { campaign_medium: params.utmMedium } : {}),
     ...(params.utmCampaign ? { campaign_name: params.utmCampaign } : {}),
+    ...(params.landingType ? { landing_type: params.landingType } : {}),
+    ...(params.landingPage ? { landing_page: params.landingPage } : {}),
+    ...(params.conversionPage ? { conversion_page: params.conversionPage } : {}),
   });
 }
 

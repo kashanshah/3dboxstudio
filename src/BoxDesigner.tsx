@@ -439,6 +439,9 @@ export default function BoxDesigner({
         utmSource: searchParams.get("sa_source"),
         utmMedium: searchParams.get("sa_medium"),
         utmCampaign: searchParams.get("sa_campaign"),
+        landingType: searchParams.get("sa_landing_type"),
+        landingPage: searchParams.get("sa_landing_page"),
+        conversionPage: "/studio",
       });
       trackStudioActivated("google");
     }

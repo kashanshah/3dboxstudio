@@ -1,4 +1,5 @@
 import type { AdminStats } from "@/server/admin/types";
+import { landingTypeLabel } from "@/lib/landingClassification";
 import AdminAnalyticsCharts from "./AdminAnalyticsCharts";
 
 type ActivityChartProps = {
@@ -45,7 +46,11 @@ type BreakdownListProps = {
   data: { label: string; count: number }[];
 };
 
-function BreakdownList({ title, data }: BreakdownListProps) {
+function BreakdownList({
+  title,
+  data,
+  labelFormatter,
+}: BreakdownListProps & { labelFormatter?: (label: string) => string }) {
   return (
     <div className="admin-panel">
       <div className="admin-panel-header">
@@ -58,7 +63,7 @@ function BreakdownList({ title, data }: BreakdownListProps) {
           <ul className="admin-breakdown-list">
             {data.map((row) => (
               <li key={row.label}>
-                <span>{row.label}</span>
+                <span>{labelFormatter ? labelFormatter(row.label) : row.label}</span>
                 <strong>{row.count.toLocaleString()}</strong>
               </li>
             ))}
@@ -122,6 +127,16 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
         <ActivityChart title="Designs created (last 30 days)" data={stats.activity.designsByDay} />
         <BreakdownList title="Signups by UTM source (30d)" data={stats.activity.signupsBySource} />
         <BreakdownList title="Signups by method (30d)" data={stats.activity.signupsByMethod} />
+        <BreakdownList
+          title="First landing page (30d)"
+          data={stats.activity.signupsByLandingType}
+          labelFormatter={(label) => (label === "(unknown)" ? label : landingTypeLabel(label))}
+        />
+        <BreakdownList
+          title="Signup page (30d)"
+          data={stats.activity.signupsByConversionType}
+          labelFormatter={(label) => (label === "(unknown)" ? label : landingTypeLabel(label))}
+        />
       </div>
 
       <AdminAnalyticsCharts />

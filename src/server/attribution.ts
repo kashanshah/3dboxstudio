@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { enrichLandingAttribution, formatLandingSummary, classifyLandingPath, landingTypeLabel } from "@/lib/landingClassification";
 import { getSql } from "./db";
 
 export const ATTRIBUTION_COOKIE = "sb_attribution";
@@ -11,6 +12,9 @@ export type StoredAttribution = {
   utmTerm: string | null;
   utmContent: string | null;
   landingPage: string | null;
+  landingType: string | null;
+  landingLabel: string | null;
+  blogSlug: string | null;
   referrerHost: string | null;
   firstSeenAt: string;
   clickIds: Record<string, string>;
@@ -36,6 +40,10 @@ function trimLandingPath(value: unknown): string | null {
   return path;
 }
 
+function trimConversionPath(value: unknown): string | null {
+  return trimLandingPath(value);
+}
+
 function sanitizeClickIds(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object") return {};
   const out: Record<string, string> = {};
@@ -55,16 +63,19 @@ export function normalizeAttributionInput(body: unknown): Omit<StoredAttribution
   const referrerHost = trim(input.referrerHost, MAX_REFERRER);
   const clickIds = sanitizeClickIds(input.clickIds);
 
-  const normalized = {
+  const normalized = enrichLandingAttribution({
     utmSource: trim(input.utmSource, MAX_UTM),
     utmMedium: trim(input.utmMedium, MAX_UTM),
     utmCampaign: trim(input.utmCampaign, MAX_UTM),
     utmTerm: trim(input.utmTerm, MAX_UTM),
     utmContent: trim(input.utmContent, MAX_UTM),
     landingPage,
+    landingType: trim(input.landingType, 40),
+    landingLabel: trim(input.landingLabel, 200),
+    blogSlug: trim(input.blogSlug, 120),
     referrerHost,
     clickIds,
-  };
+  });
 
   const hasData =
     normalized.utmSource ||
@@ -90,6 +101,9 @@ export function parseAttributionCookie(raw: string | undefined): StoredAttributi
       utmTerm: data.utmTerm,
       utmContent: data.utmContent,
       landingPage: data.landingPage,
+      landingType: data.landingType,
+      landingLabel: data.landingLabel,
+      blogSlug: data.blogSlug,
       referrerHost: data.referrerHost,
       clickIds: data.clickIds,
     });
@@ -129,30 +143,58 @@ export async function clearAttributionCookie(): Promise<void> {
   });
 }
 
+export type SignupAttributionOptions = {
+  conversionPage?: string | null;
+};
+
 export async function saveUserSignupAttribution(
   userId: string,
   method: SignupMethod,
-  attribution: StoredAttribution | null
+  attribution: StoredAttribution | null,
+  options?: SignupAttributionOptions
 ): Promise<void> {
   const sql = getSql();
-  const signupMeta = attribution
-    ? {
-        firstSeenAt: attribution.firstSeenAt,
-        ...(Object.keys(attribution.clickIds).length > 0 ? { clickIds: attribution.clickIds } : {}),
-      }
-    : null;
+  const conversionPage = trimConversionPath(options?.conversionPage);
+  const conversionClass = conversionPage ? classifyLandingPath(conversionPage) : null;
+
+  const enriched = attribution?.landingPage
+    ? enrichLandingAttribution(attribution)
+    : attribution;
+
+  const minutesToSignup =
+    attribution?.firstSeenAt
+      ? Math.max(0, Math.round((Date.now() - new Date(attribution.firstSeenAt).getTime()) / 60_000))
+      : null;
+
+  const signupMeta =
+    enriched || conversionPage
+      ? {
+          ...(attribution?.firstSeenAt ? { firstSeenAt: attribution.firstSeenAt } : {}),
+          ...(enriched?.landingType ? { landingType: enriched.landingType } : {}),
+          ...(enriched?.landingLabel ? { landingLabel: enriched.landingLabel } : {}),
+          ...(enriched?.blogSlug ? { blogSlug: enriched.blogSlug } : {}),
+          ...(conversionPage ? { conversionPage } : {}),
+          ...(conversionClass ? { conversionType: conversionClass.type, conversionLabel: conversionClass.label } : {}),
+          ...(minutesToSignup !== null ? { minutesToSignup } : {}),
+          ...(attribution && Object.keys(attribution.clickIds).length > 0
+            ? { clickIds: attribution.clickIds }
+            : {}),
+        }
+      : null;
 
   await sql`
     UPDATE users
     SET
       signup_method = ${method},
-      utm_source = ${attribution?.utmSource ?? null},
-      utm_medium = ${attribution?.utmMedium ?? null},
-      utm_campaign = ${attribution?.utmCampaign ?? null},
-      utm_term = ${attribution?.utmTerm ?? null},
-      utm_content = ${attribution?.utmContent ?? null},
-      signup_landing_page = ${attribution?.landingPage ?? null},
-      signup_referrer = ${attribution?.referrerHost ?? null},
+      utm_source = ${enriched?.utmSource ?? null},
+      utm_medium = ${enriched?.utmMedium ?? null},
+      utm_campaign = ${enriched?.utmCampaign ?? null},
+      utm_term = ${enriched?.utmTerm ?? null},
+      utm_content = ${enriched?.utmContent ?? null},
+      signup_landing_page = ${enriched?.landingPage ?? null},
+      signup_landing_type = ${enriched?.landingType ?? null},
+      signup_conversion_page = ${conversionPage},
+      signup_referrer = ${enriched?.referrerHost ?? null},
       signup_meta = ${signupMeta ? JSON.stringify(signupMeta) : null}::jsonb
     WHERE id = ${userId}
   `;
@@ -164,7 +206,26 @@ export function formatAttributionSummary(attribution: StoredAttribution | null, 
   if (attribution.utmSource) parts.push(`Source: ${attribution.utmSource}`);
   if (attribution.utmMedium) parts.push(`Medium: ${attribution.utmMedium}`);
   if (attribution.utmCampaign) parts.push(`Campaign: ${attribution.utmCampaign}`);
-  if (attribution.landingPage) parts.push(`Landing: ${attribution.landingPage}`);
+  parts.push(
+    `First landed: ${formatLandingSummary(attribution.landingType, attribution.landingPage, attribution.landingLabel)}`
+  );
+  if (attribution.landingPage && attribution.landingPage !== "/") {
+    parts.push(`Path: ${attribution.landingPage}`);
+  }
   if (attribution.referrerHost) parts.push(`Referrer: ${attribution.referrerHost}`);
   return parts.join(" · ");
 }
+
+export function conversionPageFromReferer(referer: string | null, origin: string): string | null {
+  if (!referer) return null;
+  try {
+    const url = new URL(referer);
+    const site = new URL(origin);
+    if (url.origin !== site.origin) return null;
+    return trimLandingPath(url.pathname);
+  } catch {
+    return null;
+  }
+}
+
+export { landingTypeLabel };
