@@ -1245,15 +1245,17 @@ export default function BoxDesigner({
         user={auth.user}
         onClose={() => setStartDialogOpen(false)}
         onCreateNew={() => setStartDialogOpen(false)}
-        onOpenProject={() => {
+        onOpenProject={(id) => {
           setStartDialogOpen(false);
-          openProjects();
+          void doc.openProject(id);
         }}
         onImport={() => {
           setStartDialogOpen(false);
           doc.setModal("import");
         }}
         onRequireSignUp={openSignUp}
+        onSignIn={openSignIn}
+        onStatus={(message) => doc.showStatus(message, 5000)}
       />
       <AuthModal
         open={authModal.open}
