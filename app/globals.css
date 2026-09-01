@@ -1595,47 +1595,12 @@ label {
   }
 }
 
-.studio-start-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 8px 0 4px;
+.studio-start-projects {
+  margin: 4px 0 8px;
 }
 
-@media (max-width: 480px) {
-  .studio-start-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.studio-start-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-  padding: 16px;
-  border-radius: 10px;
-  border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.studio-start-card:hover {
-  border-color: #3d9eff;
-  background: rgba(61, 158, 255, 0.08);
-}
-
-.studio-start-card-title {
-  font-weight: 600;
-  font-size: 0.92rem;
-}
-
-.studio-start-card-desc {
-  font-size: 0.76rem;
-  color: var(--muted);
-  line-height: 1.35;
+.studio-projects-list--start {
+  max-height: min(52vh, 360px);
 }
 
 .studio-open-section {

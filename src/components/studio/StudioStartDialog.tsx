@@ -1,16 +1,19 @@
 "use client";
 
-import StudioDialog from "./StudioDialog";
 import type { AuthUser } from "@/lib/authTypes";
+import StudioDialog from "./StudioDialog";
+import StudioProjectsPanel from "./StudioProjectsPanel";
 
 type StudioStartDialogProps = {
   open: boolean;
   user: AuthUser | null;
   onClose: () => void;
   onCreateNew: () => void;
-  onOpenProject: () => void;
+  onOpenProject: (id: string) => void;
   onImport: () => void;
   onRequireSignUp: () => void;
+  onSignIn: () => void;
+  onStatus: (message: string) => void;
 };
 
 export default function StudioStartDialog({
@@ -21,6 +24,8 @@ export default function StudioStartDialog({
   onOpenProject,
   onImport,
   onRequireSignUp,
+  onSignIn,
+  onStatus,
 }: StudioStartDialogProps) {
   const handleCreateNew = () => {
     if (!user) {
@@ -30,12 +35,12 @@ export default function StudioStartDialog({
     onCreateNew();
   };
 
-  const handleOpenProject = () => {
+  const handleOpenProject = (id: string) => {
     if (!user) {
       onRequireSignUp();
       return;
     }
-    onOpenProject();
+    onOpenProject(id);
   };
 
   const handleImport = () => {
@@ -51,37 +56,39 @@ export default function StudioStartDialog({
       title="3D Box Studio"
       open={open}
       onClose={onClose}
-      width={520}
+      width={560}
       footer={
-        <button type="button" className="btn btn-ghost" onClick={onClose}>
-          Close
-        </button>
+        <>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Close
+          </button>
+          <button type="button" className="btn btn-primary" onClick={handleCreateNew}>
+            Create new design
+          </button>
+        </>
       }
     >
       <p className="studio-dialog-lead">
-        Start a new box design or open one of your saved projects.
+        Pick up where you left off, or start a fresh box design.
       </p>
 
-      <div className="studio-start-grid">
-        <button type="button" className="studio-start-card" onClick={handleCreateNew}>
-          <span className="studio-start-card-title">Create a new project</span>
-          <span className="studio-start-card-desc">
-            Jump straight into the designer. Your work saves to the cloud automatically.
-          </span>
-        </button>
-
-        <button type="button" className="studio-start-card" onClick={handleOpenProject}>
-          <span className="studio-start-card-title">Open a project</span>
-          <span className="studio-start-card-desc">
-            Browse and reopen the projects saved to your account.
-          </span>
-        </button>
+      <div className="studio-start-projects">
+        <h3 className="studio-open-section-title">Your saved designs</h3>
+        <StudioProjectsPanel
+          open={open}
+          user={user}
+          onSignIn={onSignIn}
+          onOpenProject={handleOpenProject}
+          onStatus={onStatus}
+          emptyMessage="You haven't saved any designs yet. Create a new design — artwork uploads auto-save to the cloud."
+          listClassName="studio-projects-list studio-projects-list--start"
+        />
       </div>
 
       <p className="studio-dialog-hint">
-        Prefer working offline? You can also{" "}
+        Prefer working offline?{" "}
         <button type="button" className="studio-auth-switch" onClick={handleImport}>
-          import a JSON file
+          Import a JSON file
         </button>{" "}
         from a previous export.
       </p>
