@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { FaceId } from "../types";
 
 /** Loads a texture from an object URL; disposes on change/unmount. */
 export function useLoadedTexture(url: string | null) {
+  const invalidate = useThree((state) => state.invalidate);
   const [map, setMap] = useState<THREE.Texture | null>(null);
 
   useEffect(() => {
@@ -34,6 +36,11 @@ export function useLoadedTexture(url: string | null) {
       cancelled = true;
     };
   }, [url]);
+
+  // Demand-mode canvas only repaints on invalidate(); refresh after map loads or clears.
+  useEffect(() => {
+    invalidate();
+  }, [map, invalidate]);
 
   useEffect(() => {
     return () => {
