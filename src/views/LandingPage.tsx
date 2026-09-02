@@ -348,6 +348,9 @@ export default function LandingPage() {
                     <StudioLink
                       href="/studio"
                       className="btn btn-primary landing-btn-hero-primary"
+                      trackCta
+                      ctaLocation="hero"
+                      sourcePageType="homepage"
                     >
                       <span>Launch 3D studio</span>
                       <IconArrowRight />
@@ -801,6 +804,9 @@ export default function LandingPage() {
                 <StudioLink
                   href="/studio"
                   className="btn btn-primary landing-btn-hero-primary"
+                  trackCta
+                  ctaLocation="inline"
+                  sourcePageType="homepage"
                 >
                   <span>Start the 3D packaging simulator</span>
                   <IconArrowRight />

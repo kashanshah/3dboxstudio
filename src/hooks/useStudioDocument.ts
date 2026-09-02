@@ -2,6 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  trackExportClicked,
+  trackExportCompleted,
+  trackExportFailed,
+  trackProjectReopened,
+  trackProjectSaved,
+  trackStudioError,
+  type BoxType,
+  type TemplateType,
+  type UserStatus,
+} from "@/lib/analytics";
+import {
   defaultBoxDesignerState,
   deserializeDesign,
   deserializeSharedDesign,
@@ -73,6 +84,12 @@ function readShareUpdatedAt(data: unknown): number | null {
   return toShareCacheVersion(typeof updatedAt === "string" ? updatedAt : null);
 }
 
+type StudioAnalyticsContext = {
+  templateType?: TemplateType | string;
+  boxType?: BoxType | string;
+  userStatus?: UserStatus;
+};
+
 type UseStudioDocumentOptions = {
   buildPersistState: () => BoxDesignerPersistedState;
   applyPersistedState: (state: BoxDesignerPersistedState) => void;
@@ -83,6 +100,8 @@ type UseStudioDocumentOptions = {
   authUser?: AuthUser | null;
   authLoading?: boolean;
   onRequireSignIn?: () => void;
+  getAnalyticsContext?: () => StudioAnalyticsContext;
+  onDesignSessionStart?: () => void;
 };
 
 async function uploadOgPreviewIfPresent(
@@ -106,6 +125,8 @@ export function useStudioDocument({
   authUser = null,
   authLoading = false,
   onRequireSignIn,
+  getAnalyticsContext,
+  onDesignSessionStart,
 }: UseStudioDocumentOptions) {
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
@@ -132,6 +153,20 @@ export function useStudioDocument({
   const activeShareIdRef = useRef<string | null>(initialShareId);
   const autoSaveInFlightRef = useRef(false);
   const autoSaveQueuedRef = useRef(false);
+
+  const analyticsCtx = useCallback(
+    () => getAnalyticsContext?.() ?? {},
+    [getAnalyticsContext]
+  );
+
+  const markProjectSaved = useCallback(() => {
+    trackProjectSaved(analyticsCtx());
+  }, [analyticsCtx]);
+
+  const markProjectReopened = useCallback(() => {
+    trackProjectReopened(analyticsCtx());
+    onDesignSessionStart?.();
+  }, [analyticsCtx, onDesignSessionStart]);
 
   activeShareIdRef.current = activeShareId;
 
@@ -304,9 +339,12 @@ export function useStudioDocument({
       syncUrlToShare(shareId);
       setIsDirty(false);
       rememberRecent(shareId, source, undefined, shareName);
+      if (source === "opened") {
+        markProjectReopened();
+      }
       return true;
     },
-    [applyPersistedState, syncUrlToShare, rememberRecent]
+    [applyPersistedState, syncUrlToShare, rememberRecent, markProjectReopened]
   );
 
   const loadShareByPreviewToken = useCallback(
@@ -366,14 +404,16 @@ export function useStudioDocument({
       setPreviewCacheVersion(ogUpdatedAt ?? readShareUpdatedAt(result));
       setIsDirty(false);
       rememberRecent(shareId, "saved", undefined, result.name ?? activeShareName);
+      markProjectSaved();
       showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
+      trackStudioError("cloud_save_failed", "other");
     } finally {
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess]);
+  }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess, markProjectSaved]);
 
   const autoSaveCloud = useCallback(async () => {
     if (viewOnly) return;
@@ -426,8 +466,10 @@ export function useStudioDocument({
       }
 
       setIsDirty(false);
+      markProjectSaved();
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Auto-save failed.", 6000);
+      trackStudioError("cloud_save_failed", "other");
     } finally {
       setCloudBusy(false);
       autoSaveInFlightRef.current = false;
@@ -444,6 +486,7 @@ export function useStudioDocument({
     showStatus,
     syncUrlToShare,
     viewOnly,
+    markProjectSaved,
   ]);
 
   const saveCloudAs = useCallback(async () => {
@@ -491,6 +534,7 @@ export function useStudioDocument({
       setPreviewCacheVersion(cacheVersion);
       setIsDirty(false);
       rememberRecent(id, "saved", url, resolvedName);
+      markProjectSaved();
 
       if (viewOnly) {
         // Reload so the route re-evaluates ownership and unlocks the full editor.
@@ -512,11 +556,12 @@ export function useStudioDocument({
       }
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not create share link.", 6000);
+      trackStudioError("cloud_save_failed", "other");
     } finally {
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess]);
+  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess, markProjectSaved]);
 
   const renameCloudShare = useCallback(async () => {
     if (viewOnly || !activeShareId) return;
@@ -622,17 +667,26 @@ export function useStudioDocument({
   }, [refreshRecentDesigns, showStatus]);
 
   const exportJson = useCallback(async () => {
-    const json = await serializeDesign(buildPersistState());
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `3d-box-design-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setModal(null);
-    showStatus("JSON file downloaded (includes embedded images).");
-  }, [buildPersistState, showStatus]);
+    const ctx = analyticsCtx();
+    trackExportClicked("json", "standard", ctx);
+    try {
+      const json = await serializeDesign(buildPersistState());
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `3d-box-design-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setModal(null);
+      showStatus("JSON file downloaded (includes embedded images).");
+      trackExportCompleted("json", "standard", ctx);
+    } catch {
+      trackExportFailed("json", "serialization_failed", ctx);
+      trackStudioError("export_failed", "export");
+      showStatus("Could not export JSON.", 5000);
+    }
+  }, [buildPersistState, showStatus, analyticsCtx]);
 
   const importJsonFile = useCallback(
     async (file: File) => {
@@ -657,9 +711,10 @@ export function useStudioDocument({
       syncUrlToShare(null);
       setIsDirty(true);
       setModal(null);
-      showStatus(`Imported “${file.name}”.`);
+      showStatus("Imported design file.");
+      onDesignSessionStart?.();
     },
-    [applyPersistedState, showStatus, syncUrlToShare, viewOnly]
+    [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]
   );
 
   const newDocument = useCallback(() => {
@@ -673,7 +728,8 @@ export function useStudioDocument({
     setIsDirty(false);
     setModal(null);
     showStatus("New design started.");
-  }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly]);
+    onDesignSessionStart?.();
+  }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]);
 
   const requestNew = useCallback(() => {
     if (viewOnly) return;

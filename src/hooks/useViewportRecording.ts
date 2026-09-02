@@ -4,8 +4,16 @@ import {
   viewportRecordingCapture,
 } from "../viewportRecordingCapture";
 import { preloadViewportRecordingOutroAssets } from "../viewportRecordingOutro";
+import type { ExportFailureCategory, ExportFormat } from "@/lib/analytics/types";
+import { videoFormatFromMime } from "@/lib/analytics/mappers";
 
 export type ViewportRecordingPhase = "idle" | "countdown" | "recording";
+
+type ViewportRecordingOptions = {
+  onExportClicked?: (format: ExportFormat) => void;
+  onExportCompleted?: (format: ExportFormat) => void;
+  onExportFailed?: (format: ExportFormat, category: ExportFailureCategory) => void;
+};
 
 const COUNTDOWN_START = 3;
 const MAX_RECORD_MS = 15_000;
@@ -42,7 +50,9 @@ function downloadBlob(blob: Blob, extension: string) {
   URL.revokeObjectURL(url);
 }
 
-export function useViewportRecording() {
+export function useViewportRecording(options: ViewportRecordingOptions = {}) {
+  const { onExportClicked, onExportCompleted, onExportFailed } = options;
+  const exportFormatRef = useRef<ExportFormat>("webm");
   const [phase, setPhase] = useState<ViewportRecordingPhase>("idle");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [recordRemainingSec, setRecordRemainingSec] = useState<number | null>(null);
@@ -134,6 +144,7 @@ export function useViewportRecording() {
       const glCanvas = getCanvas();
       if (!glCanvas) {
         setError("Could not access the 3D canvas for recording.");
+        onExportFailed?.("webm", "canvas_unavailable");
         setPhase("idle");
         return;
       }
@@ -142,6 +153,7 @@ export function useViewportRecording() {
       const ctx = composite.getContext("2d", { alpha: false });
       if (!ctx) {
         setError("Could not prepare the recording surface.");
+        onExportFailed?.("webm", "recorder_start_failed");
         setPhase("idle");
         return;
       }
@@ -154,6 +166,7 @@ export function useViewportRecording() {
         stream = composite.captureStream(30);
       } catch {
         setError("Recording this view is not supported in your browser.");
+        onExportFailed?.("webm", "recorder_unsupported");
         setPhase("idle");
         return;
       }
@@ -172,11 +185,14 @@ export function useViewportRecording() {
           recorder = new MediaRecorder(stream);
         } catch {
           setError("Could not start the video recorder.");
+          onExportFailed?.(exportFormatRef.current, "recorder_start_failed");
           cleanupCapture();
           setPhase("idle");
           return;
         }
       }
+
+      exportFormatRef.current = videoFormatFromMime(recorder.mimeType || preferredMime || "video/webm");
 
       endingRef.current = false;
       viewportRecordingCapture.active = true;
@@ -201,9 +217,15 @@ export function useViewportRecording() {
         cleanupCapture();
         mediaRecorderRef.current = null;
         const mime = recorder.mimeType || "video/webm";
+        const format = videoFormatFromMime(mime);
         const blob = new Blob(chunksRef.current, { type: mime });
         chunksRef.current = [];
-        downloadBlob(blob, extensionForMime(mime));
+        try {
+          downloadBlob(blob, extensionForMime(mime));
+          onExportCompleted?.(format);
+        } catch {
+          onExportFailed?.(format, "download_failed");
+        }
         endingRef.current = false;
         setPhase("idle");
       };
@@ -213,6 +235,7 @@ export function useViewportRecording() {
         recorder.start(200);
       } catch {
         setError("Could not start recording.");
+        onExportFailed?.(exportFormatRef.current, "recorder_start_failed");
         cleanupCapture();
         mediaRecorderRef.current = null;
         setPhase("idle");
@@ -235,7 +258,7 @@ export function useViewportRecording() {
         finalizeStop();
       }, MAX_RECORD_MS);
     },
-    [cleanupCapture, finalizeStop]
+    [cleanupCapture, finalizeStop, onExportFailed, onExportCompleted]
   );
 
   const start = useCallback(
@@ -248,8 +271,12 @@ export function useViewportRecording() {
       const canvas = getCanvas();
       if (!canvas) {
         setError("The 3D view is not ready yet. Wait a moment and try again.");
+        onExportFailed?.("webm", "canvas_unavailable");
         return;
       }
+
+      const preferredMime = pickRecorderMime();
+      onExportClicked?.(preferredMime?.includes("mp4") ? "mp4" : "webm");
 
       setPhase("countdown");
       let n = COUNTDOWN_START;
@@ -266,7 +293,7 @@ export function useViewportRecording() {
         }
       }, 1000);
     },
-    [phase, beginCapture, clearCountdownInterval]
+    [phase, beginCapture, clearCountdownInterval, onExportFailed, onExportClicked]
   );
 
   return {

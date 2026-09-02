@@ -12,7 +12,22 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
-import { trackSignup, trackStudioActivated } from "@/lib/analytics";
+import {
+  resetDesignSession,
+  trackArtworkUploaded,
+  trackDesignCustomized,
+  trackDesignStarted,
+  trackExportClicked,
+  trackExportCompleted,
+  trackExportFailed,
+  trackLogin,
+  trackSignup,
+  trackStudioActivated,
+  trackStudioError,
+  trackStudioOpen,
+  trackTemplateSelected,
+  userStatusFromAuth,
+} from "@/lib/analytics";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -208,6 +223,8 @@ export default function BoxDesigner({
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
   const pendingAutoSaveRef = useRef(false);
+  const studioOpenTrackedRef = useRef(false);
+  const templateInitRef = useRef(true);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
   const [opening, setOpening] = useState<OpeningStyle>("closed");
@@ -238,6 +255,17 @@ export default function BoxDesigner({
   }, []);
 
   const r3fRef = useRef<RootState | null>(null);
+
+  const studioAnalyticsCtx = useCallback(
+    () => ({
+      templateType: boxTemplateId,
+      boxType: boxTemplateId,
+      user: auth.user,
+      userStatus: userStatusFromAuth(auth.user),
+    }),
+    [boxTemplateId, auth.user]
+  );
+
   const {
     phase: recordPhase,
     countdown: recordCountdown,
@@ -246,7 +274,14 @@ export default function BoxDesigner({
     start: startViewportRecording,
     stop: stopViewportRecording,
     cancelCountdown: cancelRecordCountdown,
-  } = useViewportRecording();
+  } = useViewportRecording({
+    onExportClicked: (format) => trackExportClicked(format, "viewport", studioAnalyticsCtx()),
+    onExportCompleted: (format) => trackExportCompleted(format, "viewport", studioAnalyticsCtx()),
+    onExportFailed: (format, category) => {
+      trackExportFailed(format, category, studioAnalyticsCtx());
+      trackStudioError("export_failed", "export");
+    },
+  });
 
   const isRecordingViewport = recordPhase === "recording";
 
@@ -274,6 +309,14 @@ export default function BoxDesigner({
     [isRecordingViewport]
   );
 
+  const beginDesignSession = useCallback(
+    () => {
+      resetDesignSession();
+      trackDesignStarted(studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
   const applyBoxTemplate = useCallback(
     (id: string) => {
       const template = getBoxTemplate(id);
@@ -285,14 +328,62 @@ export default function BoxDesigner({
       setDims({ ...template.dims });
       commitOpening(template.opening);
       setBoxTemplateId(template.id);
+      if (!templateInitRef.current) {
+        trackTemplateSelected(template.id, studioAnalyticsCtx());
+        trackDesignCustomized("dimensions", studioAnalyticsCtx());
+      }
     },
-    [commitOpening]
+    [commitOpening, studioAnalyticsCtx]
   );
 
-  const editDims = useCallback((patch: Partial<BoxDimensions>) => {
-    setDims((d) => ({ ...d, ...patch }));
-    setBoxTemplateId("custom");
-  }, []);
+  const editDims = useCallback(
+    (patch: Partial<BoxDimensions>) => {
+      setDims((d) => ({ ...d, ...patch }));
+      setBoxTemplateId("custom");
+      trackDesignCustomized("dimensions", studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
+  const setUnitWithAnalytics = useCallback(
+    (value: LengthUnit) => {
+      setUnit(value);
+      trackDesignCustomized("dimensions", studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
+  const setMaterialWithAnalytics = useCallback(
+    (value: string) => {
+      setMaterialId(value);
+      trackDesignCustomized("material", studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
+  const setEnvWithAnalytics = useCallback(
+    (value: EnvPreset) => {
+      setEnvPreset(value);
+      trackDesignCustomized("lighting", studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
+  const setZoomWithAnalytics = useCallback(
+    (value: number) => {
+      setZoomFraction(Math.min(1, Math.max(0, value)));
+      trackDesignCustomized("camera", studioAnalyticsCtx());
+    },
+    [studioAnalyticsCtx]
+  );
+
+  const commitOpeningWithAnalytics = useCallback(
+    (value: OpeningStyle) => {
+      commitOpening(value);
+      trackDesignCustomized("other", studioAnalyticsCtx());
+    },
+    [commitOpening, studioAnalyticsCtx]
+  );
 
   const textureUrls = useFaceObjectUrls(faceFiles);
 
@@ -398,6 +489,8 @@ export default function BoxDesigner({
     authUser: auth.user,
     authLoading: auth.loading,
     onRequireSignIn: openSignUp,
+    getAnalyticsContext: studioAnalyticsCtx,
+    onDesignSessionStart: beginDesignSession,
   });
 
   const openProjects = useCallback(() => {
@@ -428,6 +521,16 @@ export default function BoxDesigner({
   const showAuthGate = requiresAccount && !auth.loading && !auth.user;
 
   useEffect(() => {
+    templateInitRef.current = false;
+  }, []);
+
+  useEffect(() => {
+    if (showAuthGate || !sessionReady || studioOpenTrackedRef.current) return;
+    studioOpenTrackedRef.current = true;
+    trackStudioOpen(studioAnalyticsCtx());
+  }, [showAuthGate, sessionReady, studioAnalyticsCtx]);
+
+  useEffect(() => {
     if (!showAuthGate || oauthError) return;
     setAuthModal({ open: true, mode: "signup" });
   }, [showAuthGate, oauthError]);
@@ -453,6 +556,8 @@ export default function BoxDesigner({
         conversionPage: "/studio",
       });
       trackStudioActivated("google");
+    } else {
+      trackLogin("google");
     }
     doc.showStatus(welcome ? "Welcome! Your account is ready." : "Signed in with Google.", 5000);
     router.replace("/studio", { scroll: false });
@@ -474,7 +579,10 @@ export default function BoxDesigner({
         await doc.loadShareById(shareIdFromUrl);
         if (!cancelled) doc.showStatus("Opened shared design from link.");
       } catch {
-        if (!cancelled) doc.showStatus("Could not load shared design.", 5000);
+        if (!cancelled) {
+          doc.showStatus("Could not load shared design.", 5000);
+          trackStudioError("cloud_load_failed", "studio_load");
+        }
       } finally {
         if (!cancelled) {
           setSessionReady(true);
@@ -496,9 +604,15 @@ export default function BoxDesigner({
     void (async () => {
       try {
         await doc.loadShareByPreviewToken(previewTokenFromUrl);
-        if (!cancelled) doc.showStatus("View-only preview opened.");
+        if (!cancelled) {
+          doc.showStatus("View-only preview opened.");
+          beginDesignSession();
+        }
       } catch {
-        if (!cancelled) doc.showStatus("Could not load preview.", 5000);
+        if (!cancelled) {
+          doc.showStatus("Could not load preview.", 5000);
+          trackStudioError("cloud_load_failed", "studio_load");
+        }
       } finally {
         if (!cancelled) {
           setSessionReady(true);
@@ -510,11 +624,11 @@ export default function BoxDesigner({
     return () => {
       cancelled = true;
     };
-  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean]);
+  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean, beginDesignSession]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
-    setZoomFraction(Math.min(1, Math.max(0, t)));
-  }, []);
+    setZoomWithAnalytics(t);
+  }, [setZoomWithAnalytics]);
 
   const setFile = useCallback((id: FaceId, file: File | null) => {
     if (file) pendingAutoSaveRef.current = true;
@@ -537,11 +651,14 @@ export default function BoxDesigner({
       const error = validateFaceArtworkFile(file);
       if (error) {
         setArtworkUploadError(error);
+        trackStudioError("file_validation_failed", "artwork_upload");
         return;
       }
       setFile(id, file);
+      trackArtworkUploaded(id, file, undefined, studioAnalyticsCtx());
+      trackDesignCustomized("artwork", studioAnalyticsCtx());
     },
-    [setFile]
+    [setFile, studioAnalyticsCtx]
   );
 
   const bumpTextureRotationBy90 = useCallback((id: FaceId) => {
@@ -554,7 +671,8 @@ export default function BoxDesigner({
       }
       return { ...prev, [id]: next };
     });
-  }, []);
+    trackDesignCustomized("artwork", studioAnalyticsCtx());
+  }, [studioAnalyticsCtx]);
 
   const clearAllTextures = useCallback(() => {
     setFaceFiles({});
@@ -601,15 +719,27 @@ export default function BoxDesigner({
   );
 
   const exportPng = useCallback(() => {
+    const ctx = studioAnalyticsCtx();
+    trackExportClicked("png", "viewport", ctx);
     const s = r3fRef.current;
-    if (!s?.gl || !s.camera) return;
-    s.gl.render(s.scene, s.camera);
-    const url = s.gl.domElement.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `box-preview-${Date.now()}.png`;
-    a.click();
-  }, []);
+    if (!s?.gl || !s.camera) {
+      trackExportFailed("png", "canvas_unavailable", ctx);
+      trackStudioError("export_failed", "export");
+      return;
+    }
+    try {
+      s.gl.render(s.scene, s.camera);
+      const url = s.gl.domElement.toDataURL("image/png");
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `box-preview-${Date.now()}.png`;
+      a.click();
+      trackExportCompleted("png", "viewport", ctx);
+    } catch {
+      trackExportFailed("png", "download_failed", ctx);
+      trackStudioError("export_failed", "export");
+    }
+  }, [studioAnalyticsCtx]);
 
   const getPreviewCanvas = useCallback(() => r3fRef.current?.gl.domElement ?? null, []);
 
@@ -949,7 +1079,7 @@ export default function BoxDesigner({
           </div>
           <div style={{ marginBottom: "0.65rem" }}>
             <label>Unit</label>
-            <select value={unit} onChange={(e) => setUnit(e.target.value as LengthUnit)}>
+            <select value={unit} onChange={(e) => setUnitWithAnalytics(e.target.value as LengthUnit)}>
               <option value="mm">Millimeters (mm)</option>
               <option value="cm">Centimeters (cm)</option>
               <option value="in">Inches (in)</option>
@@ -992,7 +1122,7 @@ export default function BoxDesigner({
 
         <PanelCollapse title="Board / material">
           <label>Preset</label>
-          <select value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
+          <select value={materialId} onChange={(e) => setMaterialWithAnalytics(e.target.value)}>
             {MATERIAL_PRESETS.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
@@ -1006,7 +1136,7 @@ export default function BoxDesigner({
 
         <PanelCollapse title="Opening style">
           <label>Mechanism</label>
-          <select value={opening} onChange={(e) => commitOpening(e.target.value as OpeningStyle)}>
+          <select value={opening} onChange={(e) => commitOpeningWithAnalytics(e.target.value as OpeningStyle)}>
             {openingOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -1109,7 +1239,7 @@ export default function BoxDesigner({
             HDRI lighting, camera zoom, and how the preview is drawn (grid, gizmo, wireframe, turntable).
           </p>
           <label>HDRI preset</label>
-          <select value={envPreset} onChange={(e) => setEnvPreset(e.target.value as EnvPreset)}>
+          <select value={envPreset} onChange={(e) => setEnvWithAnalytics(e.target.value as EnvPreset)}>
             <option value="studio">Studio</option>
             <option value="city">City</option>
             <option value="warehouse">Warehouse</option>
@@ -1129,7 +1259,7 @@ export default function BoxDesigner({
                 title="Zoom out (camera farther)"
                 aria-label="Zoom out"
                 onClick={() =>
-                  setZoomFraction((z) => Math.min(1, Math.round((z + 0.04) * 1000) / 1000))
+                  setZoomWithAnalytics(Math.min(1, Math.round((zoomFraction + 0.04) * 1000) / 1000))
                 }
               >
                 −
@@ -1140,7 +1270,7 @@ export default function BoxDesigner({
                 max={1}
                 step={0.005}
                 value={zoomFraction}
-                onChange={(e) => setZoomFraction(Number(e.target.value))}
+                onChange={(e) => setZoomWithAnalytics(Number(e.target.value))}
                 style={{ flex: 1 }}
                 aria-valuemin={0}
                 aria-valuemax={1}
@@ -1154,7 +1284,7 @@ export default function BoxDesigner({
                 title="Zoom in (camera closer)"
                 aria-label="Zoom in"
                 onClick={() =>
-                  setZoomFraction((z) => Math.max(0, Math.round((z - 0.04) * 1000) / 1000))
+                  setZoomWithAnalytics(Math.max(0, Math.round((zoomFraction - 0.04) * 1000) / 1000))
                 }
               >
                 +
@@ -1355,14 +1485,21 @@ export default function BoxDesigner({
       <StudioStartDialog
         open={startDialogOpen && !viewOnly && Boolean(auth.user)}
         user={auth.user}
-        onClose={() => setStartDialogOpen(false)}
-        onCreateNew={() => setStartDialogOpen(false)}
+        onClose={() => {
+          setStartDialogOpen(false);
+          beginDesignSession();
+        }}
+        onCreateNew={() => {
+          setStartDialogOpen(false);
+          beginDesignSession();
+        }}
         onOpenProject={(id) => {
           setStartDialogOpen(false);
           void doc.openProject(id);
         }}
         onImport={() => {
           setStartDialogOpen(false);
+          beginDesignSession();
           doc.setModal("import");
         }}
         onRequireSignUp={openSignUp}

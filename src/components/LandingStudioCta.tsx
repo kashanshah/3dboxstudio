@@ -4,7 +4,12 @@ import StudioLink from "./StudioLink";
 export default function LandingStudioCta() {
   return (
     <div className="landing-section-cta">
-      <StudioLink className="btn btn-primary landing-btn-hero-primary">
+      <StudioLink
+        className="btn btn-primary landing-btn-hero-primary"
+        trackCta
+        ctaLocation="inline"
+        sourcePageType="homepage"
+      >
         <span>Launch 3D studio</span>
         <svg className="landing-icon-arrow" width="18" height="18" viewBox="0 0 24 24" aria-hidden>
           <path

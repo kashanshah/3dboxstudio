@@ -53,7 +53,7 @@ export default function SiteNav({ activeNav }: SiteNavProps) {
       <Link href="/contact" aria-current={activeNav === "contact" ? "page" : undefined}>
         Contact
       </Link>
-      <StudioLink href="/studio" className="btn btn-primary landing-nav-cta">
+      <StudioLink href="/studio" className="btn btn-primary landing-nav-cta" trackCta ctaLocation="header">
         Open studio
         <IconArrowRight />
       </StudioLink>

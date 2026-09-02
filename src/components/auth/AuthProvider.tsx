@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthActionResult, AuthUser } from "@/lib/authTypes";
-import { trackSignup, trackStudioActivated, type SignupAnalytics } from "@/lib/analytics";
+import { trackLogin, trackSignup, trackStudioActivated, type SignupAnalytics } from "@/lib/analytics";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -113,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not sign you in.") };
       setUser(readUser(data));
+      trackLogin("email");
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Please try again." };

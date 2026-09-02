@@ -1,4 +1,5 @@
 import Link from "next/link";
+import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
 import type { BlogSection } from "@/content/blogPosts";
 import {
@@ -112,9 +113,16 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
               renderSection(section, index),
             )}
             <div className="blog-post-cta">
-              <Link href="/studio" className="btn btn-primary">
+              <StudioLink
+                href="/studio"
+                className="btn btn-primary"
+                trackCta
+                ctaLocation="article_bottom"
+                sourcePageType="guide"
+                pageSlug={post.slug}
+              >
                 Open the free 3D box maker
-              </Link>
+              </StudioLink>
             </div>
           </div>
         </div>

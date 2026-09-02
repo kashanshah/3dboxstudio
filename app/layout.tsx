@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
+import AnalyticsPageView from "@/components/AnalyticsPageView";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import BuyMeACoffeeWidget from "@/components/BuyMeACoffeeWidget";
@@ -63,6 +64,7 @@ export default function RootLayout({
         {children}
         <Suspense fallback={null}>
           <AttributionCapture />
+          <AnalyticsPageView />
         </Suspense>
         <GoogleAnalytics />
         <VercelAnalytics />
