@@ -104,17 +104,24 @@ export function trackDesignStarted(ctx: StudioContextParams = {}): void {
   trackEvent("design_started", studioParams(ctx));
 }
 
-export function trackTemplateSelected(templateId: string, ctx: StudioContextParams = {}): void {
-  if (templateId === "custom") return;
-  const template = BOX_TEMPLATES.find((t) => t.id === templateId);
-  if (!template) return;
-  trackEvent("template_selected", {
+export function buildTemplateSelectedParams(
+  templateId: string,
+  ctx: StudioContextParams = {}
+): Record<string, string> {
+  return {
+    ...studioParams(ctx),
     template_type: sanitizeTemplateType(templateId),
     template_name: templateId,
     template_category: "box_preset",
     box_type: sanitizeBoxType(templateId),
-    ...studioParams(ctx),
-  });
+  };
+}
+
+export function trackTemplateSelected(templateId: string, ctx: StudioContextParams = {}): void {
+  if (templateId === "custom") return;
+  const template = BOX_TEMPLATES.find((t) => t.id === templateId);
+  if (!template) return;
+  trackEvent("template_selected", buildTemplateSelectedParams(templateId, ctx));
 }
 
 export function trackArtworkUploaded(

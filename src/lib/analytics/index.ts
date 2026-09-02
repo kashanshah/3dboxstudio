@@ -1,12 +1,31 @@
 export { trackEvent, GA_SHOULD_SEND, isAnalyticsDebugEnabled } from "./core";
 export type { AnalyticsParams } from "./core";
 export {
+  buildGtagInitScript,
+  buildGtagConfigOptions,
+  pushGtag,
+  isGtagInitialized,
+  GA_DATA_LAYER,
+} from "./gtag";
+export { trackPageView } from "./pageview";
+export {
+  buildPathKey,
+  createRouteTrackerState,
+  shouldEmitRouteEvents,
+  markRouteEventsEmitted,
+  clearRouteOnLeave,
+} from "./routeTracking";
+export { buildTemplateSelectedParams } from "./events";
+export { shouldFireStudioOpen } from "./studioOpen";
+export { getAnalyticsPathname, canSendAnalytics } from "./core";
+export {
   GA_ENABLED,
   GA_DEBUG,
   GA_MEASUREMENT_ID,
   isAdminPath,
   isStudioPath,
   isAnalyticsBlockedPath,
+  setGaDisableFlag,
 } from "./policy";
 
 export * from "./types";

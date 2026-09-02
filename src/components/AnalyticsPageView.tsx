@@ -9,26 +9,41 @@ import {
   storeLastPageContext,
   trackPageContext,
 } from "@/lib/analytics";
+import { trackPageView } from "@/lib/analytics/pageview";
 import { GA_ENABLED, isAnalyticsBlockedPath } from "@/lib/analytics/policy";
+import {
+  buildPathKey,
+  clearRouteOnLeave,
+  createRouteTrackerState,
+  markRouteEventsEmitted,
+  shouldEmitRouteEvents,
+  type RouteTrackerState,
+} from "@/lib/analytics/routeTracking";
+
+function emitRouteEvents(pathname: string, pathKey: string): void {
+  const pageType = pathnameToPageType(pathname);
+  const sourcePageType = pathnameToSourcePageType(pathname);
+  const pageSlug = slugFromPath(pathname);
+
+  storeLastPageContext(pathname, sourcePageType, pageSlug);
+  trackPageView(pathKey);
+  trackPageContext(pathname, pageType);
+}
 
 /**
- * Fires a supplementary page_context event with page_type once per client navigation.
- * Native page_view events are handled by gtag.js (initial load + GA4 enhanced measurement).
- *
- * Dedupes only React Strict Mode / hydration double-invoke for the same navigation —
- * repeat visits to the same URL after navigating away are tracked again.
+ * Sends explicit page_view + page_context once per permitted client navigation.
+ * gtag is initialized with send_page_view:false — this component owns SPA pageviews.
  */
 export default function AnalyticsPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const lastEmittedKeyRef = useRef<string | null>(null);
+  const trackerRef = useRef<RouteTrackerState>(createRouteTrackerState());
   const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!GA_ENABLED || !pathname || isAnalyticsBlockedPath(pathname)) return;
 
-    const query = searchParams.toString();
-    const pathKey = query ? `${pathname}?${query}` : pathname;
+    const pathKey = buildPathKey(pathname, searchParams.toString());
 
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
@@ -36,16 +51,11 @@ export default function AnalyticsPageView() {
 
     rafIdRef.current = requestAnimationFrame(() => {
       rafIdRef.current = null;
-      if (lastEmittedKeyRef.current === pathKey) return;
+      const state = trackerRef.current;
+      if (!shouldEmitRouteEvents(state, pathKey)) return;
 
-      lastEmittedKeyRef.current = pathKey;
-
-      const pageType = pathnameToPageType(pathname);
-      const sourcePageType = pathnameToSourcePageType(pathname);
-      const pageSlug = slugFromPath(pathname);
-
-      storeLastPageContext(pathname, sourcePageType, pageSlug);
-      trackPageContext(pathname, pageType);
+      trackerRef.current = markRouteEventsEmitted(state, pathKey);
+      emitRouteEvents(pathname, pathKey);
     });
 
     return () => {
@@ -53,10 +63,7 @@ export default function AnalyticsPageView() {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
       }
-      // Leaving this route allows a future return visit to emit page_context again.
-      if (lastEmittedKeyRef.current === pathKey) {
-        lastEmittedKeyRef.current = null;
-      }
+      trackerRef.current = clearRouteOnLeave(trackerRef.current, pathKey);
     };
   }, [pathname, searchParams]);
 
