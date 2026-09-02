@@ -1296,6 +1296,18 @@ html[data-studio-theme="light"] .studio-shell .btn-ghost,
   line-height: 1.4;
 }
 
+.studio-dialog-list {
+  margin: 8px 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.studio-dialog-list li + li {
+  margin-top: 6px;
+}
+
 .studio-dialog-label {
   display: block;
   margin-bottom: 6px;
