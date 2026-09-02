@@ -105,3 +105,26 @@ export function formatLandingSummary(
   if (landingPage) return landingPage;
   return "Unknown";
 }
+
+/** Normalize a stored landing path for display (strip query string and trailing slash). */
+export function normalizeLandingPath(pathname: string): string {
+  return (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+}
+
+/** Format stored signup landing fields for admin tables (shows pathname for blog posts). */
+export function formatStoredLandingDisplay(
+  landingType: string | null,
+  landingPage: string | null
+): string {
+  if (!landingPage && !landingType) return "Unknown";
+
+  if (landingPage) {
+    const path = normalizeLandingPath(landingPage);
+    const type = (landingType as LandingType | null) ?? classifyLandingPath(landingPage).type;
+    if (type === "blog_post") return path;
+    const { label } = classifyLandingPath(landingPage);
+    return formatLandingSummary(landingType, landingPage, label);
+  }
+
+  return formatLandingSummary(landingType, landingPage, null);
+}

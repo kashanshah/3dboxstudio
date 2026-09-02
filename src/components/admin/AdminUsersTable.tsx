@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { AdminUserRow } from "@/server/admin/types";
-import { formatLandingSummary } from "@/lib/landingClassification";
+import { formatStoredLandingDisplay } from "@/lib/landingClassification";
 import { formatAdminDateTime } from "@/lib/adminTimeZone";
 
 type AdminUsersTableProps = {
@@ -29,7 +29,7 @@ function formatSourceLabel(user: AdminUserRow): string {
 }
 
 function formatFirstLanding(user: AdminUserRow): string {
-  return formatLandingSummary(user.signupLandingType, user.signupLandingPage, null);
+  return formatStoredLandingDisplay(user.signupLandingType, user.signupLandingPage);
 }
 
 function formatConversionPage(user: AdminUserRow): string {
