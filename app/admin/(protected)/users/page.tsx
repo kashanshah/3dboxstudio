@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
+import { parseAdminUsersQuery } from "@/lib/adminListQuery";
 import { listAdminUsers } from "@/server/admin/reports";
 
 export const metadata: Metadata = {
@@ -7,28 +8,33 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ page?: string; search?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    sort?: string;
+    dir?: string;
+    verified?: string;
+    method?: string;
+  }>;
 };
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const page = Number(params.page ?? "1");
-  const search = params.search?.trim() || undefined;
-
-  const result = await listAdminUsers({ page, search });
+  const query = parseAdminUsersQuery(await searchParams);
+  const result = await listAdminUsers(query);
 
   return (
     <>
       <header className="admin-page-header">
         <h1>Users</h1>
-        <p>All registered accounts with design counts and view totals.</p>
+        <p>Search, filter, and sort registered accounts.</p>
       </header>
       <AdminUsersTable
         users={result.items}
         page={result.page}
+        pageSize={result.pageSize}
         totalPages={result.totalPages}
         total={result.total}
-        search={search}
+        query={query}
       />
     </>
   );

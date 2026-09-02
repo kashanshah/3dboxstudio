@@ -1,12 +1,18 @@
 import { getSql } from "../db";
 import { buildShareThumbnailUrl } from "../shareService";
 import { ADMIN_DISPLAY_TIME_ZONE } from "@/lib/adminTimeZone";
+import type {
+  DesignFilter,
+  DesignSort,
+  SortDir,
+  UserMethodFilter,
+  UserSort,
+  UserVerifiedFilter,
+} from "@/lib/adminListQuery";
 import type { AdminDesignRow, AdminStats, AdminUserRow, PaginatedResult } from "./types";
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
-
-type DesignFilter = "all" | "owned" | "anonymous" | "expired";
 
 type DesignDbRow = {
   id: string;
@@ -208,112 +214,150 @@ export async function getAdminStats(): Promise<AdminStats> {
   };
 }
 
+function likePattern(search?: string): string {
+  const q = search?.trim().toLowerCase() ?? "";
+  if (!q) return "";
+  return `%${q.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_")}%`;
+}
+
+type UserListRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  email_verified_at: string | null;
+  created_at: string;
+  signup_method: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  signup_landing_page: string | null;
+  signup_landing_type: string | null;
+  signup_conversion_page: string | null;
+  signup_referrer: string | null;
+  design_count: number;
+  total_views: number;
+};
+
 export async function listAdminUsers(options?: {
   page?: number;
   pageSize?: number;
   search?: string;
+  sort?: UserSort;
+  dir?: SortDir;
+  verified?: UserVerifiedFilter;
+  method?: UserMethodFilter;
 }): Promise<PaginatedResult<AdminUserRow>> {
   const sql = getSql();
   const page = clampPage(options?.page ?? 1);
   const pageSize = clampPageSize(options?.pageSize ?? DEFAULT_PAGE_SIZE);
   const offset = (page - 1) * pageSize;
-  const search = options?.search?.trim().toLowerCase() ?? "";
-  const searchPattern = search ? `%${search}%` : null;
+  const pattern = likePattern(options?.search);
+  const applySearch = pattern ? 1 : 0;
+  const sort = options?.sort ?? "created";
+  const dir = options?.dir ?? "desc";
+  const verified = options?.verified ?? "all";
+  const method = options?.method ?? "all";
 
-  const countRows = searchPattern
-    ? ((await sql`
-        SELECT COUNT(*)::int AS total
-        FROM users u
-        WHERE LOWER(u.email) LIKE ${searchPattern}
-           OR LOWER(COALESCE(u.name, '')) LIKE ${searchPattern}
-      `) as { total: number }[])
-    : ((await sql`SELECT COUNT(*)::int AS total FROM users`) as { total: number }[]);
+  const countRows = (await sql`
+    SELECT COUNT(*)::int AS total
+    FROM users u
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(u.email) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_source, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_medium, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_campaign, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.signup_referrer, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.signup_method, '')) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (
+        ${verified} = 'all'
+        OR (${verified} = 'verified' AND u.email_verified_at IS NOT NULL)
+        OR (${verified} = 'pending' AND u.email_verified_at IS NULL)
+      )
+      AND (
+        ${method} = 'all'
+        OR (${method} = 'google' AND LOWER(COALESCE(u.signup_method, '')) = 'google')
+        OR (
+          ${method} = 'email'
+          AND LOWER(COALESCE(NULLIF(TRIM(u.signup_method), ''), 'email')) <> 'google'
+        )
+      )
+  `) as { total: number }[];
 
   const total = countRows[0]?.total ?? 0;
 
-  const rows = searchPattern
-    ? ((await sql`
-        SELECT
-          u.id,
-          u.email,
-          u.name,
-          u.email_verified_at,
-          u.created_at,
-          u.signup_method,
-          u.utm_source,
-          u.utm_medium,
-          u.utm_campaign,
-          u.signup_landing_page,
-          u.signup_landing_type,
-          u.signup_conversion_page,
-          u.signup_referrer,
-          COUNT(sd.id)::int AS design_count,
-          COALESCE(SUM(sd.view_count), 0)::int AS total_views
-        FROM users u
-        LEFT JOIN shared_designs sd ON sd.user_id = u.id
-        WHERE LOWER(u.email) LIKE ${searchPattern}
-           OR LOWER(COALESCE(u.name, '')) LIKE ${searchPattern}
-           OR LOWER(COALESCE(u.utm_source, '')) LIKE ${searchPattern}
-           OR LOWER(COALESCE(u.utm_campaign, '')) LIKE ${searchPattern}
-        GROUP BY u.id
-        ORDER BY u.created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `) as {
-        id: string;
-        email: string;
-        name: string | null;
-        email_verified_at: string | null;
-        created_at: string;
-        signup_method: string | null;
-        utm_source: string | null;
-        utm_medium: string | null;
-        utm_campaign: string | null;
-        signup_landing_page: string | null;
-        signup_landing_type: string | null;
-        signup_conversion_page: string | null;
-        signup_referrer: string | null;
-        design_count: number;
-        total_views: number;
-      }[])
-    : ((await sql`
-        SELECT
-          u.id,
-          u.email,
-          u.name,
-          u.email_verified_at,
-          u.created_at,
-          u.signup_method,
-          u.utm_source,
-          u.utm_medium,
-          u.utm_campaign,
-          u.signup_landing_page,
-          u.signup_landing_type,
-          u.signup_conversion_page,
-          u.signup_referrer,
-          COUNT(sd.id)::int AS design_count,
-          COALESCE(SUM(sd.view_count), 0)::int AS total_views
-        FROM users u
-        LEFT JOIN shared_designs sd ON sd.user_id = u.id
-        GROUP BY u.id
-        ORDER BY u.created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `) as {
-        id: string;
-        email: string;
-        name: string | null;
-        email_verified_at: string | null;
-        created_at: string;
-        signup_method: string | null;
-        utm_source: string | null;
-        utm_medium: string | null;
-        utm_campaign: string | null;
-        signup_landing_page: string | null;
-        signup_landing_type: string | null;
-        signup_conversion_page: string | null;
-        signup_referrer: string | null;
-        design_count: number;
-        total_views: number;
-      }[]);
+  const rows = (await sql`
+    SELECT
+      u.id,
+      u.email,
+      u.name,
+      u.email_verified_at,
+      u.created_at,
+      u.signup_method,
+      u.utm_source,
+      u.utm_medium,
+      u.utm_campaign,
+      u.signup_landing_page,
+      u.signup_landing_type,
+      u.signup_conversion_page,
+      u.signup_referrer,
+      COUNT(sd.id)::int AS design_count,
+      COALESCE(SUM(sd.view_count), 0)::int AS total_views
+    FROM users u
+    LEFT JOIN shared_designs sd ON sd.user_id = u.id
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(u.email) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_source, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_medium, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.utm_campaign, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.signup_referrer, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.signup_method, '')) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (
+        ${verified} = 'all'
+        OR (${verified} = 'verified' AND u.email_verified_at IS NOT NULL)
+        OR (${verified} = 'pending' AND u.email_verified_at IS NULL)
+      )
+      AND (
+        ${method} = 'all'
+        OR (${method} = 'google' AND LOWER(COALESCE(u.signup_method, '')) = 'google')
+        OR (
+          ${method} = 'email'
+          AND LOWER(COALESCE(NULLIF(TRIM(u.signup_method), ''), 'email')) <> 'google'
+        )
+      )
+    GROUP BY u.id
+    ORDER BY
+      CASE WHEN ${sort} = 'email' AND ${dir} = 'asc' THEN LOWER(u.email) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'email' AND ${dir} = 'desc' THEN LOWER(u.email) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'name' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.name, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'name' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.name, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'landing' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.signup_landing_type, u.signup_landing_page, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'landing' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.signup_landing_type, u.signup_landing_page, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'conversion' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.signup_conversion_page, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'conversion' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.signup_conversion_page, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'source' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.utm_source, u.signup_referrer, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'source' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.utm_source, u.signup_referrer, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'method' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.signup_method, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'method' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.signup_method, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'verified' AND ${dir} = 'asc' THEN (u.email_verified_at IS NOT NULL) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'verified' AND ${dir} = 'desc' THEN (u.email_verified_at IS NOT NULL) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'designs' AND ${dir} = 'asc' THEN COUNT(sd.id) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'designs' AND ${dir} = 'desc' THEN COUNT(sd.id) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'views' AND ${dir} = 'asc' THEN COALESCE(SUM(sd.view_count), 0) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'views' AND ${dir} = 'desc' THEN COALESCE(SUM(sd.view_count), 0) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'asc' THEN u.created_at END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'desc' THEN u.created_at END DESC NULLS LAST,
+      u.created_at DESC,
+      u.id DESC
+    LIMIT ${pageSize} OFFSET ${offset}
+  `) as UserListRow[];
 
   const items: AdminUserRow[] = rows.map((row) => ({
     id: row.id,
@@ -342,218 +386,47 @@ export async function listAdminUsers(options?: {
   };
 }
 
-async function countDesigns(filter: DesignFilter, searchPattern: string | null): Promise<number> {
+export async function listAdminDesigns(options?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  filter?: DesignFilter;
+  sort?: DesignSort;
+  dir?: SortDir;
+}): Promise<PaginatedResult<AdminDesignRow>> {
   const sql = getSql();
+  const page = clampPage(options?.page ?? 1);
+  const pageSize = clampPageSize(options?.pageSize ?? DEFAULT_PAGE_SIZE);
+  const offset = (page - 1) * pageSize;
+  const pattern = likePattern(options?.search);
+  const applySearch = pattern ? 1 : 0;
+  const filter = options?.filter ?? "all";
+  const sort = options?.sort ?? "created";
+  const dir = options?.dir ?? "desc";
 
-  if (searchPattern) {
-    if (filter === "owned") {
-      const rows = (await sql`
-        SELECT COUNT(*)::int AS total
-        FROM shared_designs sd
-        LEFT JOIN users u ON u.id = sd.user_id
-        WHERE sd.user_id IS NOT NULL
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-            OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-          )
-      `) as { total: number }[];
-      return rows[0]?.total ?? 0;
-    }
-    if (filter === "anonymous") {
-      const rows = (await sql`
-        SELECT COUNT(*)::int AS total
-        FROM shared_designs sd
-        WHERE sd.user_id IS NULL
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-          )
-      `) as { total: number }[];
-      return rows[0]?.total ?? 0;
-    }
-    if (filter === "expired") {
-      const rows = (await sql`
-        SELECT COUNT(*)::int AS total
-        FROM shared_designs sd
-        LEFT JOIN users u ON u.id = sd.user_id
-        WHERE sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-            OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-          )
-      `) as { total: number }[];
-      return rows[0]?.total ?? 0;
-    }
-    const rows = (await sql`
-      SELECT COUNT(*)::int AS total
-      FROM shared_designs sd
-      LEFT JOIN users u ON u.id = sd.user_id
-      WHERE
-        LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-        OR LOWER(sd.id) LIKE ${searchPattern}
-        OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-    `) as { total: number }[];
-    return rows[0]?.total ?? 0;
-  }
+  const countRows = (await sql`
+    SELECT COUNT(*)::int AS total
+    FROM shared_designs sd
+    LEFT JOIN users u ON u.id = sd.user_id
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(COALESCE(sd.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(sd.id) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.email, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (
+        ${filter} = 'all'
+        OR (${filter} = 'owned' AND sd.user_id IS NOT NULL)
+        OR (${filter} = 'anonymous' AND sd.user_id IS NULL)
+        OR (${filter} = 'expired' AND sd.expires_at IS NOT NULL AND sd.expires_at <= NOW())
+      )
+  `) as { total: number }[];
 
-  if (filter === "owned") {
-    const rows = (await sql`
-      SELECT COUNT(*)::int AS total FROM shared_designs WHERE user_id IS NOT NULL
-    `) as { total: number }[];
-    return rows[0]?.total ?? 0;
-  }
-  if (filter === "anonymous") {
-    const rows = (await sql`
-      SELECT COUNT(*)::int AS total FROM shared_designs WHERE user_id IS NULL
-    `) as { total: number }[];
-    return rows[0]?.total ?? 0;
-  }
-  if (filter === "expired") {
-    const rows = (await sql`
-      SELECT COUNT(*)::int AS total
-      FROM shared_designs
-      WHERE expires_at IS NOT NULL AND expires_at <= NOW()
-    `) as { total: number }[];
-    return rows[0]?.total ?? 0;
-  }
-  const rows = (await sql`SELECT COUNT(*)::int AS total FROM shared_designs`) as { total: number }[];
-  return rows[0]?.total ?? 0;
-}
+  const total = countRows[0]?.total ?? 0;
 
-async function fetchDesigns(
-  filter: DesignFilter,
-  searchPattern: string | null,
-  pageSize: number,
-  offset: number
-): Promise<DesignDbRow[]> {
-  const sql = getSql();
-
-  if (searchPattern) {
-    if (filter === "owned") {
-      return (await sql`
-        SELECT
-          sd.id, sd.name, sd.preview_token, sd.user_id,
-          u.email AS owner_email, u.name AS owner_name,
-          sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-          sd.og_image_key, sd.images,
-          (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-        FROM shared_designs sd
-        LEFT JOIN users u ON u.id = sd.user_id
-        WHERE sd.user_id IS NOT NULL
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-            OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-          )
-        ORDER BY sd.created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `) as DesignDbRow[];
-    }
-    if (filter === "anonymous") {
-      return (await sql`
-        SELECT
-          sd.id, sd.name, sd.preview_token, sd.user_id,
-          u.email AS owner_email, u.name AS owner_name,
-          sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-          sd.og_image_key, sd.images,
-          (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-        FROM shared_designs sd
-        LEFT JOIN users u ON u.id = sd.user_id
-        WHERE sd.user_id IS NULL
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-          )
-        ORDER BY sd.created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `) as DesignDbRow[];
-    }
-    if (filter === "expired") {
-      return (await sql`
-        SELECT
-          sd.id, sd.name, sd.preview_token, sd.user_id,
-          u.email AS owner_email, u.name AS owner_name,
-          sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-          sd.og_image_key, sd.images,
-          (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-        FROM shared_designs sd
-        LEFT JOIN users u ON u.id = sd.user_id
-        WHERE sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()
-          AND (
-            LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-            OR LOWER(sd.id) LIKE ${searchPattern}
-            OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-          )
-        ORDER BY sd.created_at DESC
-        LIMIT ${pageSize} OFFSET ${offset}
-      `) as DesignDbRow[];
-    }
-    return (await sql`
-      SELECT
-        sd.id, sd.name, sd.preview_token, sd.user_id,
-        u.email AS owner_email, u.name AS owner_name,
-        sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-        sd.og_image_key, sd.images,
-        (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-      FROM shared_designs sd
-      LEFT JOIN users u ON u.id = sd.user_id
-      WHERE
-        LOWER(COALESCE(sd.name, '')) LIKE ${searchPattern}
-        OR LOWER(sd.id) LIKE ${searchPattern}
-        OR LOWER(COALESCE(u.email, '')) LIKE ${searchPattern}
-      ORDER BY sd.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
-    `) as DesignDbRow[];
-  }
-
-  if (filter === "owned") {
-    return (await sql`
-      SELECT
-        sd.id, sd.name, sd.preview_token, sd.user_id,
-        u.email AS owner_email, u.name AS owner_name,
-        sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-        sd.og_image_key, sd.images,
-        (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-      FROM shared_designs sd
-      LEFT JOIN users u ON u.id = sd.user_id
-      WHERE sd.user_id IS NOT NULL
-      ORDER BY sd.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
-    `) as DesignDbRow[];
-  }
-  if (filter === "anonymous") {
-    return (await sql`
-      SELECT
-        sd.id, sd.name, sd.preview_token, sd.user_id,
-        u.email AS owner_email, u.name AS owner_name,
-        sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-        sd.og_image_key, sd.images,
-        (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-      FROM shared_designs sd
-      LEFT JOIN users u ON u.id = sd.user_id
-      WHERE sd.user_id IS NULL
-      ORDER BY sd.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
-    `) as DesignDbRow[];
-  }
-  if (filter === "expired") {
-    return (await sql`
-      SELECT
-        sd.id, sd.name, sd.preview_token, sd.user_id,
-        u.email AS owner_email, u.name AS owner_name,
-        sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
-        sd.og_image_key, sd.images,
-        (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
-      FROM shared_designs sd
-      LEFT JOIN users u ON u.id = sd.user_id
-      WHERE sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()
-      ORDER BY sd.created_at DESC
-      LIMIT ${pageSize} OFFSET ${offset}
-    `) as DesignDbRow[];
-  }
-  return (await sql`
+  const rows = (await sql`
     SELECT
       sd.id, sd.name, sd.preview_token, sd.user_id,
       u.email AS owner_email, u.name AS owner_name,
@@ -562,26 +435,59 @@ async function fetchDesigns(
       (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
     FROM shared_designs sd
     LEFT JOIN users u ON u.id = sd.user_id
-    ORDER BY sd.created_at DESC
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(COALESCE(sd.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(sd.id) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.email, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(u.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (
+        ${filter} = 'all'
+        OR (${filter} = 'owned' AND sd.user_id IS NOT NULL)
+        OR (${filter} = 'anonymous' AND sd.user_id IS NULL)
+        OR (${filter} = 'expired' AND sd.expires_at IS NOT NULL AND sd.expires_at <= NOW())
+      )
+    ORDER BY
+      CASE WHEN ${sort} = 'name' AND ${dir} = 'asc' THEN LOWER(COALESCE(NULLIF(TRIM(sd.name), ''), 'untitled')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'name' AND ${dir} = 'desc' THEN LOWER(COALESCE(NULLIF(TRIM(sd.name), ''), 'untitled')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'owner' AND ${dir} = 'asc' THEN LOWER(COALESCE(u.email, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'owner' AND ${dir} = 'desc' THEN LOWER(COALESCE(u.email, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'views' AND ${dir} = 'asc' THEN sd.view_count END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'views' AND ${dir} = 'desc' THEN sd.view_count END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'images' AND ${dir} = 'asc' THEN (
+        CASE WHEN jsonb_typeof(sd.images) = 'object'
+          THEN (SELECT COUNT(*)::int FROM jsonb_object_keys(sd.images))
+          ELSE 0
+        END + CASE WHEN sd.og_image_key IS NOT NULL AND sd.og_image_key <> '' THEN 1 ELSE 0 END
+      ) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'images' AND ${dir} = 'desc' THEN (
+        CASE WHEN jsonb_typeof(sd.images) = 'object'
+          THEN (SELECT COUNT(*)::int FROM jsonb_object_keys(sd.images))
+          ELSE 0
+        END + CASE WHEN sd.og_image_key IS NOT NULL AND sd.og_image_key <> '' THEN 1 ELSE 0 END
+      ) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'status' AND ${dir} = 'asc' THEN (
+        CASE
+          WHEN sd.expires_at IS NOT NULL AND sd.expires_at <= NOW() THEN 0
+          WHEN sd.user_id IS NULL THEN 1
+          ELSE 2
+        END
+      ) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'status' AND ${dir} = 'desc' THEN (
+        CASE
+          WHEN sd.expires_at IS NOT NULL AND sd.expires_at <= NOW() THEN 0
+          WHEN sd.user_id IS NULL THEN 1
+          ELSE 2
+        END
+      ) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'asc' THEN sd.created_at END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'desc' THEN sd.created_at END DESC NULLS LAST,
+      sd.created_at DESC,
+      sd.id DESC
     LIMIT ${pageSize} OFFSET ${offset}
   `) as DesignDbRow[];
-}
-
-export async function listAdminDesigns(options?: {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  filter?: DesignFilter;
-}): Promise<PaginatedResult<AdminDesignRow>> {
-  const page = clampPage(options?.page ?? 1);
-  const pageSize = clampPageSize(options?.pageSize ?? DEFAULT_PAGE_SIZE);
-  const offset = (page - 1) * pageSize;
-  const search = options?.search?.trim().toLowerCase() ?? "";
-  const searchPattern = search ? `%${search}%` : null;
-  const filter = options?.filter ?? "all";
-
-  const total = await countDesigns(filter, searchPattern);
-  const rows = await fetchDesigns(filter, searchPattern, pageSize, offset);
 
   return {
     items: rows.map(mapDesignRow),

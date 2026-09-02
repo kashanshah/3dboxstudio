@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/server/admin/auth";
+import { parseAdminUsersQuery } from "@/lib/adminListQuery";
 import { listAdminUsers } from "@/server/admin/reports";
 
 export const runtime = "nodejs";
@@ -10,11 +11,17 @@ export async function GET(req: Request) {
     if (denied) return denied;
 
     const { searchParams } = new URL(req.url);
-    const page = Number(searchParams.get("page") ?? "1");
+    const query = parseAdminUsersQuery({
+      page: searchParams.get("page") ?? undefined,
+      search: searchParams.get("search") ?? undefined,
+      sort: searchParams.get("sort") ?? undefined,
+      dir: searchParams.get("dir") ?? undefined,
+      verified: searchParams.get("verified") ?? undefined,
+      method: searchParams.get("method") ?? undefined,
+    });
     const pageSize = Number(searchParams.get("pageSize") ?? "25");
-    const search = searchParams.get("search") ?? undefined;
 
-    const result = await listAdminUsers({ page, pageSize, search });
+    const result = await listAdminUsers({ ...query, pageSize });
     return NextResponse.json(result);
   } catch (e) {
     console.error("GET /api/admin/users failed:", e);

@@ -2,16 +2,25 @@ import Link from "next/link";
 import type { AdminDesignRow } from "@/server/admin/types";
 import { studioSharePath, studioPreviewPath } from "@/lib/shareUrl";
 import { formatAdminDateTime } from "@/lib/adminTimeZone";
-
-type DesignFilter = "all" | "owned" | "anonymous" | "expired";
+import {
+  designsListHref,
+  designsQueryIsFiltered,
+  nextDesignSortDir,
+  resultRange,
+  type AdminDesignsQuery,
+  type DesignFilter,
+  type DesignSort,
+} from "@/lib/adminListQuery";
+import AdminListToolbar from "./AdminListToolbar";
+import AdminSortHeader from "./AdminSortHeader";
 
 type AdminDesignsTableProps = {
   designs: AdminDesignRow[];
   page: number;
+  pageSize: number;
   totalPages: number;
   total: number;
-  search?: string;
-  filter: DesignFilter;
+  query: AdminDesignsQuery;
 };
 
 const FILTERS: { value: DesignFilter; label: string }[] = [
@@ -21,47 +30,52 @@ const FILTERS: { value: DesignFilter; label: string }[] = [
   { value: "expired", label: "Expired" },
 ];
 
-function listHref(options: { page?: number; search?: string; filter: DesignFilter }): string {
-  const params = new URLSearchParams();
-  if (options.search) params.set("search", options.search);
-  if (options.filter !== "all") params.set("filter", options.filter);
-  if (options.page && options.page > 1) params.set("page", String(options.page));
-  const qs = params.toString();
-  return qs ? `/admin/designs?${qs}` : "/admin/designs";
-}
-
 export default function AdminDesignsTable({
   designs,
   page,
+  pageSize,
   totalPages,
   total,
-  search,
-  filter,
+  query,
 }: AdminDesignsTableProps) {
+  const range = resultRange(page, pageSize, total);
+  const filtered = designsQueryIsFiltered(query);
+
+  function sortHref(column: DesignSort) {
+    return designsListHref({
+      ...query,
+      page: 1,
+      sort: column,
+      dir: nextDesignSortDir(query, column),
+    });
+  }
+
+  const hidden = [
+    ...(query.filter !== "all" ? [{ name: "filter", value: query.filter }] : []),
+    ...(query.sort !== "created" ? [{ name: "sort", value: query.sort }] : []),
+    ...(query.sort !== "created" || query.dir !== "desc" ? [{ name: "dir", value: query.dir }] : []),
+  ];
+
   return (
     <>
-      <div className="admin-toolbar">
-        <form method="get" style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap" }}>
-          <input type="hidden" name="filter" value={filter} />
-          <input
-            type="search"
-            name="search"
-            placeholder="Search by name, id, or owner email…"
-            defaultValue={search ?? ""}
-            aria-label="Search designs"
-          />
-          <button className="admin-btn" type="submit">
-            Search
-          </button>
-        </form>
+      <div className="admin-toolbar-stack">
+        <AdminListToolbar
+          key={`${query.search ?? ""}|${query.filter}|${query.sort}|${query.dir}`}
+          action="/admin/designs"
+          search={query.search}
+          searchPlaceholder="Search by name, id, or owner email…"
+          searchAriaLabel="Search designs"
+          hidden={hidden}
+          clearHref={filtered ? designsListHref({ sort: query.sort, dir: query.dir }) : null}
+        />
 
         <div className="admin-filter-tabs" role="tablist" aria-label="Design filters">
           {FILTERS.map((f) => (
             <Link
               key={f.value}
               className="admin-filter-tab"
-              href={listHref({ search, filter: f.value })}
-              aria-current={filter === f.value ? "true" : undefined}
+              href={designsListHref({ ...query, page: 1, filter: f.value })}
+              aria-current={query.filter === f.value ? "true" : undefined}
             >
               {f.label}
             </Link>
@@ -71,26 +85,63 @@ export default function AdminDesignsTable({
 
       <div className="admin-panel">
         <div className="admin-panel-header">
-          <h2>Designs ({total.toLocaleString()})</h2>
+          <h2>Designs</h2>
+          <p className="admin-panel-meta">
+            {total === 0
+              ? "No matching designs"
+              : `Showing ${range.from.toLocaleString()}–${range.to.toLocaleString()} of ${total.toLocaleString()}`}
+          </p>
         </div>
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
                 <th>Preview</th>
-                <th>Name</th>
-                <th>Owner</th>
-                <th>Views</th>
-                <th>Images</th>
-                <th>Status</th>
-                <th>Created</th>
+                <AdminSortHeader
+                  label="Name"
+                  href={sortHref("name")}
+                  active={query.sort === "name"}
+                  dir={query.dir}
+                />
+                <AdminSortHeader
+                  label="Owner"
+                  href={sortHref("owner")}
+                  active={query.sort === "owner"}
+                  dir={query.dir}
+                />
+                <AdminSortHeader
+                  label="Views"
+                  href={sortHref("views")}
+                  active={query.sort === "views"}
+                  dir={query.dir}
+                  numeric
+                />
+                <AdminSortHeader
+                  label="Images"
+                  href={sortHref("images")}
+                  active={query.sort === "images"}
+                  dir={query.dir}
+                  numeric
+                />
+                <AdminSortHeader
+                  label="Status"
+                  href={sortHref("status")}
+                  active={query.sort === "status"}
+                  dir={query.dir}
+                />
+                <AdminSortHeader
+                  label="Created"
+                  href={sortHref("created")}
+                  active={query.sort === "created"}
+                  dir={query.dir}
+                />
                 <th>Links</th>
               </tr>
             </thead>
             <tbody>
               {designs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ color: "var(--muted)" }}>
+                  <td colSpan={8} className="admin-empty">
                     No designs found.
                   </td>
                 </tr>
@@ -117,16 +168,14 @@ export default function AdminDesignsTable({
                     </td>
                     <td>
                       <div>{design.name ?? "Untitled"}</div>
-                      <div className="admin-mono" style={{ color: "var(--muted)", marginTop: "0.2rem" }}>
-                        {design.id}
-                      </div>
+                      <div className="admin-mono admin-muted">{design.id}</div>
                     </td>
                     <td>
                       {design.ownerEmail ? (
                         <>
                           <div>{design.ownerEmail}</div>
                           {design.ownerName ? (
-                            <div style={{ color: "var(--muted)", fontSize: "0.8rem" }}>{design.ownerName}</div>
+                            <div className="admin-muted admin-sub">{design.ownerName}</div>
                           ) : null}
                         </>
                       ) : (
@@ -149,7 +198,7 @@ export default function AdminDesignsTable({
                     </td>
                     <td>{formatAdminDateTime(design.createdAt)}</td>
                     <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                      <div className="admin-link-stack">
                         <a className="admin-link" href={studioSharePath(design.id)} target="_blank" rel="noopener noreferrer">
                           Studio
                         </a>
@@ -178,9 +227,9 @@ export default function AdminDesignsTable({
               Page {page} of {totalPages}
             </span>
             <div className="admin-pagination-links">
-              {page > 1 ? <Link href={listHref({ page: page - 1, search, filter })}>Previous</Link> : null}
+              {page > 1 ? <Link href={designsListHref({ ...query, page: page - 1 })}>Previous</Link> : null}
               <span aria-current="page">{page}</span>
-              {page < totalPages ? <Link href={listHref({ page: page + 1, search, filter })}>Next</Link> : null}
+              {page < totalPages ? <Link href={designsListHref({ ...query, page: page + 1 })}>Next</Link> : null}
             </div>
           </div>
         ) : null}

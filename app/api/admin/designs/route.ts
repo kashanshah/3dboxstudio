@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireAdminApi } from "@/server/admin/auth";
+import { parseAdminDesignsQuery } from "@/lib/adminListQuery";
 import { listAdminDesigns } from "@/server/admin/reports";
 
 export const runtime = "nodejs";
-
-const VALID_FILTERS = new Set(["all", "owned", "anonymous", "expired"]);
 
 export async function GET(req: Request) {
   try {
@@ -12,15 +11,16 @@ export async function GET(req: Request) {
     if (denied) return denied;
 
     const { searchParams } = new URL(req.url);
-    const page = Number(searchParams.get("page") ?? "1");
+    const query = parseAdminDesignsQuery({
+      page: searchParams.get("page") ?? undefined,
+      search: searchParams.get("search") ?? undefined,
+      sort: searchParams.get("sort") ?? undefined,
+      dir: searchParams.get("dir") ?? undefined,
+      filter: searchParams.get("filter") ?? undefined,
+    });
     const pageSize = Number(searchParams.get("pageSize") ?? "25");
-    const search = searchParams.get("search") ?? undefined;
-    const rawFilter = searchParams.get("filter") ?? "all";
-    const filter = VALID_FILTERS.has(rawFilter)
-      ? (rawFilter as "all" | "owned" | "anonymous" | "expired")
-      : "all";
 
-    const result = await listAdminDesigns({ page, pageSize, search, filter });
+    const result = await listAdminDesigns({ ...query, pageSize });
     return NextResponse.json(result);
   } catch (e) {
     console.error("GET /api/admin/designs failed:", e);
