@@ -94,7 +94,7 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
               materials, openings, and per-face artwork—then export PNG mockups or share preview
               links with clients and teammates.
             </p>
-            <StudioLink href="/studio" className="btn btn-primary site-footer-cta">
+            <StudioLink href="/studio" className="btn btn-primary site-footer-cta" trackCta ctaLocation="footer">
               Open free 3D studio
             </StudioLink>
           </div>

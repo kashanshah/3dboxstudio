@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { trackStudioError } from "@/lib/analytics";
 
 type StudioErrorBoundaryProps = {
   children: ReactNode;
@@ -21,6 +22,7 @@ export default class StudioErrorBoundary extends Component<StudioErrorBoundaryPr
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Studio render error:", error, info.componentStack);
+    trackStudioError("webgl_init_failed", "rendering");
   }
 
   private handleReset = () => {
