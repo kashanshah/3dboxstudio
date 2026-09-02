@@ -1,18 +1,25 @@
 "use client";
 
 import { GoogleAnalytics as NextGoogleAnalytics } from "@next/third-parties/google";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim();
-
-function isAdminPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
-}
+import {
+  GA_DEBUG,
+  GA_ENABLED,
+  GA_MEASUREMENT_ID,
+  isAnalyticsBlockedPath,
+  setGaDisableFlag,
+} from "@/lib/analytics/policy";
 
 export default function GoogleAnalytics() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "/";
+  const blocked = isAnalyticsBlockedPath(pathname);
 
-  if (!GA_ID || isAdminPath(pathname)) return null;
+  useEffect(() => {
+    setGaDisableFlag(blocked);
+  }, [blocked]);
 
-  return <NextGoogleAnalytics gaId={GA_ID} />;
+  if (!GA_ENABLED || blocked) return null;
+
+  return <NextGoogleAnalytics gaId={GA_MEASUREMENT_ID} debugMode={GA_DEBUG} />;
 }

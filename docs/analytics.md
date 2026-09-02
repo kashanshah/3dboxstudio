@@ -6,9 +6,10 @@ This document describes how GA4 is implemented on [3dboxstudio.com](https://3dbo
 
 | Layer | Location | Role |
 |-------|----------|------|
+| Enablement policy | `src/lib/analytics/policy.ts` | Single `GA_ENABLED` rule for loader + custom events |
 | GA script loader | `src/components/GoogleAnalytics.tsx` | Loads **gtag.js** via `@next/third-parties/google` (not GTM) |
-| Page views | `@next/third-parties` `GoogleAnalytics` component | Automatic SPA `page_view` on route changes |
-| Page context | `src/components/AnalyticsPageView.tsx` | Supplementary `page_context` event with `page_type` (no duplicate `page_view`) |
+| Page views | gtag `config` on load + GA4 Enhanced Measurement | Initial `page_view`; further navigations depend on GA4 property settings |
+| Page context | `src/components/AnalyticsPageView.tsx` | Supplementary `page_context` event with `page_type` |
 | Event API | `src/lib/analytics/` | `trackEvent(name, params)` + typed helpers |
 | Attribution | `src/components/AttributionCapture.tsx` | First-touch UTM/referrer → httpOnly cookie (signup only; does **not** override GA session attribution) |
 | Studio CTAs | `src/components/StudioLink.tsx` | `studio_cta_clicked` + session entry context for `studio_open` |
@@ -19,13 +20,22 @@ This document describes how GA4 is implemented on [3dboxstudio.com](https://3dbo
 
 ```tsx
 // app/layout.tsx
-<GoogleAnalytics />  // reads NEXT_PUBLIC_GA_MEASUREMENT_ID
-<AnalyticsPageView />  // page_type context
+<GoogleAnalytics />   // gtag loader — only when GA_ENABLED
+<AnalyticsPageView /> // page_context — only when GA_ENABLED
 ```
 
-- **Measurement ID:** `NEXT_PUBLIC_GA_MEASUREMENT_ID` (`G-XXXXXXXX`)
-- **Disabled when:** env var empty, or route is `/admin` / `/admin/*`
-- **Development:** events are **not sent** unless `NODE_ENV=production` **or** `NEXT_PUBLIC_ANALYTICS_DEBUG=true`
+### Shared enablement policy (`GA_ENABLED`)
+
+Defined in `src/lib/analytics/policy.ts` and used by **both** the gtag loader and `trackEvent()`:
+
+| Condition | GA loads? | Events send? |
+|-----------|-----------|--------------|
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` empty | No | No |
+| `NODE_ENV=development` and debug off | **No** | **No** |
+| `NODE_ENV=production` | Yes | Yes |
+| `NEXT_PUBLIC_ANALYTICS_DEBUG=true` (any env) | Yes | Yes |
+
+**Localhost cannot pollute production GA** unless you explicitly set `NEXT_PUBLIC_ANALYTICS_DEBUG=true` with a real measurement ID.
 
 ### Core API
 
@@ -35,11 +45,9 @@ import { trackEvent } from "@/lib/analytics";
 trackEvent("event_name", { param: "value" });
 ```
 
-All helpers (`trackStudioOpen`, `trackExportCompleted`, etc.) call `trackEvent` internally. Analytics never throws; blocked scripts and ad blockers are ignored safely.
+All helpers call `trackEvent` internally. Analytics never throws; blocked scripts and ad blockers are ignored safely.
 
 ### Debug mode
-
-Set in `.env.local`:
 
 ```env
 NEXT_PUBLIC_ANALYTICS_DEBUG=true
@@ -48,10 +56,11 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
 When enabled:
 
-- Every event logs to the console as `[Analytics] event_name { ...params }`
-- Events are sent to GA even in non-production builds (for DebugView)
+- Console logs: `[Analytics] event_name { ...params }`
+- `GA_ENABLED` is true in development (events send)
+- `GoogleAnalytics` passes `debugMode={true}` → gtag config includes `{ debug_mode: true }` for **GA4 DebugView**
 
-Default: **disabled** — local dev does not pollute production GA.
+Debug mode is **off by default**. It is never enabled in production unless you explicitly set the env var.
 
 ---
 
@@ -60,7 +69,7 @@ Default: **disabled** — local dev does not pollute production GA.
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Production | GA4 measurement ID (`G-XXXXXXXX`). Empty = GA fully disabled. |
-| `NEXT_PUBLIC_ANALYTICS_DEBUG` | No | `true` = console logging + allow sending in dev. Default off. |
+| `NEXT_PUBLIC_ANALYTICS_DEBUG` | No | `true` = console logging + enable GA in dev + `debug_mode` for DebugView. Default off. |
 
 ---
 
@@ -75,7 +84,7 @@ Default: **disabled** — local dev does not pollute production GA.
 
 **Allowed:** predefined enums, buckets, sanitized categories, template preset IDs, page paths, article slugs (public URLs).
 
-**Attribution:** The app does **not** manually set `source`, `medium`, or `campaign` on product funnel events. UTMs, `gclid`, and referrers (including ChatGPT, Perplexity, Claude, Gemini) are preserved by GA4 + first-page load. `AttributionCapture` only enriches `sign_up` with first-touch context stored server-side.
+**Attribution:** The app does **not** manually set `source`, `medium`, or `campaign` on product funnel events. UTMs, `gclid`, and referrers (including ChatGPT, Perplexity, Claude, Gemini) are preserved by GA4 + first-page load.
 
 ---
 
@@ -83,22 +92,51 @@ Default: **disabled** — local dev does not pollute production GA.
 
 | Mechanism | Events protected |
 |-----------|------------------|
-| `sessionStorage` milestone flags | `studio_open`, `design_started`, `design_completed`, `design_customized` (per category) |
-| `shouldTrackPageContext` per path key | `page_context` |
-| `resetDesignSession()` on new design | Resets per-design milestones when starting a new session |
-| Ref guards | `studioOpenTrackedRef`, `templateInitRef` (skip initial template render) |
+| `sessionStorage` per design session | `design_started`, `design_customized` (per category) |
+| `requestAnimationFrame` + effect cleanup | `page_context` (Strict Mode only; repeat URL visits allowed) |
+| `studioOpenTrackedRef` per BoxDesigner mount | `studio_open` (re-fires when re-entering Studio) |
+| `resetDesignSession()` on new design | Resets per-design milestones |
+| `templateInitRef` | Skips initial template dropdown render |
 
-React Strict Mode: milestone flags persist in `sessionStorage` within the tab so double `useEffect` mounts do not duplicate milestone events.
+### `page_context` frequency
+
+- Fires **once per actual client navigation** to a URL
+- **Does** fire again when returning to the same URL after navigating away (e.g. `/blog/x` → `/studio` → `/blog/x`)
+- **Does not** fire twice for the same navigation due to React Strict Mode (rAF + cleanup clears the in-flight key)
+
+### `studio_open` frequency
+
+- Fires **once per entry into the Studio workspace** (each time `BoxDesigner` mounts with auth resolved and session ready)
+- **Does** fire again when leaving Studio and returning (e.g. Studio → Blog → Studio)
+- **Does** fire again in a new GA session if the user re-enters Studio (no tab-level persistence)
+- **Does not** fire during auth loading, on the auth gate, or on React rerenders within the same mount
 
 ---
 
-## `design_completed` definition
+## `design_completed` — not implemented
 
-**Trigger:** First successful **cloud save** in a design session — manual Save, Save As, or auto-save after artwork upload.
+**Decision:** Removed from instrumentation.
 
-**Rationale:** The product treats cloud persistence as the meaningful “design is real” milestone (auto-save on artwork is documented in-app). Export is tracked separately in the export funnel.
+**Why:** The previous definition (first cloud save) fired almost immediately after `artwork_uploaded` because artwork upload triggers auto-save. That did not represent meaningful design completion and duplicated `project_saved`.
 
-Fired once per design session via `markDesignCompleted()` inside `trackProjectSaved()`.
+**Use instead:**
+
+- `project_saved` — cloud persistence milestone
+- `design_customized` — meaningful editing beyond upload
+- `export_completed` — primary success metric
+
+Do **not** mark `design_completed` as a Key Event. Reintroduce only when a stronger completion signal exists (e.g. explicit “ready to export” user action).
+
+---
+
+## Admin exclusion
+
+Admin routes (`/admin`, `/admin/*`) are excluded two ways:
+
+1. **No script on direct admin loads** — `GoogleAnalytics` returns `null` on admin routes when `GA_ENABLED`
+2. **Opt-out after client navigation** — `window['ga-disable-G-XXXXXXXX'] = true` when pathname is admin, so gtag stops sending even if the script was loaded on a prior public page
+
+`AnalyticsPageView` and `trackEvent` also skip admin paths.
 
 ---
 
@@ -106,38 +144,23 @@ Fired once per design session via `markDesignCompleted()` inside `trackProjectSa
 
 | Event | Trigger | Parameters | Funnel stage | Key Event? |
 |-------|---------|------------|--------------|------------|
-| `page_view` | Automatic on route change (`@next/third-parties`) | GA defaults (`page_path`, etc.) | Acquisition | No |
+| `page_view` | gtag config on load (+ GA4 Enhanced Measurement if enabled) | GA defaults | Acquisition | No |
 | `page_context` | Once per client navigation | `page_path`, `page_type` | Acquisition | No |
 | `studio_cta_clicked` | Click tracked Studio CTA toward `/studio` | `source_page_type`, `page_path`, `page_slug?`, `cta_location`, `destination` | Content → Studio | No |
-| `studio_open` | User enters studio workspace (past auth gate, session ready) — once per tab | `entry_point`, `template_type`, `user_status` | Studio entry | No |
-| `design_started` | User begins a design session (create new, close start dialog, import JSON, reopen project) — once per design session | `template_type`, `box_type`, `user_status` | Design | No |
-| `template_selected` | User selects a preset from Box template dropdown (not initial load) | `template_type`, `template_name`, `template_category`, `box_type`, `user_status` | Design | No |
-| `artwork_uploaded` | Face image passes validation and is applied | `template_type`, `file_type`, `file_size_bucket`, `upload_surface`, `user_status` | Design | No |
-| `design_customized` | First use of each customization category per design session | `customization_type`, `template_type`, `box_type`, `user_status` | Design | No |
-| `design_completed` | First successful cloud save in design session | `template_type`, `box_type`, `user_status` | Design complete | **Yes (secondary)** |
-| `export_clicked` | User clicks PNG export, Record video, or Download JSON | `export_format`, `export_resolution`, `template_type`, `box_type`, `user_status` | Export intent | No |
+| `studio_open` | Each Studio workspace entry (past auth, session ready) | `entry_point`, `template_type`, `user_status` | Studio entry | No |
+| `design_started` | User begins a design session — once per design session | `template_type`, `box_type`, `user_status` | Design | No |
+| `template_selected` | User selects a preset from Box template dropdown | `template_type`, `template_name`, `template_category`, `box_type` | Design | No |
+| `artwork_uploaded` | Face image passes validation and is applied | `file_type`, `file_size_bucket`, `upload_surface` | Design | No |
+| `design_customized` | First use of each customization category per design session | `customization_type` | Design | No |
+| `export_clicked` | User clicks PNG export, Record video, or Download JSON | `export_format`, `export_resolution` | Export intent | No |
 | `export_completed` | Export/download succeeds | above + `is_first_export` | Export success | **Yes (primary)** |
-| `export_failed` | Export/recording fails | `export_format`, `template_type`, `failure_category` | Export | No |
+| `export_failed` | Export/recording fails | `export_format`, `failure_category` | Export | No |
 | `project_saved` | Cloud save succeeds (manual or auto) | `template_type`, `box_type`, `user_status` | Retention | No |
-| `project_reopened` | User opens saved project (panel, recent, link, URL) | `template_type`, `box_type`, `user_status` | Retention | No |
-| `sign_up` | Account created (email or Google) | `method`, optional campaign/landing params | Auth | No |
-| `login` | Successful sign-in (email or returning Google) | `method` | Auth | No |
-| `studio_activated` | Legacy: immediately after `sign_up` | `method` | Auth | No |
+| `project_reopened` | User opens saved project | `template_type`, `box_type`, `user_status` | Retention | No |
+| `sign_up` | Account created | `method`, optional campaign/landing params | Auth | No |
+| `login` | Successful sign-in | `method` | Auth | No |
+| `studio_activated` | Legacy: after `sign_up` | `method` | Auth | No |
 | `studio_error` | Sanitized studio failure | `error_category`, `stage` | Diagnostics | No |
-
-### Parameter enums
-
-**`entry_point`:** `homepage`, `template_page`, `blog`, `guide`, `direct`, `other`
-
-**`user_status`:** `guest`, `signed_in`, `signed_in_unverified`
-
-**`customization_type`:** `artwork`, `dimensions`, `material`, `background`, `camera`, `color`, `lighting`, `other`
-
-**`upload_surface`:** `front`, `back`, `left`, `right`, `top`, `bottom`, `other`
-
-**`export_format`:** `png`, `json`, `mp4`, `webm`
-
-**`failure_category`:** `canvas_unavailable`, `recorder_unsupported`, `recorder_start_failed`, `serialization_failed`, `download_failed`, `unknown`
 
 ---
 
@@ -146,53 +169,44 @@ Fired once per design session via `markDesignCompleted()` inside `trackProjectSa
 Mark manually in **Admin → Events → Mark as key event**:
 
 1. **`export_completed`** — primary product success metric
-2. **`design_completed`** — secondary (reliable: first cloud save)
 
-Do **not** mark every funnel step as a Key Event.
-
-**Future (when built):** `purchase`, `subscription_started` per GA4 ecommerce recommendations.
+Do **not** mark `design_completed` (not implemented). Do **not** mark every funnel step.
 
 ---
 
 ## GA4 Explorations
 
-### Funnel A — Overall product funnel
-
-Steps (event name):
+### Funnel A — Core activation funnel (recommended)
 
 1. `session_start`
 2. `studio_open`
 3. `design_started`
 4. `artwork_uploaded`
-5. `design_completed`
+5. `design_customized`
 6. `export_clicked`
 7. `export_completed`
 
-Exploration: **Funnel exploration** → open mode, 7 steps, breakdown by `session default channel group` optional.
+Optional parallel retention step: `project_saved` (not in the same linear funnel — often follows `artwork_uploaded` via auto-save).
 
 ### Funnel B — ChatGPT traffic
 
-Segment: Session source contains `chatgpt.com` (or exact match on `chatgpt.com`).
+Segment: Session source contains `chatgpt.com`.
 
 Steps: `session_start` → `studio_open` → `design_started` → `export_completed`
 
 ### Funnel C — Google Organic
 
-Segment: Session default channel group = Organic Search, source = google.
+Segment: Session default channel group = Organic Search.
 
 Steps: same as Funnel B.
 
 ### Funnel D — Content conversion
 
-Steps: `page_context` where `page_type` in (`blog`, `guide`, `landing`) → `studio_cta_clicked` → `studio_open` → `design_started` → `export_completed`
-
-Filter `studio_cta_clicked` by `source_page_type` and `page_slug` for per-article performance.
+Steps: `page_context` (`page_type` = `blog` / `guide` / `landing`) → `studio_cta_clicked` → `studio_open` → `design_started` → `export_completed`
 
 ### Funnel E — Template performance
 
-Steps: `template_selected` → `design_started` → `export_completed`
-
-Breakdown: `template_type`
+Steps: `template_selected` → `design_started` → `export_completed` (breakdown: `template_type`)
 
 ---
 
@@ -201,62 +215,30 @@ Breakdown: `template_type`
 ### Local / staging
 
 1. Set `NEXT_PUBLIC_ANALYTICS_DEBUG=true` and your GA measurement ID.
-2. Open DevTools → Console; confirm `[Analytics]` logs on actions.
-3. Do **not** use production GA ID for casual local browsing without debug mode (events are suppressed in dev by default).
+2. Console: confirm `[Analytics]` logs.
+3. GA4 → Admin → **DebugView**: events appear with `debug_mode: true` on the gtag config.
+4. Without debug mode in development: **no gtag script, no events** — localhost is safe.
 
 ### GA4 Realtime
 
-1. GA4 → **Reports → Realtime**
-2. Open the site in another tab (production URL)
-3. Perform actions; watch **Event count by Event name** for `studio_open`, `export_completed`, etc.
-
-### GA4 DebugView
-
-1. Install [Google Analytics Debugger](https://chrome.google.com/webstore/detail/google-analytics-debugger/jnkmfdileelhofjcijamephohjechhna) or use `debug_mode` via gtag (DebugView picks up validated streams).
-2. With `NEXT_PUBLIC_ANALYTICS_DEBUG=true`, trigger events and open **Admin → DebugView**.
+Production URL only (or debug-enabled local). Watch event counts for `studio_open`, `export_completed`, etc.
 
 ### Verification checklist
 
-- [ ] Single GA tag (no duplicates in Network tab for second `gtag/js?id=`)
-- [ ] Homepage: one automatic `page_view` per navigation
-- [ ] Client-side route change fires new `page_view` + one `page_context`
-- [ ] `studio_open` once when entering studio
-- [ ] `design_started` once per design session
+- [ ] No `gtag/js` request on localhost without `NEXT_PUBLIC_ANALYTICS_DEBUG=true`
+- [ ] `page_context` fires on every navigation, including return visits to the same URL
+- [ ] `studio_open` fires on each Studio re-entry, not once per tab forever
+- [ ] Navigating public → `/admin` stops GA hits (`ga-disable` flag)
 - [ ] `export_completed` only after successful download
-- [ ] UTMs present in landing URL still visible in GA acquisition reports
-- [ ] No PII in event parameter payloads (DebugView)
+- [ ] No PII in DebugView payloads
 
 ---
 
 ## Exclude internal / developer traffic
 
-**Do not hardcode IPs in the repository.**
+Use GA4 Admin **internal traffic filters** (define IPs in Data stream settings). Do not hardcode IPs in the repo.
 
-Recommended GA4 Admin setup:
-
-1. **Admin → Data collection → Data filters**
-2. Create filter: **Internal traffic** (define your office/home IPs in **Admin → Data streams → Configure tag settings → Show all → Define internal traffic**)
-3. Set filter to **Active** once validated in Testing mode
-4. Optionally exclude staging/preview hostnames via **Data filters** on `hostname`
-
-For Vercel preview deployments, use a separate GA4 property or leave `NEXT_PUBLIC_GA_MEASUREMENT_ID` unset on previews.
-
----
-
-## Future monetization events (not implemented)
-
-The analytics layer is structured to add when features ship:
-
-| Event | When to add |
-|-------|-------------|
-| `paywall_viewed` | Paywall UI shown |
-| `pricing_viewed` | Pricing page/modal viewed |
-| `upgrade_clicked` | User clicks upgrade CTA |
-| `begin_checkout` | Checkout started (GA4 recommended) |
-| `purchase` | Payment succeeded (GA4 ecommerce) |
-| `subscription_started` | Subscription active |
-
-Use `trackEvent()` — no code changes to the core wrapper required.
+Leave `NEXT_PUBLIC_GA_MEASUREMENT_ID` unset on Vercel preview deployments.
 
 ---
 
@@ -264,23 +246,19 @@ Use `trackEvent()` — no code changes to the core wrapper required.
 
 | File | Purpose |
 |------|---------|
-| `src/lib/analytics/core.ts` | `trackEvent`, send guard, debug logging |
+| `src/lib/analytics/policy.ts` | `GA_ENABLED`, admin/studio path helpers, `ga-disable` flag |
+| `src/lib/analytics/core.ts` | `trackEvent`, debug logging |
 | `src/lib/analytics/events.ts` | Typed event helpers |
-| `src/lib/analytics/session.ts` | Deduplication + `is_first_export` |
-| `src/lib/analytics/entryContext.ts` | CTA → `studio_open` entry attribution |
-| `src/lib/analytics/mappers.ts` | Sanitized enums |
-| `src/components/GoogleAnalytics.tsx` | gtag loader |
+| `src/lib/analytics/session.ts` | Per-design-session deduplication |
+| `src/components/GoogleAnalytics.tsx` | gtag loader + `debugMode` |
 | `src/components/AnalyticsPageView.tsx` | `page_context` |
-| `src/components/StudioLink.tsx` | CTA tracking |
-| `src/BoxDesigner.tsx` | Studio product events |
-| `src/hooks/useStudioDocument.ts` | Save/reopen/export JSON |
-| `src/hooks/useViewportRecording.ts` | Video export events |
+| `src/BoxDesigner.tsx` | Studio product events + `studio_open` |
 
 ---
 
 ## Known limitations
 
-- **No separate template landing pages** — `template_page` entry point is reserved; template selection is tracked via `template_selected` in-studio.
-- **No pricing/paywall** — monetization events are documented only.
-- **Apple OAuth** — not implemented; `login` / `sign_up` support `apple` enum for future use.
-- **`studio_activated`** — retained for backward compatibility with existing reports; prefer `studio_open` + `sign_up` for new funnels.
+- **No `design_completed` event** until a reliable completion signal exists.
+- **SPA `page_view`** relies on GA4 Enhanced Measurement for history changes; `page_context` supplements with `page_type`.
+- **No template landing pages** — use `template_selected` in-studio.
+- **`studio_activated`** — legacy; prefer `studio_open` + `sign_up` for new funnels.

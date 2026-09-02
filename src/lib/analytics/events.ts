@@ -9,10 +9,8 @@ import {
 } from "./mappers";
 import {
   markCustomization,
-  markDesignCompleted,
   markDesignStarted,
   markFirstExport,
-  markStudioOpen,
   hasExportedBefore,
 } from "./session";
 import type {
@@ -94,7 +92,6 @@ export function trackStudioCtaClicked(context: StudioCtaContext): void {
 }
 
 export function trackStudioOpen(ctx: StudioContextParams = {}): void {
-  if (!markStudioOpen()) return;
   const entry = consumeStudioEntryContext();
   trackEvent("studio_open", {
     entry_point: entry.entryPoint,
@@ -142,15 +139,6 @@ export function trackDesignCustomized(customizationType: CustomizationType, ctx:
   });
 }
 
-/**
- * Fires once per design session when the design is first successfully saved to the cloud
- * (manual Save, Save As, or auto-save after artwork upload).
- */
-export function trackDesignCompleted(ctx: StudioContextParams = {}): void {
-  if (!markDesignCompleted()) return;
-  trackEvent("design_completed", studioParams(ctx));
-}
-
 export function trackExportClicked(
   exportFormat: ExportFormat,
   exportResolution: ExportResolution = "viewport",
@@ -191,7 +179,6 @@ export function trackExportFailed(
 
 export function trackProjectSaved(ctx: StudioContextParams = {}): void {
   trackEvent("project_saved", studioParams(ctx));
-  trackDesignCompleted(ctx);
 }
 
 export function trackProjectReopened(ctx: StudioContextParams = {}): void {

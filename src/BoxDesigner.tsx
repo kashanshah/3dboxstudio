@@ -525,10 +525,10 @@ export default function BoxDesigner({
   }, []);
 
   useEffect(() => {
-    if (showAuthGate || !sessionReady || studioOpenTrackedRef.current) return;
+    if (showAuthGate || auth.loading || !sessionReady || studioOpenTrackedRef.current) return;
     studioOpenTrackedRef.current = true;
     trackStudioOpen(studioAnalyticsCtx());
-  }, [showAuthGate, sessionReady, studioAnalyticsCtx]);
+  }, [showAuthGate, auth.loading, sessionReady, studioAnalyticsCtx]);
 
   useEffect(() => {
     if (!showAuthGate || oauthError) return;

@@ -1,5 +1,13 @@
 export { trackEvent, GA_SHOULD_SEND, isAnalyticsDebugEnabled } from "./core";
 export type { AnalyticsParams } from "./core";
+export {
+  GA_ENABLED,
+  GA_DEBUG,
+  GA_MEASUREMENT_ID,
+  isAdminPath,
+  isStudioPath,
+  isAnalyticsBlockedPath,
+} from "./policy";
 
 export * from "./types";
 export * from "./events";
@@ -15,4 +23,4 @@ export {
   sanitizeTemplateType,
   sanitizeBoxType,
 } from "./mappers";
-export { resetDesignSession, shouldTrackPageContext } from "./session";
+export { resetDesignSession } from "./session";

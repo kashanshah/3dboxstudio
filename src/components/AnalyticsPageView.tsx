@@ -1,41 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   pathnameToPageType,
   pathnameToSourcePageType,
-  shouldTrackPageContext,
   slugFromPath,
   storeLastPageContext,
   trackPageContext,
 } from "@/lib/analytics";
-
-function isAdminPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
-}
+import { GA_ENABLED, isAnalyticsBlockedPath } from "@/lib/analytics/policy";
 
 /**
  * Fires a supplementary page_context event with page_type once per client navigation.
- * Native page_view events remain handled by @next/third-parties GoogleAnalytics.
+ * Native page_view events are handled by gtag.js (initial load + GA4 enhanced measurement).
+ *
+ * Dedupes only React Strict Mode / hydration double-invoke for the same navigation —
+ * repeat visits to the same URL after navigating away are tracked again.
  */
 export default function AnalyticsPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const lastEmittedKeyRef = useRef<string | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!pathname || isAdminPath(pathname)) return;
+    if (!GA_ENABLED || !pathname || isAnalyticsBlockedPath(pathname)) return;
 
     const query = searchParams.toString();
     const pathKey = query ? `${pathname}?${query}` : pathname;
-    if (!shouldTrackPageContext(pathKey)) return;
 
-    const pageType = pathnameToPageType(pathname);
-    const sourcePageType = pathnameToSourcePageType(pathname);
-    const pageSlug = slugFromPath(pathname);
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
 
-    storeLastPageContext(pathname, sourcePageType, pageSlug);
-    trackPageContext(pathname, pageType);
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = null;
+      if (lastEmittedKeyRef.current === pathKey) return;
+
+      lastEmittedKeyRef.current = pathKey;
+
+      const pageType = pathnameToPageType(pathname);
+      const sourcePageType = pathnameToSourcePageType(pathname);
+      const pageSlug = slugFromPath(pathname);
+
+      storeLastPageContext(pathname, sourcePageType, pageSlug);
+      trackPageContext(pathname, pageType);
+    });
+
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      // Leaving this route allows a future return visit to emit page_context again.
+      if (lastEmittedKeyRef.current === pathKey) {
+        lastEmittedKeyRef.current = null;
+      }
+    };
   }, [pathname, searchParams]);
 
   return null;
