@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { AuthUser } from "@/lib/authTypes";
 import StudioDialog from "./StudioDialog";
 import StudioProjectsPanel from "./StudioProjectsPanel";
@@ -59,9 +60,9 @@ export default function StudioStartDialog({
       width={560}
       footer={
         <>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Close
-          </button>
+          <Link href="/" className="btn btn-ghost">
+            Go to website
+          </Link>
           <button type="button" className="btn btn-primary" onClick={handleCreateNew}>
             Create new design
           </button>

@@ -365,6 +365,7 @@ label {
   background: var(--btn-bg, #1a1f28);
   color: var(--text);
   cursor: pointer;
+  text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
   transition: background 0.15s, border-color 0.15s, color 0.15s, filter 0.15s;
