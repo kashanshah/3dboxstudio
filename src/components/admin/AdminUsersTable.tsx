@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AdminUserRow } from "@/server/admin/types";
-import { formatLandingSummary } from "@/lib/landingClassification";
+import { formatStoredLandingDisplay } from "@/lib/landingClassification";
+import { formatAdminDateTime } from "@/lib/adminTimeZone";
 
 type AdminUsersTableProps = {
   users: AdminUserRow[];
@@ -9,16 +10,6 @@ type AdminUsersTableProps = {
   total: number;
   search?: string;
 };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function pageHref(page: number, search?: string): string {
   const params = new URLSearchParams();
@@ -38,7 +29,7 @@ function formatSourceLabel(user: AdminUserRow): string {
 }
 
 function formatFirstLanding(user: AdminUserRow): string {
-  return formatLandingSummary(user.signupLandingType, user.signupLandingPage, null);
+  return formatStoredLandingDisplay(user.signupLandingType, user.signupLandingPage);
 }
 
 function formatConversionPage(user: AdminUserRow): string {
@@ -111,7 +102,7 @@ export default function AdminUsersTable({ users, page, totalPages, total, search
                       </Link>
                     </td>
                     <td className="num">{user.totalViews.toLocaleString()}</td>
-                    <td>{formatDate(user.createdAt)}</td>
+                    <td>{formatAdminDateTime(user.createdAt)}</td>
                   </tr>
                 ))
               )}

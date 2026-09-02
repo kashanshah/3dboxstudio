@@ -1,5 +1,6 @@
 import { getSql } from "../db";
 import { buildShareThumbnailUrl } from "../shareService";
+import { ADMIN_DISPLAY_TIME_ZONE } from "@/lib/adminTimeZone";
 import type { AdminDesignRow, AdminStats, AdminUserRow, PaginatedResult } from "./types";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -107,18 +108,18 @@ export async function getAdminStats(): Promise<AdminStats> {
   }[];
 
   const signupsByDay = (await sql`
-    SELECT DATE(created_at)::text AS day, COUNT(*)::int AS count
+    SELECT (timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at))::date::text AS day, COUNT(*)::int AS count
     FROM users
     WHERE created_at >= NOW() - INTERVAL '30 days'
-    GROUP BY DATE(created_at)
+    GROUP BY 1
     ORDER BY day ASC
   `) as DailyCountRow[];
 
   const designsByDay = (await sql`
-    SELECT DATE(created_at)::text AS day, COUNT(*)::int AS count
+    SELECT (timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at))::date::text AS day, COUNT(*)::int AS count
     FROM shared_designs
     WHERE created_at >= NOW() - INTERVAL '30 days'
-    GROUP BY DATE(created_at)
+    GROUP BY 1
     ORDER BY day ASC
   `) as DailyCountRow[];
 

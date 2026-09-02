@@ -1,4 +1,12 @@
 import { getSql } from "../db";
+import {
+  addAdminPeriod,
+  ADMIN_DISPLAY_TIME_ZONE,
+  adminPeriodKey,
+  adminPeriodStartIso,
+  formatAdminPeriodLabel,
+  startOfAdminPeriod,
+} from "@/lib/adminTimeZone";
 import type { AdminAnalytics, AdminAnalyticsGranularity, AdminAnalyticsSeriesPoint } from "./types";
 
 const GRANULARITY_CONFIG: Record<
@@ -28,97 +36,28 @@ export function parseAnalyticsGranularity(value: string | null | undefined): Adm
   return "daily";
 }
 
-function startOfPeriod(date: Date, trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"]): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  if (trunc === "day") return d;
-  if (trunc === "week") {
-    const day = d.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    return d;
-  }
-  if (trunc === "month") {
-    d.setDate(1);
-    return d;
-  }
-  if (trunc === "quarter") {
-    d.setDate(1);
-    d.setMonth(Math.floor(d.getMonth() / 3) * 3);
-    return d;
-  }
-  d.setMonth(0, 1);
-  return d;
-}
-
-function addPeriod(date: Date, trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"], delta: number): Date {
-  const d = new Date(date);
-  if (trunc === "day") {
-    d.setDate(d.getDate() + delta);
-    return d;
-  }
-  if (trunc === "week") {
-    d.setDate(d.getDate() + delta * 7);
-    return d;
-  }
-  if (trunc === "month") {
-    d.setMonth(d.getMonth() + delta);
-    return d;
-  }
-  if (trunc === "quarter") {
-    d.setMonth(d.getMonth() + delta * 3);
-    return d;
-  }
-  d.setFullYear(d.getFullYear() + delta);
-  return d;
-}
-
-function periodKey(date: Date, trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"]): string {
-  const start = startOfPeriod(date, trunc);
-  if (trunc === "year") return String(start.getFullYear());
-  if (trunc === "quarter") {
-    const q = Math.floor(start.getMonth() / 3) + 1;
-    return `${start.getFullYear()}-Q${q}`;
-  }
-  if (trunc === "month") {
-    const month = String(start.getMonth() + 1).padStart(2, "0");
-    return `${start.getFullYear()}-${month}`;
-  }
-  return start.toISOString().slice(0, 10);
-}
-
-function formatLabel(date: Date, trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"]): string {
-  const start = startOfPeriod(date, trunc);
-  if (trunc === "year") return String(start.getFullYear());
-  if (trunc === "quarter") {
-    const q = Math.floor(start.getMonth() / 3) + 1;
-    return `Q${q} ${start.getFullYear()}`;
-  }
-  if (trunc === "month") {
-    return start.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-  }
-  if (trunc === "week") {
-    return start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-  return start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function buildPeriodSpine(granularity: AdminAnalyticsGranularity) {
   const { buckets, trunc } = GRANULARITY_CONFIG[granularity];
-  const rangeEnd = startOfPeriod(new Date(), trunc);
-  const rangeStart = addPeriod(rangeEnd, trunc, -(buckets - 1));
+  const rangeEndYmd = startOfAdminPeriod(new Date(), trunc);
+  const rangeStartYmd = addAdminPeriod(rangeEndYmd, trunc, -(buckets - 1));
   const periods: { periodStart: string; label: string; key: string }[] = [];
 
   for (let i = 0; i < buckets; i++) {
-    const date = addPeriod(rangeStart, trunc, i);
+    const ymd = addAdminPeriod(rangeStartYmd, trunc, i);
     periods.push({
-      periodStart: startOfPeriod(date, trunc).toISOString(),
-      label: formatLabel(date, trunc),
-      key: periodKey(date, trunc),
+      periodStart: adminPeriodStartIso(ymd),
+      label: formatAdminPeriodLabel(ymd, trunc),
+      key: adminPeriodKey(ymd, trunc),
     });
   }
 
-  return { buckets, trunc, periods, rangeStart, rangeEnd };
+  return {
+    buckets,
+    trunc,
+    periods,
+    rangeStart: new Date(adminPeriodStartIso(rangeStartYmd)),
+    rangeEnd: new Date(adminPeriodStartIso(rangeEndYmd)),
+  };
 }
 
 function mapCountRows(rows: CountRow[]): Map<string, number> {
@@ -151,7 +90,7 @@ async function fetchSignupSeries(
   if (trunc === "day") {
     return (await sql`
       SELECT
-        TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS period_key,
+        TO_CHAR(DATE_TRUNC('day', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key,
         COUNT(*) FILTER (
           WHERE COALESCE(NULLIF(TRIM(signup_method), ''), 'email') <> 'google'
         )::int AS email,
@@ -167,7 +106,7 @@ async function fetchSignupSeries(
   if (trunc === "week") {
     return (await sql`
       SELECT
-        TO_CHAR(DATE_TRUNC('week', created_at), 'YYYY-MM-DD') AS period_key,
+        TO_CHAR(DATE_TRUNC('week', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key,
         COUNT(*) FILTER (
           WHERE COALESCE(NULLIF(TRIM(signup_method), ''), 'email') <> 'google'
         )::int AS email,
@@ -183,7 +122,7 @@ async function fetchSignupSeries(
   if (trunc === "month") {
     return (await sql`
       SELECT
-        TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS period_key,
+        TO_CHAR(DATE_TRUNC('month', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM') AS period_key,
         COUNT(*) FILTER (
           WHERE COALESCE(NULLIF(TRIM(signup_method), ''), 'email') <> 'google'
         )::int AS email,
@@ -199,7 +138,7 @@ async function fetchSignupSeries(
   if (trunc === "quarter") {
     return (await sql`
       SELECT
-        TO_CHAR(DATE_TRUNC('quarter', created_at), 'YYYY-"Q"Q') AS period_key,
+        TO_CHAR(DATE_TRUNC('quarter', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-"Q"Q') AS period_key,
         COUNT(*) FILTER (
           WHERE COALESCE(NULLIF(TRIM(signup_method), ''), 'email') <> 'google'
         )::int AS email,
@@ -214,7 +153,7 @@ async function fetchSignupSeries(
   }
   return (await sql`
     SELECT
-      TO_CHAR(DATE_TRUNC('year', created_at), 'YYYY') AS period_key,
+      TO_CHAR(DATE_TRUNC('year', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY') AS period_key,
       COUNT(*) FILTER (
         WHERE COALESCE(NULLIF(TRIM(signup_method), ''), 'email') <> 'google'
       )::int AS email,
@@ -235,7 +174,7 @@ async function fetchVerificationSeries(
   const sql = getSql();
   if (trunc === "day") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('day', email_verified_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('day', timezone(${ADMIN_DISPLAY_TIME_ZONE}, email_verified_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM users
       WHERE email_verified_at IS NOT NULL AND email_verified_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -243,7 +182,7 @@ async function fetchVerificationSeries(
   }
   if (trunc === "week") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('week', email_verified_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('week', timezone(${ADMIN_DISPLAY_TIME_ZONE}, email_verified_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM users
       WHERE email_verified_at IS NOT NULL AND email_verified_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -251,7 +190,7 @@ async function fetchVerificationSeries(
   }
   if (trunc === "month") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('month', email_verified_at), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('month', timezone(${ADMIN_DISPLAY_TIME_ZONE}, email_verified_at)), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
       FROM users
       WHERE email_verified_at IS NOT NULL AND email_verified_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -259,14 +198,14 @@ async function fetchVerificationSeries(
   }
   if (trunc === "quarter") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('quarter', email_verified_at), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('quarter', timezone(${ADMIN_DISPLAY_TIME_ZONE}, email_verified_at)), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
       FROM users
       WHERE email_verified_at IS NOT NULL AND email_verified_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
     `) as CountRow[];
   }
   return (await sql`
-    SELECT TO_CHAR(DATE_TRUNC('year', email_verified_at), 'YYYY') AS period_key, COUNT(*)::int AS count
+    SELECT TO_CHAR(DATE_TRUNC('year', timezone(${ADMIN_DISPLAY_TIME_ZONE}, email_verified_at)), 'YYYY') AS period_key, COUNT(*)::int AS count
     FROM users
     WHERE email_verified_at IS NOT NULL AND email_verified_at >= ${rangeStartIso}::timestamptz
     GROUP BY 1 ORDER BY 1 ASC
@@ -286,7 +225,7 @@ async function fetchFirstDesignSeries(
         WHERE user_id IS NOT NULL
         GROUP BY user_id
       )
-      SELECT TO_CHAR(DATE_TRUNC('day', first_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('day', timezone(${ADMIN_DISPLAY_TIME_ZONE}, first_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM first_design
       WHERE first_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -300,7 +239,7 @@ async function fetchFirstDesignSeries(
         WHERE user_id IS NOT NULL
         GROUP BY user_id
       )
-      SELECT TO_CHAR(DATE_TRUNC('week', first_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('week', timezone(${ADMIN_DISPLAY_TIME_ZONE}, first_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM first_design
       WHERE first_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -314,7 +253,7 @@ async function fetchFirstDesignSeries(
         WHERE user_id IS NOT NULL
         GROUP BY user_id
       )
-      SELECT TO_CHAR(DATE_TRUNC('month', first_at), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('month', timezone(${ADMIN_DISPLAY_TIME_ZONE}, first_at)), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
       FROM first_design
       WHERE first_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -328,7 +267,7 @@ async function fetchFirstDesignSeries(
         WHERE user_id IS NOT NULL
         GROUP BY user_id
       )
-      SELECT TO_CHAR(DATE_TRUNC('quarter', first_at), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('quarter', timezone(${ADMIN_DISPLAY_TIME_ZONE}, first_at)), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
       FROM first_design
       WHERE first_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -341,7 +280,7 @@ async function fetchFirstDesignSeries(
       WHERE user_id IS NOT NULL
       GROUP BY user_id
     )
-    SELECT TO_CHAR(DATE_TRUNC('year', first_at), 'YYYY') AS period_key, COUNT(*)::int AS count
+    SELECT TO_CHAR(DATE_TRUNC('year', timezone(${ADMIN_DISPLAY_TIME_ZONE}, first_at)), 'YYYY') AS period_key, COUNT(*)::int AS count
     FROM first_design
     WHERE first_at >= ${rangeStartIso}::timestamptz
     GROUP BY 1 ORDER BY 1 ASC
@@ -355,7 +294,7 @@ async function fetchDesignSeries(
   const sql = getSql();
   if (trunc === "day") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('day', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM shared_designs
       WHERE created_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -363,7 +302,7 @@ async function fetchDesignSeries(
   }
   if (trunc === "week") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('week', created_at), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('week', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key, COUNT(*)::int AS count
       FROM shared_designs
       WHERE created_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -371,7 +310,7 @@ async function fetchDesignSeries(
   }
   if (trunc === "month") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('month', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM') AS period_key, COUNT(*)::int AS count
       FROM shared_designs
       WHERE created_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
@@ -379,14 +318,14 @@ async function fetchDesignSeries(
   }
   if (trunc === "quarter") {
     return (await sql`
-      SELECT TO_CHAR(DATE_TRUNC('quarter', created_at), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
+      SELECT TO_CHAR(DATE_TRUNC('quarter', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-"Q"Q') AS period_key, COUNT(*)::int AS count
       FROM shared_designs
       WHERE created_at >= ${rangeStartIso}::timestamptz
       GROUP BY 1 ORDER BY 1 ASC
     `) as CountRow[];
   }
   return (await sql`
-    SELECT TO_CHAR(DATE_TRUNC('year', created_at), 'YYYY') AS period_key, COUNT(*)::int AS count
+    SELECT TO_CHAR(DATE_TRUNC('year', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY') AS period_key, COUNT(*)::int AS count
     FROM shared_designs
     WHERE created_at >= ${rangeStartIso}::timestamptz
     GROUP BY 1 ORDER BY 1 ASC

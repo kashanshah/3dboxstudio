@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { Canvas, type RootState, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
@@ -126,6 +126,26 @@ function OrbitControlsZoomSync({
   return null;
 }
 
+/** Demand-mode canvases only repaint when invalidated — pump frames after async lighting updates. */
+function ViewportDemandInvalidate({ revision }: { revision: string | number | boolean }) {
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    invalidate();
+    let frames = 0;
+    let raf = 0;
+    const tick = () => {
+      invalidate();
+      frames += 1;
+      if (frames < 5) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [revision, invalidate]);
+
+  return null;
+}
+
 export interface Viewport3DProps {
   width: number;
   height: number;
@@ -195,12 +215,7 @@ function Scene({
   const keyLightRef = useRef<THREE.DirectionalLight>(null);
   const shadowMapSize = performanceMode ? 1024 : 2048;
   const castShadows = !cleanCapture && !performanceMode;
-  const [hdriReady, setHdriReady] = useState(false);
-
-  useEffect(() => {
-    const id = window.requestAnimationFrame(() => setHdriReady(true));
-    return () => window.cancelAnimationFrame(id);
-  }, []);
+  const environmentIntensity = cleanCapture ? 0.45 : performanceMode ? 0.7 : 1;
 
   useLayoutEffect(() => {
     const cam = keyLightRef.current?.shadow.camera;
@@ -237,15 +252,10 @@ function Scene({
       />
       <directionalLight position={[-maxDim * 1.5, maxDim * 2, -maxDim * 2]} intensity={0.35} />
 
-      {/* Environment suspends while HDRI loads — defer one frame so the box can paint first */}
-      {hdriReady && (
-        <Suspense fallback={null}>
-          <Environment
-            preset={envPreset}
-            environmentIntensity={cleanCapture ? 0.45 : performanceMode ? 0.7 : 1}
-          />
-        </Suspense>
-      )}
+      <Suspense fallback={null}>
+        <Environment preset={envPreset} environmentIntensity={environmentIntensity} />
+        <ViewportDemandInvalidate revision={`environment:${envPreset}:${environmentIntensity}`} />
+      </Suspense>
       <PackagingBox
         width={width}
         height={height}
@@ -286,6 +296,9 @@ function Scene({
       />
 
       {recordingActive && <ViewportRecordingBridge />}
+      <ViewportDemandInvalidate
+        revision={`${theme}:${envPreset}:${showGrid}:${wireframe}:${performanceMode}:${cleanCapture}`}
+      />
     </>
   );
 }
@@ -323,6 +336,8 @@ export function Viewport3D(props: Viewport3DProps) {
     state.gl.toneMappingExposure = 1;
     state.gl.shadowMap.enabled = !performanceMode;
     state.gl.shadowMap.type = THREE.PCFSoftShadowMap;
+    state.invalidate();
+    requestAnimationFrame(() => state.invalidate());
     onCanvasReady?.(state);
   };
 
