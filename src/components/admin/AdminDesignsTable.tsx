@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AdminDesignRow } from "@/server/admin/types";
 import { studioSharePath, studioPreviewPath } from "@/lib/shareUrl";
+import { formatAdminDateTime } from "@/lib/adminTimeZone";
 
 type DesignFilter = "all" | "owned" | "anonymous" | "expired";
 
@@ -19,16 +20,6 @@ const FILTERS: { value: DesignFilter; label: string }[] = [
   { value: "anonymous", label: "Anonymous" },
   { value: "expired", label: "Expired" },
 ];
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function listHref(options: { page?: number; search?: string; filter: DesignFilter }): string {
   const params = new URLSearchParams();
@@ -156,7 +147,7 @@ export default function AdminDesignsTable({
                         <span className="admin-badge admin-badge--ok">Active</span>
                       )}
                     </td>
-                    <td>{formatDate(design.createdAt)}</td>
+                    <td>{formatAdminDateTime(design.createdAt)}</td>
                     <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                         <a className="admin-link" href={studioSharePath(design.id)} target="_blank" rel="noopener noreferrer">
