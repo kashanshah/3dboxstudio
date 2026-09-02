@@ -199,7 +199,7 @@ export function trackStudioError(errorCategory: StudioErrorCategory, stage: Stud
   });
 }
 
-/** Supplementary route context — does not replace native GA4 page_view from @next/third-parties. */
+/** Supplementary route context — paired with explicit page_view from AnalyticsPageView. */
 export function trackPageContext(pagePath: string, pageType: string): void {
   trackEvent("page_context", {
     page_path: pagePath,
