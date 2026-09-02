@@ -3,8 +3,11 @@ export type { AnalyticsParams } from "./core";
 export {
   buildGtagInitScript,
   buildGtagConfigOptions,
+  ensureGtagInitialized,
+  installGtagStub,
   pushGtag,
   isGtagInitialized,
+  resetGtagForTesting,
   GA_DATA_LAYER,
 } from "./gtag";
 export { trackPageView } from "./pageview";

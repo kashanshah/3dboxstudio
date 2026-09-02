@@ -62,11 +62,11 @@ export default function RootLayout({
     >
       <body>
         {children}
+        <GoogleAnalytics />
         <Suspense fallback={null}>
           <AttributionCapture />
           <AnalyticsPageView />
         </Suspense>
-        <GoogleAnalytics />
         <VercelAnalytics />
         <BuyMeACoffeeWidget />
       </body>
