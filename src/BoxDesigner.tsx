@@ -34,6 +34,12 @@ import { useAuth } from "./components/auth/AuthProvider";
 import { useStudioDocument } from "./hooks/useStudioDocument";
 import { captureCanvasOgBlob } from "./lib/shareOgImage";
 import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint";
+import {
+  formatFileSize,
+  MAX_FACE_ARTWORK_BYTES,
+  validateFaceArtworkFile,
+  type FaceArtworkUploadError,
+} from "./lib/faceArtworkUpload";
 import { DEFAULT_UNTITLED_SHARE_NAME } from "@/lib/shareName";
 import { Viewport3D, INITIAL_ZOOM_FRACTION } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
@@ -218,6 +224,7 @@ export default function BoxDesigner({
   const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
   const [applyToAllFace, setApplyToAllFace] = useState<FaceId | null>(null);
+  const [artworkUploadError, setArtworkUploadError] = useState<FaceArtworkUploadError | null>(null);
   const [showViewportHint, setShowViewportHint] = useState(false);
   const [mobileTab, setMobileTab] = useState<"viewport" | "design" | "export">("viewport");
 
@@ -519,6 +526,23 @@ export default function BoxDesigner({
       });
     }
   }, []);
+
+  const handleFaceFileChange = useCallback(
+    (id: FaceId, file: File | null, input?: HTMLInputElement | null) => {
+      if (input) input.value = "";
+      if (!file) {
+        setFile(id, null);
+        return;
+      }
+      const error = validateFaceArtworkFile(file);
+      if (error) {
+        setArtworkUploadError(error);
+        return;
+      }
+      setFile(id, file);
+    },
+    [setFile]
+  );
 
   const bumpTextureRotationBy90 = useCallback((id: FaceId) => {
     setTextureRotationDeg((prev) => {
@@ -1017,9 +1041,9 @@ export default function BoxDesigner({
 
         <PanelCollapse title="Face artwork">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            PNG or JPG recommended. Art is UV-stretched to each rectangle; for print-ready proofs, design to the flat dieline
-            first, then preview here. Hover the rotate, apply-to-all, and clear icons beside each face for hints; rotation
-            advances 90° per click.
+            PNG or JPG recommended, up to {formatFileSize(MAX_FACE_ARTWORK_BYTES)} per image. Art is UV-stretched to each
+            rectangle; for print-ready proofs, design to the flat dieline first, then preview here. Hover the rotate,
+            apply-to-all, and clear icons beside each face for hints; rotation advances 90° per click.
           </p>
           {(splitTop ? [...ALL_FACES.filter((f) => f !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES).map((fid) => (
             <div key={fid} style={{ marginBottom: "0.65rem" }}>
@@ -1029,7 +1053,7 @@ export default function BoxDesigner({
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setFile(fid, e.target.files?.[0] ?? null)}
+                onChange={(e) => handleFaceFileChange(fid, e.target.files?.[0] ?? null, e.currentTarget)}
                 style={{ width: "100%", marginBottom: 6 }}
               />
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1300,6 +1324,32 @@ export default function BoxDesigner({
           </p>
         ) : (
           <p className="studio-dialog-hint">This cannot be undone in one step—use Clear all artwork if you need to reset.</p>
+        )}
+      </StudioDialog>
+      <StudioDialog
+        title="Image too large"
+        open={artworkUploadError !== null}
+        onClose={() => setArtworkUploadError(null)}
+        footer={
+          <button type="button" className="btn btn-primary" onClick={() => setArtworkUploadError(null)}>
+            OK
+          </button>
+        }
+      >
+        {artworkUploadError && (
+          <>
+            <p className="studio-dialog-lead">
+              <strong>{artworkUploadError.fileName}</strong> is {formatFileSize(artworkUploadError.fileSize)}. Face artwork
+              must be {formatFileSize(artworkUploadError.maxBytes)} or smaller.
+            </p>
+            <p className="studio-dialog-hint">How to fix:</p>
+            <ul className="studio-dialog-list">
+              <li>Export or save as JPG instead of PNG if the file is a photo or full-color print.</li>
+              <li>Reduce image dimensions (e.g. 2000–3000 px on the longest side is usually enough for preview).</li>
+              <li>Compress the file in Photoshop, Affinity, Figma, or a free tool such as Squoosh or TinyPNG.</li>
+              <li>Remove unused layers or embedded profiles before exporting.</li>
+            </ul>
+          </>
         )}
       </StudioDialog>
       <StudioStartDialog
