@@ -9,10 +9,8 @@ import {
 } from "./mappers";
 import {
   markCustomization,
-  markDesignCompleted,
   markDesignStarted,
   markFirstExport,
-  markStudioOpen,
   hasExportedBefore,
 } from "./session";
 import type {
@@ -94,7 +92,6 @@ export function trackStudioCtaClicked(context: StudioCtaContext): void {
 }
 
 export function trackStudioOpen(ctx: StudioContextParams = {}): void {
-  if (!markStudioOpen()) return;
   const entry = consumeStudioEntryContext();
   trackEvent("studio_open", {
     entry_point: entry.entryPoint,
@@ -107,17 +104,24 @@ export function trackDesignStarted(ctx: StudioContextParams = {}): void {
   trackEvent("design_started", studioParams(ctx));
 }
 
-export function trackTemplateSelected(templateId: string, ctx: StudioContextParams = {}): void {
-  if (templateId === "custom") return;
-  const template = BOX_TEMPLATES.find((t) => t.id === templateId);
-  if (!template) return;
-  trackEvent("template_selected", {
+export function buildTemplateSelectedParams(
+  templateId: string,
+  ctx: StudioContextParams = {}
+): Record<string, string> {
+  return {
+    ...studioParams(ctx),
     template_type: sanitizeTemplateType(templateId),
     template_name: templateId,
     template_category: "box_preset",
     box_type: sanitizeBoxType(templateId),
-    ...studioParams(ctx),
-  });
+  };
+}
+
+export function trackTemplateSelected(templateId: string, ctx: StudioContextParams = {}): void {
+  if (templateId === "custom") return;
+  const template = BOX_TEMPLATES.find((t) => t.id === templateId);
+  if (!template) return;
+  trackEvent("template_selected", buildTemplateSelectedParams(templateId, ctx));
 }
 
 export function trackArtworkUploaded(
@@ -140,15 +144,6 @@ export function trackDesignCustomized(customizationType: CustomizationType, ctx:
     customization_type: customizationType,
     ...studioParams(ctx),
   });
-}
-
-/**
- * Fires once per design session when the design is first successfully saved to the cloud
- * (manual Save, Save As, or auto-save after artwork upload).
- */
-export function trackDesignCompleted(ctx: StudioContextParams = {}): void {
-  if (!markDesignCompleted()) return;
-  trackEvent("design_completed", studioParams(ctx));
 }
 
 export function trackExportClicked(
@@ -191,7 +186,6 @@ export function trackExportFailed(
 
 export function trackProjectSaved(ctx: StudioContextParams = {}): void {
   trackEvent("project_saved", studioParams(ctx));
-  trackDesignCompleted(ctx);
 }
 
 export function trackProjectReopened(ctx: StudioContextParams = {}): void {
@@ -205,7 +199,7 @@ export function trackStudioError(errorCategory: StudioErrorCategory, stage: Stud
   });
 }
 
-/** Supplementary route context — does not replace native GA4 page_view from @next/third-parties. */
+/** Supplementary route context — paired with explicit page_view from AnalyticsPageView. */
 export function trackPageContext(pagePath: string, pageType: string): void {
   trackEvent("page_context", {
     page_path: pagePath,

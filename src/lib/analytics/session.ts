@@ -1,14 +1,12 @@
 /**
- * In-memory + sessionStorage guards for milestone events.
+ * In-memory + sessionStorage guards for per-design-session milestone events.
  * Prevents duplicate fires from React Strict Mode, rerenders, and hydration.
  */
 
 const STORAGE_PREFIX = "sb_analytics_";
 
 type MilestoneStore = {
-  studioOpen: boolean;
   designStarted: boolean;
-  designCompleted: boolean;
   customization: Set<string>;
   designSessionId: string;
 };
@@ -20,9 +18,7 @@ function readStore(): MilestoneStore {
 
   if (typeof window === "undefined") {
     memoryStore = {
-      studioOpen: false,
       designStarted: false,
-      designCompleted: false,
       customization: new Set(),
       designSessionId: "ssr",
     };
@@ -33,16 +29,12 @@ function readStore(): MilestoneStore {
     const raw = sessionStorage.getItem(`${STORAGE_PREFIX}milestones`);
     if (raw) {
       const parsed = JSON.parse(raw) as {
-        studioOpen?: boolean;
         designStarted?: boolean;
-        designCompleted?: boolean;
         customization?: string[];
         designSessionId?: string;
       };
       memoryStore = {
-        studioOpen: Boolean(parsed.studioOpen),
         designStarted: Boolean(parsed.designStarted),
-        designCompleted: Boolean(parsed.designCompleted),
         customization: new Set(parsed.customization ?? []),
         designSessionId: parsed.designSessionId ?? createDesignSessionId(),
       };
@@ -53,9 +45,7 @@ function readStore(): MilestoneStore {
   }
 
   memoryStore = {
-    studioOpen: false,
     designStarted: false,
-    designCompleted: false,
     customization: new Set(),
     designSessionId: createDesignSessionId(),
   };
@@ -69,9 +59,7 @@ function persistStore(store: MilestoneStore): void {
     sessionStorage.setItem(
       `${STORAGE_PREFIX}milestones`,
       JSON.stringify({
-        studioOpen: store.studioOpen,
         designStarted: store.designStarted,
-        designCompleted: store.designCompleted,
         customization: [...store.customization],
         designSessionId: store.designSessionId,
       })
@@ -88,18 +76,9 @@ function createDesignSessionId(): string {
 export function resetDesignSession(): void {
   const store = readStore();
   store.designStarted = false;
-  store.designCompleted = false;
   store.customization = new Set();
   store.designSessionId = createDesignSessionId();
   persistStore(store);
-}
-
-export function markStudioOpen(): boolean {
-  const store = readStore();
-  if (store.studioOpen) return false;
-  store.studioOpen = true;
-  persistStore(store);
-  return true;
 }
 
 export function markDesignStarted(): boolean {
@@ -110,28 +89,11 @@ export function markDesignStarted(): boolean {
   return true;
 }
 
-export function markDesignCompleted(): boolean {
-  const store = readStore();
-  if (store.designCompleted) return false;
-  store.designCompleted = true;
-  persistStore(store);
-  return true;
-}
-
 export function markCustomization(category: string): boolean {
   const store = readStore();
   if (store.customization.has(category)) return false;
   store.customization.add(category);
   persistStore(store);
-  return true;
-}
-
-const pageViewKeys = new Set<string>();
-
-/** Dedupe page_context events per pathname+search within the tab session. */
-export function shouldTrackPageContext(pathKey: string): boolean {
-  if (pageViewKeys.has(pathKey)) return false;
-  pageViewKeys.add(pathKey);
   return true;
 }
 

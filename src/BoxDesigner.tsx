@@ -12,6 +12,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
+import { shouldFireStudioOpen } from "@/lib/analytics/studioOpen";
 import {
   resetDesignSession,
   trackArtworkUploaded,
@@ -525,10 +526,19 @@ export default function BoxDesigner({
   }, []);
 
   useEffect(() => {
-    if (showAuthGate || !sessionReady || studioOpenTrackedRef.current) return;
+    if (
+      !shouldFireStudioOpen({
+        alreadyTrackedThisMount: studioOpenTrackedRef.current,
+        showAuthGate,
+        authLoading: auth.loading,
+        sessionReady,
+      })
+    ) {
+      return;
+    }
     studioOpenTrackedRef.current = true;
     trackStudioOpen(studioAnalyticsCtx());
-  }, [showAuthGate, sessionReady, studioAnalyticsCtx]);
+  }, [showAuthGate, auth.loading, sessionReady, studioAnalyticsCtx]);
 
   useEffect(() => {
     if (!showAuthGate || oauthError) return;

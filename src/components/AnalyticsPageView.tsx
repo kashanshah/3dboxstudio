@@ -1,41 +1,70 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   pathnameToPageType,
   pathnameToSourcePageType,
-  shouldTrackPageContext,
   slugFromPath,
   storeLastPageContext,
   trackPageContext,
 } from "@/lib/analytics";
+import { trackPageView } from "@/lib/analytics/pageview";
+import { GA_ENABLED, isAnalyticsBlockedPath } from "@/lib/analytics/policy";
+import {
+  buildPathKey,
+  clearRouteOnLeave,
+  createRouteTrackerState,
+  markRouteEventsEmitted,
+  shouldEmitRouteEvents,
+  type RouteTrackerState,
+} from "@/lib/analytics/routeTracking";
 
-function isAdminPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+function emitRouteEvents(pathname: string, pathKey: string): void {
+  const pageType = pathnameToPageType(pathname);
+  const sourcePageType = pathnameToSourcePageType(pathname);
+  const pageSlug = slugFromPath(pathname);
+
+  storeLastPageContext(pathname, sourcePageType, pageSlug);
+  trackPageView(pathKey);
+  trackPageContext(pathname, pageType);
 }
 
 /**
- * Fires a supplementary page_context event with page_type once per client navigation.
- * Native page_view events remain handled by @next/third-parties GoogleAnalytics.
+ * Sends explicit page_view + page_context once per permitted client navigation.
+ * gtag is initialized with send_page_view:false — this component owns SPA pageviews.
  */
 export default function AnalyticsPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const trackerRef = useRef<RouteTrackerState>(createRouteTrackerState());
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!pathname || isAdminPath(pathname)) return;
+    if (!GA_ENABLED || !pathname || isAnalyticsBlockedPath(pathname)) return;
 
-    const query = searchParams.toString();
-    const pathKey = query ? `${pathname}?${query}` : pathname;
-    if (!shouldTrackPageContext(pathKey)) return;
+    const pathKey = buildPathKey(pathname, searchParams.toString());
 
-    const pageType = pathnameToPageType(pathname);
-    const sourcePageType = pathnameToSourcePageType(pathname);
-    const pageSlug = slugFromPath(pathname);
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
 
-    storeLastPageContext(pathname, sourcePageType, pageSlug);
-    trackPageContext(pathname, pageType);
+    rafIdRef.current = requestAnimationFrame(() => {
+      rafIdRef.current = null;
+      const state = trackerRef.current;
+      if (!shouldEmitRouteEvents(state, pathKey)) return;
+
+      trackerRef.current = markRouteEventsEmitted(state, pathKey);
+      emitRouteEvents(pathname, pathKey);
+    });
+
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      trackerRef.current = clearRouteOnLeave(trackerRef.current, pathKey);
+    };
   }, [pathname, searchParams]);
 
   return null;
