@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AdminDesignsTable from "@/components/admin/AdminDesignsTable";
-import { parseAdminDesignsQuery } from "@/lib/adminListQuery";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import { designsQueryIsFiltered, parseAdminDesignsQuery } from "@/lib/adminListQuery";
 import { listAdminDesigns } from "@/server/admin/reports";
 
 export const metadata: Metadata = {
@@ -23,10 +24,13 @@ export default async function AdminDesignsPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <header className="admin-page-header">
-        <h1>Designs</h1>
-        <p>Search, filter, and sort cloud-saved box designs.</p>
-      </header>
+      <AdminPageHeader
+        title="Designs"
+        description="Search, filter, and sort cloud-saved box designs."
+        count={result.total}
+        itemName="design"
+        filtered={designsQueryIsFiltered(query)}
+      />
       <AdminDesignsTable
         designs={result.items}
         page={result.page}

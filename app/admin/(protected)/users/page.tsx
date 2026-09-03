@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import AdminUsersTable from "@/components/admin/AdminUsersTable";
-import { parseAdminUsersQuery } from "@/lib/adminListQuery";
+import { parseAdminUsersQuery, usersQueryIsFiltered } from "@/lib/adminListQuery";
 import { listAdminUsers } from "@/server/admin/reports";
 
 export const metadata: Metadata = {
@@ -24,10 +25,13 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <header className="admin-page-header">
-        <h1>Users</h1>
-        <p>Search, filter, and sort registered accounts.</p>
-      </header>
+      <AdminPageHeader
+        title="Users"
+        description="Search, filter, and sort registered accounts."
+        count={result.total}
+        itemName="user"
+        filtered={usersQueryIsFiltered(query)}
+      />
       <AdminUsersTable
         users={result.items}
         page={result.page}

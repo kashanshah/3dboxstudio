@@ -85,8 +85,10 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
   return (
     <>
       <header className="admin-page-header">
-        <h1>Dashboard</h1>
-        <p>Overview of signups, saved designs, and platform activity.</p>
+        <div className="admin-page-header-copy">
+          <h1>Dashboard</h1>
+          <p>Overview of signups, saved designs, and platform activity.</p>
+        </div>
       </header>
 
       <section className="admin-stats-grid" aria-label="Key metrics">
