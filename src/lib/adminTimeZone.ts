@@ -36,16 +36,47 @@ function zonedParts(date: Date): ZonedYmd & { weekday: number } {
   };
 }
 
+function calendarYmd(date: Date): ZonedYmd {
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+  };
+}
+
 function addDaysYmd(ymd: ZonedYmd, days: number): ZonedYmd {
-  const shifted = new Date(Date.UTC(ymd.year, ymd.month - 1, ymd.day + days));
-  const parts = zonedParts(shifted);
-  return { year: parts.year, month: parts.month, day: parts.day };
+  return calendarYmd(new Date(Date.UTC(ymd.year, ymd.month - 1, ymd.day + days)));
 }
 
 function addMonthsYmd(ymd: ZonedYmd, months: number): ZonedYmd {
-  const shifted = new Date(Date.UTC(ymd.year, ymd.month - 1 + months, ymd.day));
-  const parts = zonedParts(shifted);
-  return { year: parts.year, month: parts.month, day: parts.day };
+  return calendarYmd(new Date(Date.UTC(ymd.year, ymd.month - 1 + months, ymd.day)));
+}
+
+/** Offset of `timeZone` at `date`, as milliseconds to add to UTC to get wall time. */
+function timeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+
+  const asUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  return asUtc - date.getTime();
 }
 
 export function formatAdminDateTime(iso: string): string {
@@ -112,5 +143,14 @@ export function formatAdminPeriodLabel(ymd: ZonedYmd, trunc: AdminPeriodTrunc): 
 }
 
 export function adminPeriodStartIso(ymd: ZonedYmd): string {
-  return new Date(Date.UTC(ymd.year, ymd.month - 1, ymd.day)).toISOString();
+  const utcMidnight = Date.UTC(ymd.year, ymd.month - 1, ymd.day);
+  const first = utcMidnight - timeZoneOffsetMs(new Date(utcMidnight), ADMIN_DISPLAY_TIME_ZONE);
+  const second = utcMidnight - timeZoneOffsetMs(new Date(first), ADMIN_DISPLAY_TIME_ZONE);
+  return new Date(second).toISOString();
+}
+
+export function listAdminDayKeys(days: number, now = new Date()): string[] {
+  const end = startOfAdminPeriod(now, "day");
+  const start = addAdminPeriod(end, "day", -(days - 1));
+  return Array.from({ length: days }, (_, i) => adminPeriodKey(addAdminPeriod(start, "day", i), "day"));
 }

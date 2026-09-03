@@ -1,6 +1,12 @@
 import { getSql } from "../db";
 import { buildShareThumbnailUrl } from "../shareService";
-import { ADMIN_DISPLAY_TIME_ZONE } from "@/lib/adminTimeZone";
+import {
+  ADMIN_DISPLAY_TIME_ZONE,
+  addAdminPeriod,
+  adminPeriodStartIso,
+  listAdminDayKeys,
+  startOfAdminPeriod,
+} from "@/lib/adminTimeZone";
 import type {
   DesignFilter,
   DesignSort,
@@ -43,9 +49,10 @@ function clampPage(n: number): number {
 type DailyCountRow = { day: string; count: number };
 
 function mapDailyCounts(rows: DailyCountRow[]): { date: string; count: number }[] {
-  return rows.map((row) => ({
-    date: row.day,
-    count: Number(row.count) || 0,
+  const counts = new Map(rows.map((row) => [row.day, Number(row.count) || 0]));
+  return listAdminDayKeys(30).map((date) => ({
+    date,
+    count: counts.get(date) ?? 0,
   }));
 }
 
@@ -113,10 +120,14 @@ export async function getAdminStats(): Promise<AdminStats> {
     total_views: number;
   }[];
 
+  const chartRangeStartIso = adminPeriodStartIso(
+    addAdminPeriod(startOfAdminPeriod(new Date(), "day"), "day", -29),
+  );
+
   const signupsByDay = (await sql`
     SELECT (timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at))::date::text AS day, COUNT(*)::int AS count
     FROM users
-    WHERE created_at >= NOW() - INTERVAL '30 days'
+    WHERE created_at >= ${chartRangeStartIso}::timestamptz
     GROUP BY 1
     ORDER BY day ASC
   `) as DailyCountRow[];
@@ -124,7 +135,7 @@ export async function getAdminStats(): Promise<AdminStats> {
   const designsByDay = (await sql`
     SELECT (timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at))::date::text AS day, COUNT(*)::int AS count
     FROM shared_designs
-    WHERE created_at >= NOW() - INTERVAL '30 days'
+    WHERE created_at >= ${chartRangeStartIso}::timestamptz
     GROUP BY 1
     ORDER BY day ASC
   `) as DailyCountRow[];

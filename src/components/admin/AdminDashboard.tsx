@@ -25,7 +25,7 @@ function ActivityChart({ title, data }: ActivityChartProps) {
                 <div
                   key={point.date}
                   className="admin-activity-bar"
-                  style={{ height: `${Math.max(4, (point.count / max) * 100)}%` }}
+                  style={{ height: `${point.count > 0 ? Math.max(4, (point.count / max) * 100) : 0}%` }}
                   title={`${point.date}: ${point.count}`}
                 />
               ))}
