@@ -5,7 +5,7 @@ import { optionalEnv, requireEnv } from "./env";
 
 let client: S3Client | null = null;
 
-function getS3Client(): S3Client {
+export function getS3Client(): S3Client {
   if (!client) {
     client = new S3Client({
       region: requireEnv("AWS_REGION"),
@@ -21,6 +21,18 @@ function getS3Client(): S3Client {
 function sharePrefix(): string {
   const raw = optionalEnv("AWS_S3_SHARE_PREFIX", "shares/");
   return raw.endsWith("/") ? raw : `${raw}/`;
+}
+
+export function s3SharePrefix(): string {
+  return sharePrefix();
+}
+
+export function s3BucketConfig(): { bucket: string; region: string; prefix: string } {
+  return {
+    bucket: requireEnv("AWS_S3_BUCKET"),
+    region: requireEnv("AWS_REGION"),
+    prefix: sharePrefix(),
+  };
 }
 
 function extensionFromMime(mime: string): string {

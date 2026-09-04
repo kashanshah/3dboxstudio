@@ -7,6 +7,7 @@ import {
   formatAdminPeriodLabel,
   startOfAdminPeriod,
 } from "@/lib/adminTimeZone";
+import { bucketS3Inventory, getS3Inventory } from "../s3Stats";
 import type { AdminAnalytics, AdminAnalyticsGranularity, AdminAnalyticsSeriesPoint } from "./types";
 
 const GRANULARITY_CONFIG: Record<
@@ -287,6 +288,111 @@ async function fetchFirstDesignSeries(
   `) as CountRow[];
 }
 
+async function fetchImageSeries(
+  trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"],
+  rangeStartIso: string
+): Promise<CountRow[]> {
+  const sql = getSql();
+  if (trunc === "day") {
+    return (await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('day', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key,
+        COALESCE(SUM(
+          CASE
+            WHEN jsonb_typeof(images) = 'object'
+              THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+            ELSE 0
+          END
+          + CASE
+            WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+            ELSE 0
+          END
+        ), 0)::int AS count
+      FROM shared_designs
+      WHERE created_at >= ${rangeStartIso}::timestamptz
+      GROUP BY 1 ORDER BY 1 ASC
+    `) as CountRow[];
+  }
+  if (trunc === "week") {
+    return (await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('week', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM-DD') AS period_key,
+        COALESCE(SUM(
+          CASE
+            WHEN jsonb_typeof(images) = 'object'
+              THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+            ELSE 0
+          END
+          + CASE
+            WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+            ELSE 0
+          END
+        ), 0)::int AS count
+      FROM shared_designs
+      WHERE created_at >= ${rangeStartIso}::timestamptz
+      GROUP BY 1 ORDER BY 1 ASC
+    `) as CountRow[];
+  }
+  if (trunc === "month") {
+    return (await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-MM') AS period_key,
+        COALESCE(SUM(
+          CASE
+            WHEN jsonb_typeof(images) = 'object'
+              THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+            ELSE 0
+          END
+          + CASE
+            WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+            ELSE 0
+          END
+        ), 0)::int AS count
+      FROM shared_designs
+      WHERE created_at >= ${rangeStartIso}::timestamptz
+      GROUP BY 1 ORDER BY 1 ASC
+    `) as CountRow[];
+  }
+  if (trunc === "quarter") {
+    return (await sql`
+      SELECT
+        TO_CHAR(DATE_TRUNC('quarter', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY-"Q"Q') AS period_key,
+        COALESCE(SUM(
+          CASE
+            WHEN jsonb_typeof(images) = 'object'
+              THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+            ELSE 0
+          END
+          + CASE
+            WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+            ELSE 0
+          END
+        ), 0)::int AS count
+      FROM shared_designs
+      WHERE created_at >= ${rangeStartIso}::timestamptz
+      GROUP BY 1 ORDER BY 1 ASC
+    `) as CountRow[];
+  }
+  return (await sql`
+    SELECT
+      TO_CHAR(DATE_TRUNC('year', timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at)), 'YYYY') AS period_key,
+      COALESCE(SUM(
+        CASE
+          WHEN jsonb_typeof(images) = 'object'
+            THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+          ELSE 0
+        END
+        + CASE
+          WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+          ELSE 0
+        END
+      ), 0)::int AS count
+    FROM shared_designs
+    WHERE created_at >= ${rangeStartIso}::timestamptz
+    GROUP BY 1 ORDER BY 1 ASC
+  `) as CountRow[];
+}
+
 async function fetchDesignSeries(
   trunc: (typeof GRANULARITY_CONFIG)[AdminAnalyticsGranularity]["trunc"],
   rangeStartIso: string
@@ -340,12 +446,13 @@ export async function getAdminAnalytics(
   const { buckets, trunc, periods, rangeStart, rangeEnd } = buildPeriodSpine(granularity);
   const rangeStartIso = rangeStart.toISOString();
 
-  const [signupRows, verificationRows, firstDesignRows, designRows, userDesignTotals] =
+  const [signupRows, verificationRows, firstDesignRows, designRows, imageRows, userDesignTotals, s3Inventory] =
     await Promise.all([
       fetchSignupSeries(trunc, rangeStartIso),
       fetchVerificationSeries(trunc, rangeStartIso),
       fetchFirstDesignSeries(trunc, rangeStartIso),
       fetchDesignSeries(trunc, rangeStartIso),
+      fetchImageSeries(trunc, rangeStartIso),
       sql`
         SELECT
           COUNT(DISTINCT u.id) FILTER (WHERE sd.id IS NOT NULL)::int AS with_design,
@@ -353,6 +460,7 @@ export async function getAdminAnalytics(
         FROM users u
         LEFT JOIN shared_designs sd ON sd.user_id = u.id
       `,
+      getS3Inventory(),
     ]);
 
   const designTotals = userDesignTotals as { with_design: number; without_design: number }[];
@@ -361,9 +469,12 @@ export async function getAdminAnalytics(
   const verificationsMap = mapCountRows(verificationRows);
   const firstDesignMap = mapCountRows(firstDesignRows);
   const designsMap = mapCountRows(designRows);
+  const imagesMap = mapCountRows(imageRows);
+  const s3Series = s3Inventory.ok ? bucketS3Inventory(s3Inventory.objects, periods, trunc) : [];
 
-  const series: AdminAnalyticsSeriesPoint[] = periods.map((period) => {
+  const series: AdminAnalyticsSeriesPoint[] = periods.map((period, index) => {
     const signup = signupsMap.get(period.key);
+    const s3Point = s3Series[index];
     return {
       periodStart: period.periodStart,
       label: period.label,
@@ -374,6 +485,8 @@ export async function getAdminAnalytics(
       verifications: verificationsMap.get(period.key) ?? 0,
       usersWithFirstDesign: firstDesignMap.get(period.key) ?? 0,
       designsCreated: designsMap.get(period.key) ?? 0,
+      imagesUploaded: s3Point?.imagesUploaded ?? imagesMap.get(period.key) ?? 0,
+      bytesUploaded: s3Point?.bytesUploaded ?? 0,
     };
   });
 
@@ -386,6 +499,8 @@ export async function getAdminAnalytics(
       acc.verifications += point.verifications;
       acc.usersWithFirstDesign += point.usersWithFirstDesign;
       acc.designsCreated += point.designsCreated;
+      acc.imagesUploaded += point.imagesUploaded;
+      acc.bytesUploaded += point.bytesUploaded;
       return acc;
     },
     {
@@ -397,6 +512,8 @@ export async function getAdminAnalytics(
       verifications: 0,
       usersWithFirstDesign: 0,
       designsCreated: 0,
+      imagesUploaded: 0,
+      bytesUploaded: 0,
       usersWithDesignTotal: designTotals[0]?.with_design ?? 0,
       usersWithoutDesignTotal: designTotals[0]?.without_design ?? 0,
     }
@@ -409,6 +526,8 @@ export async function getAdminAnalytics(
     rangeStart: rangeStart.toISOString(),
     rangeEnd: rangeEnd.toISOString(),
     summary,
+    s3Available: s3Inventory.ok,
+    s3Error: s3Inventory.ok ? undefined : s3Inventory.error,
     series,
   };
 }

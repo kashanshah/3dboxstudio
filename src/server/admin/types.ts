@@ -1,3 +1,38 @@
+export type AdminS3Window = {
+  objects: number;
+  bytes: number;
+};
+
+export type AdminS3Usage = {
+  available: boolean;
+  error?: string;
+  bucket: string;
+  region: string;
+  prefix: string;
+  scannedAt: string;
+  objectCount: number;
+  totalBytes: number;
+  averageBytes: number;
+  faceImages: number;
+  ogImages: number;
+  otherObjects: number;
+  last7Days: AdminS3Window;
+  last30Days: AdminS3Window;
+  objectsByDay: { date: string; count: number; bytes: number }[];
+  storageClasses: { label: string; objects: number; bytes: number }[];
+  estimatedMonthlyStorageUsd: number;
+  estimatedMonthlyPutUsd: number;
+  truncated: boolean;
+};
+
+export type AdminDbImageCounts = {
+  faceImages: number;
+  ogImages: number;
+  last7Days: number;
+  last30Days: number;
+  imagesByDay: { date: string; count: number }[];
+};
+
 export type AdminStats = {
   users: {
     total: number;
@@ -15,6 +50,8 @@ export type AdminStats = {
     last30Days: number;
     totalViews: number;
   };
+  images: AdminDbImageCounts;
+  s3: AdminS3Usage;
   activity: {
     signupsByDay: { date: string; count: number }[];
     designsByDay: { date: string; count: number }[];
@@ -81,6 +118,8 @@ export type AdminAnalyticsSeriesPoint = {
   verifications: number;
   usersWithFirstDesign: number;
   designsCreated: number;
+  imagesUploaded: number;
+  bytesUploaded: number;
 };
 
 export type AdminAnalytics = {
@@ -97,8 +136,12 @@ export type AdminAnalytics = {
     verifications: number;
     usersWithFirstDesign: number;
     designsCreated: number;
+    imagesUploaded: number;
+    bytesUploaded: number;
     usersWithDesignTotal: number;
     usersWithoutDesignTotal: number;
   };
+  s3Available: boolean;
+  s3Error?: string;
   series: AdminAnalyticsSeriesPoint[];
 };

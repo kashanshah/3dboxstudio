@@ -1,6 +1,7 @@
 import type { AdminStats } from "@/server/admin/types";
 import { landingTypeLabel } from "@/lib/landingClassification";
 import AdminAnalyticsCharts from "./AdminAnalyticsCharts";
+import AdminS3UsageSection from "./AdminS3UsageSection";
 
 type ActivityChartProps = {
   title: string;
@@ -87,7 +88,7 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
       <header className="admin-page-header">
         <div className="admin-page-header-copy">
           <h1>Dashboard</h1>
-          <p>Overview of signups, saved designs, and platform activity.</p>
+          <p>Overview of signups, saved designs, S3 usage, and platform activity.</p>
         </div>
       </header>
 
@@ -140,6 +141,8 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
           labelFormatter={(label) => (label === "(unknown)" ? label : landingTypeLabel(label))}
         />
       </div>
+
+      <AdminS3UsageSection s3={stats.s3} images={stats.images} />
 
       <AdminAnalyticsCharts />
     </>

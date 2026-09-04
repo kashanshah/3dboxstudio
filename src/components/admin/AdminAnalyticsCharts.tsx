@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { formatBytes } from "@/lib/formatBytes";
 import type { AdminAnalytics, AdminAnalyticsGranularity } from "@/server/admin/types";
 
 const GRANULARITY_OPTIONS: { id: AdminAnalyticsGranularity; label: string }[] = [
@@ -97,11 +98,13 @@ type SingleSeriesChartProps = {
   values: number[];
   color: string;
   emptyMessage?: string;
+  formatValue?: (value: number) => string;
 };
 
-function SingleSeriesChart({ title, periods, values, color, emptyMessage }: SingleSeriesChartProps) {
+function SingleSeriesChart({ title, periods, values, color, emptyMessage, formatValue }: SingleSeriesChartProps) {
   const max = Math.max(1, ...values);
   const hasData = values.some((value) => value > 0);
+  const format = formatValue ?? ((value: number) => value.toLocaleString());
 
   return (
     <div className="admin-panel">
@@ -122,7 +125,7 @@ function SingleSeriesChart({ title, periods, values, color, emptyMessage }: Sing
                     height: `${Math.max(count > 0 ? 6 : 0, (count / max) * 100)}%`,
                     background: color,
                   }}
-                  title={`${periods[index]}: ${count.toLocaleString()}`}
+                  title={`${periods[index]}: ${format(count)}`}
                 />
               ))}
             </div>
@@ -184,7 +187,7 @@ export default function AdminAnalyticsCharts() {
         <div>
           <h2 className="admin-analytics-title">Analytics</h2>
           <p className="admin-analytics-subtitle">
-            Signup methods, verification, and design activation over time.
+            Signup methods, verification, design activation, and S3 uploads over time.
           </p>
         </div>
         <div className="admin-filter-tabs" role="tablist" aria-label="Chart period">
@@ -241,6 +244,15 @@ export default function AdminAnalyticsCharts() {
               <div className="admin-stat-label">Designs created</div>
               <div className="admin-stat-value">{analytics.summary.designsCreated.toLocaleString()}</div>
               <div className="admin-stat-sub">In selected {granularityLabel(granularity)} range</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="admin-stat-label">Images uploaded</div>
+              <div className="admin-stat-value">{analytics.summary.imagesUploaded.toLocaleString()}</div>
+              <div className="admin-stat-sub">
+                {analytics.s3Available
+                  ? `${formatBytes(analytics.summary.bytesUploaded)} written in this range`
+                  : "From saved designs · add s3:ListBucket for exact bytes"}
+              </div>
             </div>
           </section>
 
@@ -299,6 +311,21 @@ export default function AdminAnalyticsCharts() {
               values={analytics.series.map((point) => point.designsCreated)}
               color="#3d9eff"
             />
+            <SingleSeriesChart
+              title={`Images uploaded (${granularityLabel(granularity)})`}
+              periods={periods}
+              values={analytics.series.map((point) => point.imagesUploaded)}
+              color="#ff9f0a"
+            />
+            {analytics.s3Available ? (
+              <SingleSeriesChart
+                title={`Bytes written (${granularityLabel(granularity)})`}
+                periods={periods}
+                values={analytics.series.map((point) => point.bytesUploaded)}
+                color="#ff375f"
+                formatValue={formatBytes}
+              />
+            ) : null}
           </div>
         </>
       )}

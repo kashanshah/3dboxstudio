@@ -15,6 +15,7 @@ import type {
   UserSort,
   UserVerifiedFilter,
 } from "@/lib/adminListQuery";
+import { getS3UsageStats } from "../s3Stats";
 import type { AdminDesignRow, AdminStats, AdminUserRow, PaginatedResult } from "./types";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -84,6 +85,29 @@ function mapDesignRow(row: DesignDbRow): AdminDesignRow {
 export async function getAdminStats(): Promise<AdminStats> {
   const sql = getSql();
 
+  const s3Promise = getS3UsageStats();
+  const imageCountsPromise = sql`
+    SELECT
+      COALESCE(SUM(face_count), 0)::int AS face_images,
+      COALESCE(SUM(og_count), 0)::int AS og_images,
+      COALESCE(SUM(face_count + og_count) FILTER (WHERE created_at >= NOW() - INTERVAL '7 days'), 0)::int AS last_7_days,
+      COALESCE(SUM(face_count + og_count) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days'), 0)::int AS last_30_days
+    FROM (
+      SELECT
+        created_at,
+        CASE
+          WHEN jsonb_typeof(images) = 'object'
+            THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+          ELSE 0
+        END AS face_count,
+        CASE
+          WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+          ELSE 0
+        END AS og_count
+      FROM shared_designs
+    ) img
+  `;
+
   const [userStats] = (await sql`
     SELECT
       COUNT(*)::int AS total,
@@ -140,6 +164,26 @@ export async function getAdminStats(): Promise<AdminStats> {
     ORDER BY day ASC
   `) as DailyCountRow[];
 
+  const imagesByDay = (await sql`
+    SELECT
+      (timezone(${ADMIN_DISPLAY_TIME_ZONE}, created_at))::date::text AS day,
+      COALESCE(SUM(
+        CASE
+          WHEN jsonb_typeof(images) = 'object'
+            THEN (SELECT COUNT(*) FROM jsonb_object_keys(images))
+          ELSE 0
+        END
+        + CASE
+          WHEN og_image_key IS NOT NULL AND og_image_key <> '' THEN 1
+          ELSE 0
+        END
+      ), 0)::int AS count
+    FROM shared_designs
+    WHERE created_at >= ${chartRangeStartIso}::timestamptz
+    GROUP BY 1
+    ORDER BY day ASC
+  `) as DailyCountRow[];
+
   const signupsBySource = (await sql`
     SELECT COALESCE(NULLIF(TRIM(utm_source), ''), '(direct / unknown)') AS label, COUNT(*)::int AS count
     FROM users
@@ -185,6 +229,16 @@ export async function getAdminStats(): Promise<AdminStats> {
     ORDER BY count DESC, label ASC
   `) as { label: string; count: number }[];
 
+  const [s3, imageCountRows] = await Promise.all([s3Promise, imageCountsPromise]);
+  const imageCounts = (
+    imageCountRows as {
+      face_images: number;
+      og_images: number;
+      last_7_days: number;
+      last_30_days: number;
+    }[]
+  )[0];
+
   return {
     users: {
       total: userStats?.total ?? 0,
@@ -202,6 +256,14 @@ export async function getAdminStats(): Promise<AdminStats> {
       last30Days: designStats?.last_30_days ?? 0,
       totalViews: designStats?.total_views ?? 0,
     },
+    images: {
+      faceImages: Number(imageCounts?.face_images) || 0,
+      ogImages: Number(imageCounts?.og_images) || 0,
+      last7Days: Number(imageCounts?.last_7_days) || 0,
+      last30Days: Number(imageCounts?.last_30_days) || 0,
+      imagesByDay: mapDailyCounts(imagesByDay),
+    },
+    s3,
     activity: {
       signupsByDay: mapDailyCounts(signupsByDay),
       designsByDay: mapDailyCounts(designsByDay),
