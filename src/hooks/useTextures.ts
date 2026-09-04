@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { FaceId } from "../types";
+import { createSharedFileObjectUrls } from "../lib/faceObjectUrls";
 
 /** Loads a texture from an object URL; disposes on change/unmount. */
 export function useLoadedTexture(url: string | null) {
@@ -51,27 +52,16 @@ export function useLoadedTexture(url: string | null) {
   return map;
 }
 
-/** Revokes previous URLs when the map of Files changes. */
+/** Revokes previous URLs when the map of Files changes. Same File shares one object URL. */
 export function useFaceObjectUrls(
   files: Partial<Record<FaceId, File | null>>
 ): Partial<Record<FaceId, string>> {
   const [urls, setUrls] = useState<Partial<Record<FaceId, string>>>({});
 
   useEffect(() => {
-    const next: Partial<Record<FaceId, string>> = {};
-    const created: string[] = [];
-    (Object.keys(files) as FaceId[]).forEach((key) => {
-      const f = files[key];
-      if (f) {
-        const u = URL.createObjectURL(f);
-        next[key] = u;
-        created.push(u);
-      }
-    });
+    const { urls: next, revoke } = createSharedFileObjectUrls(files);
     setUrls(next);
-    return () => {
-      created.forEach((u) => URL.revokeObjectURL(u));
-    };
+    return revoke;
   }, [files]);
 
   return urls;

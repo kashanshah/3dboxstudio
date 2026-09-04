@@ -53,9 +53,26 @@ import { dismissViewportHint, isViewportHintDismissed } from "./lib/viewportHint
 import {
   formatFileSize,
   MAX_FACE_ARTWORK_BYTES,
+  unreadableFaceArtworkError,
   validateFaceArtworkFile,
   type FaceArtworkUploadError,
 } from "./lib/faceArtworkUpload";
+import { getFaceAspectRatio } from "./lib/faceAspectRatio";
+import {
+  applyFaceCrop,
+  applySourceToFaces,
+  clearAllFaceArtwork,
+  clearFaceArtwork,
+  sourceForFace,
+  type FaceArtworkState,
+} from "./lib/faceArtworkState";
+import type { SideImageCrop, SideImagePlacement } from "./lib/faceImageCrop";
+import {
+  createSourceImageFromFile,
+  uniqueSourcesFromRecords,
+  type SourceImageRecord,
+} from "./lib/sourceImages";
+import FaceImageCropModal from "./components/studio/FaceImageCropModal";
 import { DEFAULT_UNTITLED_SHARE_NAME } from "@/lib/shareName";
 import { Viewport3D, INITIAL_ZOOM_FRACTION } from "./components/Viewport3D";
 import { MATERIAL_PRESETS, getPreset } from "./materialPresets";
@@ -223,7 +240,19 @@ export default function BoxDesigner({
   const [dims, setDims] = useState<BoxDimensions>({ width: 24, height: 10, length: 16 });
   const [boxTemplateId, setBoxTemplateId] = useState("custom");
   const [faceFiles, setFaceFiles] = useState<Partial<Record<FaceId, File | null>>>({});
+  const [sourceImages, setSourceImages] = useState<Record<string, SourceImageRecord>>({});
+  const [faceImagePlacements, setFaceImagePlacements] = useState<Partial<Record<FaceId, SideImagePlacement>>>({});
+  const [cropSession, setCropSession] = useState<{
+    faceId: FaceId;
+    source: SourceImageRecord;
+    existingPlacement: SideImagePlacement | null;
+  } | null>(null);
   const pendingAutoSaveRef = useRef(false);
+  const artworkRef = useRef<FaceArtworkState>({
+    sourceImages: {},
+    faceFiles: {},
+    faceImagePlacements: {},
+  });
   const studioOpenTrackedRef = useRef(false);
   const templateInitRef = useRef(true);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
@@ -238,13 +267,22 @@ export default function BoxDesigner({
   const [autoRotateSpeed, setAutoRotateSpeed] = useState(0.65);
   const [autoRotateReverse, setAutoRotateReverse] = useState(false);
   const [zoomFraction, setZoomFraction] = useState(INITIAL_ZOOM_FRACTION);
-  const [envPreset, setEnvPreset] = useState<EnvPreset>("studio");
+  const [envPreset, setEnvPreset] = useState<EnvPreset>("city");
   const [sessionReady, setSessionReady] = useState(() => !shareIdFromUrl && !previewTokenFromUrl);
   const [helpModal, setHelpModal] = useState<StudioHelpModal>(null);
   const [applyToAllFace, setApplyToAllFace] = useState<FaceId | null>(null);
   const [artworkUploadError, setArtworkUploadError] = useState<FaceArtworkUploadError | null>(null);
   const [showViewportHint, setShowViewportHint] = useState(false);
   const [mobileTab, setMobileTab] = useState<"viewport" | "design" | "export">("viewport");
+
+  artworkRef.current = { sourceImages, faceFiles, faceImagePlacements };
+
+  const commitArtwork = useCallback((next: FaceArtworkState) => {
+    artworkRef.current = next;
+    setSourceImages(next.sourceImages);
+    setFaceFiles(next.faceFiles);
+    setFaceImagePlacements(next.faceImagePlacements);
+  }, []);
 
   useEffect(() => {
     setShowViewportHint(!isViewportHintDismissed());
@@ -410,12 +448,30 @@ export default function BoxDesigner({
     return out;
   }, [textureUrls]);
 
+  const textureCrops = useMemo(() => {
+    const out: Partial<Record<FaceId, SideImageCrop>> = {};
+    (Object.keys(faceImagePlacements) as FaceId[]).forEach((id) => {
+      const placement = faceImagePlacements[id];
+      if (placement) out[id] = placement.crop;
+    });
+    return out;
+  }, [faceImagePlacements]);
+
+  const faceSizeCtx = useMemo(
+    () => ({ dims, splitTopHingeSide }),
+    [dims, splitTopHingeSide]
+  );
+
+  const reusableSources = useMemo(() => uniqueSourcesFromRecords(sourceImages), [sourceImages]);
+
   const buildPersistState = useCallback((): BoxDesignerPersistedState => {
     return {
       unit,
       dims,
       faceFiles,
       textureRotationDeg,
+      sourceImages,
+      faceImagePlacements,
       materialId,
       opening,
       splitTopHingeSide,
@@ -434,6 +490,8 @@ export default function BoxDesigner({
     dims,
     faceFiles,
     textureRotationDeg,
+    sourceImages,
+    faceImagePlacements,
     materialId,
     opening,
     splitTopHingeSide,
@@ -452,7 +510,12 @@ export default function BoxDesigner({
     setUnit(restored.unit);
     setDims(restored.dims);
     setBoxTemplateId("custom");
-    setFaceFiles(restored.faceFiles);
+    const restoredArtwork: FaceArtworkState = {
+      sourceImages: restored.sourceImages ?? {},
+      faceFiles: restored.faceFiles,
+      faceImagePlacements: restored.faceImagePlacements ?? {},
+    };
+    commitArtwork(restoredArtwork);
     setTextureRotationDeg(restored.textureRotationDeg);
     setMaterialId(restored.materialId);
     setOpening(restored.opening);
@@ -468,7 +531,7 @@ export default function BoxDesigner({
     // for the restored dimensions (avoids inheriting a stale, over-zoomed saved value).
     setZoomFraction(INITIAL_ZOOM_FRACTION);
     setEnvPreset(restored.envPreset);
-  }, []);
+  }, [commitArtwork]);
 
   const capturePreviewImage = useCallback(async () => {
     const s = r3fRef.current;
@@ -577,7 +640,7 @@ export default function BoxDesigner({
     if (doc.viewOnly || !pendingAutoSaveRef.current) return;
     pendingAutoSaveRef.current = false;
     void doc.autoSaveCloud();
-  }, [faceFiles, doc.autoSaveCloud, doc.viewOnly]);
+  }, [faceFiles, faceImagePlacements, doc.autoSaveCloud, doc.viewOnly]);
 
   useEffect(() => {
     if (!shareIdFromUrl) return;
@@ -642,14 +705,30 @@ export default function BoxDesigner({
 
   const setFile = useCallback((id: FaceId, file: File | null) => {
     if (file) pendingAutoSaveRef.current = true;
-    setFaceFiles((prev) => ({ ...prev, [id]: file }));
     if (!file) {
+      commitArtwork(clearFaceArtwork(artworkRef.current, id));
       setTextureRotationDeg((prev) => {
         const { [id]: _removed, ...rest } = prev;
         return rest;
       });
+      return;
     }
-  }, []);
+    commitArtwork({
+      ...artworkRef.current,
+      faceFiles: { ...artworkRef.current.faceFiles, [id]: file },
+    });
+  }, [commitArtwork]);
+
+  const openCropSession = useCallback(
+    (
+      id: FaceId,
+      source: SourceImageRecord,
+      existingPlacement: SideImagePlacement | null
+    ) => {
+      setCropSession({ faceId: id, source, existingPlacement });
+    },
+    []
+  );
 
   const handleFaceFileChange = useCallback(
     (id: FaceId, file: File | null, input?: HTMLInputElement | null) => {
@@ -664,11 +743,57 @@ export default function BoxDesigner({
         trackStudioError("file_validation_failed", "artwork_upload");
         return;
       }
-      setFile(id, file);
-      trackArtworkUploaded(id, file, undefined, studioAnalyticsCtx());
-      trackDesignCustomized("artwork", studioAnalyticsCtx());
+      void (async () => {
+        try {
+          const source = await createSourceImageFromFile(file, artworkRef.current.sourceImages);
+          openCropSession(id, source, null);
+        } catch {
+          setArtworkUploadError(unreadableFaceArtworkError(file));
+          trackStudioError("file_validation_failed", "artwork_upload");
+        }
+      })();
     },
-    [setFile, studioAnalyticsCtx]
+    [openCropSession, setFile]
+  );
+
+  const handleCropEdit = useCallback(
+    (id: FaceId) => {
+      const existing = sourceForFace(artworkRef.current, id);
+      const placement = artworkRef.current.faceImagePlacements[id] ?? null;
+      const file = artworkRef.current.faceFiles[id];
+      if (existing && existing.naturalWidth > 0) {
+        openCropSession(id, existing, placement);
+        return;
+      }
+      if (!file) return;
+      void (async () => {
+        try {
+          const source = await createSourceImageFromFile(file, artworkRef.current.sourceImages);
+          openCropSession(id, source, placement);
+        } catch {
+          setArtworkUploadError(unreadableFaceArtworkError(file));
+          trackStudioError("file_validation_failed", "artwork_upload");
+        }
+      })();
+    },
+    [openCropSession]
+  );
+
+  const handleCropCancel = useCallback(() => {
+    setCropSession(null);
+  }, []);
+
+  const handleCropApply = useCallback(
+    (result: { placement: SideImagePlacement }) => {
+      const session = cropSession;
+      if (!session) return;
+      pendingAutoSaveRef.current = true;
+      commitArtwork(applyFaceCrop(artworkRef.current, session.faceId, session.source, result.placement));
+      trackArtworkUploaded(session.faceId, session.source.file, undefined, studioAnalyticsCtx());
+      trackDesignCustomized("artwork", studioAnalyticsCtx());
+      setCropSession(null);
+    },
+    [commitArtwork, cropSession, studioAnalyticsCtx]
   );
 
   const bumpTextureRotationBy90 = useCallback((id: FaceId) => {
@@ -685,21 +810,28 @@ export default function BoxDesigner({
   }, [studioAnalyticsCtx]);
 
   const clearAllTextures = useCallback(() => {
-    setFaceFiles({});
+    commitArtwork(clearAllFaceArtwork());
     setTextureRotationDeg({});
-  }, []);
+  }, [commitArtwork]);
 
   const applyOneToAll = useCallback(
     (id: FaceId) => {
-      const f = faceFiles[id];
+      const f = artworkRef.current.faceFiles[id];
       if (!f) return;
       pendingAutoSaveRef.current = true;
-      const next: Partial<Record<FaceId, File | null>> = {};
       const targets: FaceId[] = splitTop ? [...ALL_FACES.filter((x) => x !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES;
-      targets.forEach((k) => {
-        next[k] = f;
-      });
-      setFaceFiles((prev) => ({ ...prev, ...next }));
+      const existing = sourceForFace(artworkRef.current, id);
+      void (async () => {
+        try {
+          const source =
+            existing && existing.naturalWidth > 0
+              ? existing
+              : await createSourceImageFromFile(f, artworkRef.current.sourceImages);
+          commitArtwork(applySourceToFaces(artworkRef.current, source, targets, faceSizeCtx, id));
+        } catch {
+          setArtworkUploadError(unreadableFaceArtworkError(f));
+        }
+      })();
       const rot = textureRotationDeg[id] ?? 0;
       setTextureRotationDeg((prev) => {
         const merged = { ...prev };
@@ -713,7 +845,7 @@ export default function BoxDesigner({
         return merged;
       });
     },
-    [faceFiles, splitTop, textureRotationDeg]
+    [commitArtwork, faceSizeCtx, splitTop, textureRotationDeg]
   );
 
   const confirmApplyOneToAll = useCallback(() => {
@@ -918,6 +1050,7 @@ export default function BoxDesigner({
           onZoomFractionChange={setZoomFractionClamped}
           envPreset={envPreset}
           textureRotationDeg={textureRotationDeg}
+          textureCrops={textureCrops}
           snappyOrbit={recordPhase === "recording"}
           recordingActive={recordPhase === "recording"}
           cleanCapture={recordPhase === "recording"}
@@ -1181,9 +1314,10 @@ export default function BoxDesigner({
 
         <PanelCollapse title="Face artwork">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            PNG or JPG recommended, up to {formatFileSize(MAX_FACE_ARTWORK_BYTES)} per image. Art is UV-stretched to each
-            rectangle; for print-ready proofs, design to the flat dieline first, then preview here. Hover the rotate,
-            apply-to-all, and clear icons beside each face for hints; rotation advances 90° per click.
+            PNG or JPG recommended, up to {formatFileSize(MAX_FACE_ARTWORK_BYTES)} per image. After upload, crop the
+            original to this face’s aspect ratio. The same source image can be reused on every side with an independent
+            crop. Hover the rotate, apply-to-all, and clear icons beside each face for hints; rotation advances 90° per
+            click.
           </p>
           {(splitTop ? [...ALL_FACES.filter((f) => f !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES).map((fid) => (
             <div key={fid} style={{ marginBottom: "0.65rem" }}>
@@ -1192,11 +1326,44 @@ export default function BoxDesigner({
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                 onChange={(e) => handleFaceFileChange(fid, e.target.files?.[0] ?? null, e.currentTarget)}
                 style={{ width: "100%", marginBottom: 6 }}
               />
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {reusableSources.length > 0 && (
+                <div className="face-artwork-reuse">
+                  <span className="face-artwork-reuse-label">Use uploaded</span>
+                  {reusableSources.map((source) => (
+                    <button
+                      key={source.id}
+                      type="button"
+                      className="btn btn-ghost face-artwork-reuse-btn"
+                      title={`Use ${source.originalFileName || "uploaded image"} on this face`}
+                      onClick={() =>
+                        openCropSession(
+                          fid,
+                          source,
+                          faceImagePlacements[fid]?.sourceImageId === source.id
+                            ? faceImagePlacements[fid] ?? null
+                            : null
+                        )
+                      }
+                    >
+                      {source.originalFileName || "Image"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="face-artwork-actions">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => handleCropEdit(fid)}
+                  disabled={!faceFiles[fid]}
+                  title="Crop or edit this face using the original image"
+                >
+                  Crop / Edit
+                </button>
                 <button
                   type="button"
                   className="btn btn-ghost"
@@ -1250,8 +1417,8 @@ export default function BoxDesigner({
           </p>
           <label>HDRI preset</label>
           <select value={envPreset} onChange={(e) => setEnvWithAnalytics(e.target.value as EnvPreset)}>
-            <option value="studio">Studio</option>
             <option value="city">City</option>
+            <option value="studio">Studio</option>
             <option value="warehouse">Warehouse</option>
             <option value="sunset">Sunset</option>
             <option value="dawn">Dawn</option>
@@ -1454,20 +1621,25 @@ export default function BoxDesigner({
         }
       >
         <p className="studio-dialog-lead">
-          Replace artwork on every face with the image from{" "}
-          <strong>{applyToAllFace ? faceArtworkLabel(applyToAllFace) : "this face"}</strong>. Any existing images on other
-          faces will be overwritten.
+          Assign the source image and current crop from{" "}
+          <strong>{applyToAllFace ? faceArtworkLabel(applyToAllFace) : "this face"}</strong> to every face. Existing
+          artwork on other faces will be replaced.
         </p>
-        {(applyToAllFace && (textureRotationDeg[applyToAllFace] ?? 0) !== 0) ? (
-          <p className="studio-dialog-hint">
-            The current {textureRotationDeg[applyToAllFace]}° rotation on this face will be copied to all faces as well.
-          </p>
-        ) : (
-          <p className="studio-dialog-hint">This cannot be undone in one step—use Clear all artwork if you need to reset.</p>
-        )}
+        <p className="studio-dialog-hint">
+          {(applyToAllFace && (textureRotationDeg[applyToAllFace] ?? 0) !== 0)
+            ? `The current crop and ${textureRotationDeg[applyToAllFace]}° rotation on this face will be copied to all faces as well. `
+            : "The current crop, position, and zoom will be copied to every face. "}
+          This cannot be undone in one step—use Clear all artwork if you need to reset.
+        </p>
       </StudioDialog>
       <StudioDialog
-        title="Image too large"
+        title={
+          artworkUploadError?.kind === "unsupported"
+            ? "Unsupported image"
+            : artworkUploadError?.kind === "unreadable"
+              ? "Could not read image"
+              : "Image too large"
+        }
         open={artworkUploadError !== null}
         onClose={() => setArtworkUploadError(null)}
         footer={
@@ -1476,7 +1648,7 @@ export default function BoxDesigner({
           </button>
         }
       >
-        {artworkUploadError && (
+        {artworkUploadError && artworkUploadError.kind === "too_large" && (
           <>
             <p className="studio-dialog-lead">
               <strong>{artworkUploadError.fileName}</strong> is {formatFileSize(artworkUploadError.fileSize)}. Face artwork
@@ -1491,7 +1663,21 @@ export default function BoxDesigner({
             </ul>
           </>
         )}
+        {artworkUploadError && artworkUploadError.kind !== "too_large" && (
+          <p className="studio-dialog-lead">
+            <strong>{artworkUploadError.fileName}</strong> — {artworkUploadError.message}
+          </p>
+        )}
       </StudioDialog>
+      <FaceImageCropModal
+        open={cropSession !== null}
+        faceName={cropSession ? faceArtworkLabel(cropSession.faceId) : "this side"}
+        source={cropSession?.source ?? null}
+        aspectRatio={cropSession ? getFaceAspectRatio(cropSession.faceId, faceSizeCtx) : 1}
+        initialPlacement={cropSession?.existingPlacement ?? null}
+        onCancel={handleCropCancel}
+        onApply={handleCropApply}
+      />
       <StudioStartDialog
         open={startDialogOpen && !viewOnly && Boolean(auth.user)}
         user={auth.user}

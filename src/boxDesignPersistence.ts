@@ -1,4 +1,6 @@
 import { MATERIAL_PRESETS } from "./materialPresets";
+import { parseSideImagePlacement, type SideImagePlacement } from "./lib/faceImageCrop";
+import { sourceRecordFromLoadedFile, type SourceImageRecord } from "./lib/sourceImages";
 import type { BoxDimensions, FaceId, LengthUnit, OpeningStyle, SplitTopHingeSide, TextureRotationDeg } from "./types";
 
 const LENGTH_UNITS: LengthUnit[] = ["mm", "cm", "in"];
@@ -14,7 +16,7 @@ const OPENINGS: OpeningStyle[] = [
   "double_doors",
 ];
 const SPLIT_HINGES: SplitTopHingeSide[] = ["side_a", "side_b"];
-const ENV_PRESETS = ["studio", "city", "warehouse", "sunset", "dawn"] as const;
+const ENV_PRESETS = ["city", "studio", "warehouse", "sunset", "dawn"] as const;
 export type EnvPreset = (typeof ENV_PRESETS)[number];
 
 const ALL_FACE_IDS: FaceId[] = [
@@ -35,6 +37,10 @@ export interface BoxDesignerPersistedState {
   dims: BoxDimensions;
   faceFiles: Partial<Record<FaceId, File | null>>;
   textureRotationDeg: Partial<Record<FaceId, TextureRotationDeg>>;
+  /** Original uploaded images, keyed by stable source id. Optional for legacy designs. */
+  sourceImages: Record<string, SourceImageRecord>;
+  /** Per-face crop of a shared source image. Absent means legacy full-face mapping. */
+  faceImagePlacements: Partial<Record<FaceId, SideImagePlacement>>;
   materialId: string;
   opening: OpeningStyle;
   splitTopHingeSide: SplitTopHingeSide;
@@ -58,6 +64,8 @@ export function defaultBoxDesignerState(): BoxDesignerPersistedState {
     dims: { width: 24, height: 10, length: 16 },
     faceFiles: {},
     textureRotationDeg: {},
+    sourceImages: {},
+    faceImagePlacements: {},
     materialId: MATERIAL_PRESETS[0].id,
     opening: "closed",
     splitTopHingeSide: "side_a",
@@ -69,7 +77,7 @@ export function defaultBoxDesignerState(): BoxDesignerPersistedState {
     autoRotateSpeed: 0.65,
     autoRotateReverse: false,
     zoomFraction: 0.5,
-    envPreset: "studio",
+    envPreset: "city",
   };
 }
 
@@ -79,11 +87,31 @@ export interface PersistedImageEntry {
   base64: string;
 }
 
+export interface PersistedSourceImageEntry extends PersistedImageEntry {
+  id: string;
+  naturalWidth: number;
+  naturalHeight: number;
+}
+
 export interface RemoteImageEntry {
   name: string;
   mime: string;
   url: string;
 }
+
+export interface RemoteSourceImageEntry extends RemoteImageEntry {
+  id: string;
+  naturalWidth?: number;
+  naturalHeight?: number;
+}
+
+export type PersistedSourceImageMeta = {
+  id: string;
+  name: string;
+  mime: string;
+  naturalWidth: number;
+  naturalHeight: number;
+};
 
 /** Validated v1 design JSON (images as base64 entries). Safe for server-side parsing. */
 export interface ParsedDesignV1 {
@@ -104,6 +132,8 @@ export interface ParsedDesignV1 {
   envPreset: EnvPreset;
   textureRotationDeg: Partial<Record<FaceId, TextureRotationDeg>>;
   faceImages: Partial<Record<FaceId, PersistedImageEntry>>;
+  sourceImages?: Record<string, PersistedSourceImageEntry>;
+  faceImagePlacements?: Partial<Record<FaceId, SideImagePlacement>>;
 }
 
 interface PersistedJsonV1 {
@@ -124,6 +154,8 @@ interface PersistedJsonV1 {
   envPreset: unknown;
   textureRotationDeg: unknown;
   faceImages: unknown;
+  sourceImages?: unknown;
+  faceImagePlacements?: unknown;
 }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
@@ -228,6 +260,83 @@ function parseRemoteFaceImages(raw: unknown): Partial<Record<FaceId, RemoteImage
   return out;
 }
 
+function parseNaturalSize(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function parseSourceImages(raw: unknown): Record<string, PersistedSourceImageEntry> {
+  if (!isRecord(raw)) return {};
+  const out: Record<string, PersistedSourceImageEntry> = {};
+  for (const [key, entry] of Object.entries(raw)) {
+    if (!isRecord(entry)) continue;
+    const id = typeof entry.id === "string" && entry.id ? entry.id : key;
+    const name = typeof entry.name === "string" ? entry.name : "image";
+    const mime = typeof entry.mime === "string" ? entry.mime : "application/octet-stream";
+    const base64 = typeof entry.base64 === "string" ? entry.base64 : "";
+    if (!base64) continue;
+    out[id] = {
+      id,
+      name,
+      mime,
+      base64,
+      naturalWidth: parseNaturalSize(entry.naturalWidth),
+      naturalHeight: parseNaturalSize(entry.naturalHeight),
+    };
+  }
+  return out;
+}
+
+export function parseRemoteSourceImages(raw: unknown): Record<string, RemoteSourceImageEntry> {
+  if (!isRecord(raw)) return {};
+  const out: Record<string, RemoteSourceImageEntry> = {};
+  for (const [key, entry] of Object.entries(raw)) {
+    if (!isRecord(entry)) continue;
+    const id = typeof entry.id === "string" && entry.id ? entry.id : key;
+    const name = typeof entry.name === "string" ? entry.name : "image";
+    const mime = typeof entry.mime === "string" ? entry.mime : "application/octet-stream";
+    const url = typeof entry.url === "string" ? entry.url : "";
+    if (!url) continue;
+    out[id] = {
+      id,
+      name,
+      mime,
+      url,
+      naturalWidth: parseNaturalSize(entry.naturalWidth),
+      naturalHeight: parseNaturalSize(entry.naturalHeight),
+    };
+  }
+  return out;
+}
+
+export function parseSourceImageMeta(raw: unknown): Record<string, PersistedSourceImageMeta> {
+  if (!isRecord(raw)) return {};
+  const out: Record<string, PersistedSourceImageMeta> = {};
+  for (const [key, entry] of Object.entries(raw)) {
+    if (!isRecord(entry)) continue;
+    const id = typeof entry.id === "string" && entry.id ? entry.id : key;
+    out[id] = {
+      id,
+      name: typeof entry.name === "string" ? entry.name : "image",
+      mime: typeof entry.mime === "string" ? entry.mime : "application/octet-stream",
+      naturalWidth: parseNaturalSize(entry.naturalWidth),
+      naturalHeight: parseNaturalSize(entry.naturalHeight),
+    };
+  }
+  return out;
+}
+
+export function parseFaceImagePlacements(raw: unknown): Partial<Record<FaceId, SideImagePlacement>> {
+  if (!isRecord(raw)) return {};
+  const out: Partial<Record<FaceId, SideImagePlacement>> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isFaceId(key)) continue;
+    const placement = parseSideImagePlacement(value);
+    if (placement) out[key] = placement;
+  }
+  return out;
+}
+
 /** Parse and validate a v1 design export JSON (works on server and client). */
 export function parseDesignJsonV1(json: string): ParsedDesignV1 | null {
   let parsed: unknown;
@@ -263,10 +372,12 @@ export function parseDesignJsonV1(json: string): ParsedDesignV1 | null {
     envPreset: isEnvPreset(parsed.envPreset) ? parsed.envPreset : base.envPreset,
     textureRotationDeg: parseTextureRotations(parsed.textureRotationDeg),
     faceImages: parseFaceImages(parsed.faceImages),
+    sourceImages: parseSourceImages(parsed.sourceImages),
+    faceImagePlacements: parseFaceImagePlacements(parsed.faceImagePlacements),
   };
 }
 
-function parsedToPersistedState(parsed: ParsedDesignV1): Omit<BoxDesignerPersistedState, "faceFiles"> {
+function parsedToPersistedState(parsed: ParsedDesignV1): Omit<BoxDesignerPersistedState, "faceFiles" | "sourceImages" | "faceImagePlacements"> {
   return {
     unit: parsed.unit,
     dims: parsed.dims,
@@ -332,11 +443,61 @@ async function remoteEntryToFile(entry: RemoteImageEntry): Promise<File | null> 
 }
 
 export async function serializeDesign(state: BoxDesignerPersistedState): Promise<string> {
+  const encodedByFile = new Map<File, PersistedImageEntry>();
+  const encodeFile = async (file: File): Promise<PersistedImageEntry> => {
+    const cached = encodedByFile.get(file);
+    if (cached) return cached;
+    const entry = await fileToPersistedEntry(file);
+    encodedByFile.set(file, entry);
+    return entry;
+  };
+
+  const sourceImages: Record<string, PersistedSourceImageEntry> = {};
+  for (const source of Object.values(state.sourceImages ?? {})) {
+    if (!source?.file) continue;
+    const entry = await encodeFile(source.file);
+    sourceImages[source.id] = {
+      id: source.id,
+      name: source.originalFileName || entry.name,
+      mime: source.mimeType || entry.mime,
+      base64: entry.base64,
+      naturalWidth: source.naturalWidth,
+      naturalHeight: source.naturalHeight,
+    };
+  }
+
+  const requestedPlacements = state.faceImagePlacements ?? {};
+  for (const id of ALL_FACE_IDS) {
+    const placement = requestedPlacements[id];
+    if (!placement || sourceImages[placement.sourceImageId]) continue;
+    const file = state.faceFiles[id];
+    if (!file) continue;
+    const entry = await encodeFile(file);
+    sourceImages[placement.sourceImageId] = {
+      id: placement.sourceImageId,
+      name: file.name,
+      mime: file.type || entry.mime,
+      base64: entry.base64,
+      naturalWidth: 0,
+      naturalHeight: 0,
+    };
+  }
+
+  const faceImagePlacements: Partial<Record<FaceId, SideImagePlacement>> = {};
+  for (const id of ALL_FACE_IDS) {
+    const placement = requestedPlacements[id];
+    if (!placement) continue;
+    if (!sourceImages[placement.sourceImageId]) continue;
+    faceImagePlacements[id] = placement;
+  }
+
   const faceImages: Partial<Record<FaceId, PersistedImageEntry>> = {};
   for (const id of ALL_FACE_IDS) {
+    if (faceImagePlacements[id]) continue;
     const f = state.faceFiles[id];
-    if (f) faceImages[id] = await fileToPersistedEntry(f);
+    if (f) faceImages[id] = await encodeFile(f);
   }
+
   const payload: PersistedJsonV1 = {
     v: 1,
     unit: state.unit,
@@ -355,8 +516,52 @@ export async function serializeDesign(state: BoxDesignerPersistedState): Promise
     envPreset: state.envPreset,
     textureRotationDeg: state.textureRotationDeg,
     faceImages,
+    ...(Object.keys(sourceImages).length > 0 ? { sourceImages } : {}),
+    ...(Object.keys(faceImagePlacements).length > 0 ? { faceImagePlacements } : {}),
   };
   return JSON.stringify(payload);
+}
+
+type LoadableImageEntry = PersistedImageEntry | RemoteImageEntry | PersistedSourceImageEntry | RemoteSourceImageEntry;
+
+async function hydrateArtworkFromEntries(
+  out: BoxDesignerPersistedState,
+  sourceEntries: Record<string, PersistedSourceImageEntry | RemoteSourceImageEntry>,
+  loadSourceFile: (entry: LoadableImageEntry) => Promise<File | null>,
+  faceEntries: Partial<Record<FaceId, PersistedImageEntry | RemoteImageEntry>>,
+  loadFaceFile: (entry: LoadableImageEntry) => Promise<File | null>,
+  placements: Partial<Record<FaceId, SideImagePlacement>>
+): Promise<void> {
+  const sourceFiles = new Map<string, File>();
+  for (const [id, entry] of Object.entries(sourceEntries)) {
+    const file = await loadSourceFile(entry);
+    if (!file) continue;
+    sourceFiles.set(id, file);
+    out.sourceImages[id] = sourceRecordFromLoadedFile(file, {
+      id,
+      originalFileName: entry.name,
+      mimeType: entry.mime,
+      naturalWidth: "naturalWidth" in entry ? entry.naturalWidth : 0,
+      naturalHeight: "naturalHeight" in entry ? entry.naturalHeight : 0,
+      url: "url" in entry ? entry.url : undefined,
+    });
+  }
+
+  for (const id of ALL_FACE_IDS) {
+    const placement = placements[id];
+    if (placement) {
+      const file = sourceFiles.get(placement.sourceImageId);
+      if (file) {
+        out.faceFiles[id] = file;
+        out.faceImagePlacements[id] = placement;
+        continue;
+      }
+    }
+    const entry = faceEntries[id];
+    if (!entry) continue;
+    const file = await loadFaceFile(entry);
+    if (file) out.faceFiles[id] = file;
+  }
 }
 
 export async function deserializeDesign(json: string): Promise<BoxDesignerPersistedState | null> {
@@ -366,14 +571,18 @@ export async function deserializeDesign(json: string): Promise<BoxDesignerPersis
   const out: BoxDesignerPersistedState = {
     ...parsedToPersistedState(parsed),
     faceFiles: {},
+    sourceImages: {},
+    faceImagePlacements: {},
   };
 
-  for (const id of ALL_FACE_IDS) {
-    const entry = parsed.faceImages[id];
-    if (!entry) continue;
-    const file = await entryToFile(entry);
-    if (file) out.faceFiles[id] = file;
-  }
+  await hydrateArtworkFromEntries(
+    out,
+    parsed.sourceImages ?? {},
+    (entry) => entryToFile(entry),
+    parsed.faceImages,
+    (entry) => entryToFile(entry),
+    parsed.faceImagePlacements ?? {}
+  );
 
   return out;
 }
@@ -407,15 +616,50 @@ export async function deserializeSharedDesign(payload: unknown): Promise<BoxDesi
     envPreset: isEnvPreset(payload.envPreset) ? payload.envPreset : base.envPreset,
     textureRotationDeg: parseTextureRotations(payload.textureRotationDeg),
     faceFiles: {},
+    sourceImages: {},
+    faceImagePlacements: {},
   };
 
   const remoteImages = parseRemoteFaceImages(payload.faceImages);
-  for (const id of ALL_FACE_IDS) {
-    const entry = remoteImages[id];
-    if (!entry) continue;
-    const file = await remoteEntryToFile(entry);
-    if (file) out.faceFiles[id] = file;
+  const remoteSources = parseRemoteSourceImages(payload.sourceImages);
+  const sourceMeta = parseSourceImageMeta(payload.sourceImageMeta);
+  const placements = parseFaceImagePlacements(payload.faceImagePlacements);
+
+  if (Object.keys(remoteSources).length === 0 && Object.keys(sourceMeta).length > 0) {
+    for (const [id, meta] of Object.entries(sourceMeta)) {
+      const faceUsingSource = ALL_FACE_IDS.find((faceId) => placements[faceId]?.sourceImageId === id);
+      const faceEntry = faceUsingSource ? remoteImages[faceUsingSource] : undefined;
+      if (!faceEntry?.url) continue;
+      remoteSources[id] = {
+        id,
+        name: meta.name,
+        mime: meta.mime,
+        url: faceEntry.url,
+        naturalWidth: meta.naturalWidth,
+        naturalHeight: meta.naturalHeight,
+      };
+    }
   }
+
+  const uniqueSourceFetches = new Map<string, Promise<File | null>>();
+  const loadRemoteOnce = (entry: LoadableImageEntry) => {
+    const url = "url" in entry ? entry.url : "";
+    if (!url) return Promise.resolve(null);
+    const existing = uniqueSourceFetches.get(url);
+    if (existing) return existing;
+    const pending = remoteEntryToFile({ name: entry.name, mime: entry.mime, url });
+    uniqueSourceFetches.set(url, pending);
+    return pending;
+  };
+
+  await hydrateArtworkFromEntries(
+    out,
+    remoteSources,
+    loadRemoteOnce,
+    remoteImages,
+    loadRemoteOnce,
+    placements
+  );
 
   return out;
 }

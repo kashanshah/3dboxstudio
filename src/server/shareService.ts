@@ -1,11 +1,11 @@
-import type { ParsedDesignV1 } from "@/boxDesignPersistence";
+import type { ParsedDesignV1, PersistedSourceImageMeta } from "@/boxDesignPersistence";
 import type { FaceId } from "@/types";
 import { ALL_FACES, SPLIT_TOP_FACES } from "@/types";
 import { normalizeShareName } from "@/lib/shareName";
 import { appendShareCacheVersion, toShareCacheVersion } from "@/lib/shareUrl";
 import { getSql } from "./db";
 import { SHARE_MAX_IMAGE_BYTES, SHARE_MAX_OG_IMAGE_BYTES, shareMaxPayloadBytes, shareTtlDays } from "./env";
-import { getShareObject, publicUrlForKey, uploadShareFaceImage, uploadShareOgImage } from "./s3";
+import { getShareObject, publicUrlForKey, uploadShareFaceImage, uploadShareOgImage, uploadShareSourceImage } from "./s3";
 import { customAlphabet } from "nanoid";
 
 const SHARE_FACE_IDS = new Set<FaceId>([...ALL_FACES, ...SPLIT_TOP_FACES, "top"]);
@@ -20,7 +20,9 @@ export type StoredShareImage = {
   name: string;
 };
 
-export type ShareConfig = Omit<ParsedDesignV1, "faceImages" | "v">;
+export type ShareConfig = Omit<ParsedDesignV1, "faceImages" | "sourceImages" | "v"> & {
+  sourceImageMeta?: Record<string, PersistedSourceImageMeta>;
+};
 
 export type ShareLinks = {
   id: string;
@@ -48,12 +50,30 @@ export type ShareSeoMeta = {
 };
 
 function stripImages(parsed: ParsedDesignV1): ShareConfig {
-  const { faceImages: _faceImages, v: _v, ...config } = parsed;
-  return config;
+  const { faceImages: _faceImages, sourceImages, v: _v, ...config } = parsed;
+  const sourceImageMeta: Record<string, PersistedSourceImageMeta> = {};
+  for (const [id, entry] of Object.entries(sourceImages ?? {})) {
+    if (!entry) continue;
+    sourceImageMeta[id] = {
+      id: entry.id || id,
+      name: entry.name,
+      mime: entry.mime,
+      naturalWidth: entry.naturalWidth,
+      naturalHeight: entry.naturalHeight,
+    };
+  }
+  return {
+    ...config,
+    ...(Object.keys(sourceImageMeta).length > 0 ? { sourceImageMeta } : {}),
+  };
 }
 
 function validateImageSizes(parsed: ParsedDesignV1): string | null {
-  for (const entry of Object.values(parsed.faceImages)) {
+  const entries = [
+    ...Object.values(parsed.faceImages),
+    ...Object.values(parsed.sourceImages ?? {}),
+  ];
+  for (const entry of entries) {
     if (!entry) continue;
     const bytes = Buffer.byteLength(entry.base64, "base64");
     if (bytes > SHARE_MAX_IMAGE_BYTES) {
@@ -94,7 +114,27 @@ async function uploadDesignImages(
   parsed: ParsedDesignV1
 ): Promise<Partial<Record<FaceId, StoredShareImage>>> {
   const images: Partial<Record<FaceId, StoredShareImage>> = {};
+  const uploadedSources = new Map<string, StoredShareImage>();
+
+  for (const [sourceId, entry] of Object.entries(parsed.sourceImages ?? {})) {
+    if (!entry?.base64) continue;
+    const uploaded = await uploadShareSourceImage(shareId, sourceId, entry);
+    uploadedSources.set(sourceId, {
+      s3Key: uploaded.s3Key,
+      mime: entry.mime,
+      name: entry.name,
+    });
+  }
+
+  for (const [faceId, placement] of Object.entries(parsed.faceImagePlacements ?? {})) {
+    if (!placement) continue;
+    const source = uploadedSources.get(placement.sourceImageId);
+    if (!source) continue;
+    images[faceId as FaceId] = source;
+  }
+
   for (const faceId of Object.keys(parsed.faceImages) as FaceId[]) {
+    if (images[faceId]) continue;
     const entry = parsed.faceImages[faceId];
     if (!entry) continue;
     const uploaded = await uploadShareFaceImage(shareId, faceId, entry);
@@ -186,6 +226,23 @@ function buildEditorPayload(
     };
   }
 
+  const sourceImages: Record<string, { id: string; name: string; mime: string; url: string; naturalWidth: number; naturalHeight: number }> = {};
+  for (const [sourceId, meta] of Object.entries(row.config.sourceImageMeta ?? {})) {
+    const faceUsingSource = (Object.entries(row.config.faceImagePlacements ?? {}) as [FaceId, { sourceImageId: string }][]).find(
+      ([, placement]) => placement?.sourceImageId === sourceId
+    )?.[0];
+    const url = faceUsingSource ? faceImages[faceUsingSource]?.url : undefined;
+    if (!url) continue;
+    sourceImages[sourceId] = {
+      id: meta.id || sourceId,
+      name: meta.name,
+      mime: meta.mime,
+      url,
+      naturalWidth: meta.naturalWidth,
+      naturalHeight: meta.naturalHeight,
+    };
+  }
+
   return {
     v: 1,
     shareName: row.name ?? null,
@@ -193,6 +250,7 @@ function buildEditorPayload(
     ...(includePreviewToken ? { previewToken: row.preview_token } : {}),
     ...row.config,
     faceImages,
+    ...(Object.keys(sourceImages).length > 0 ? { sourceImages } : {}),
   };
 }
 

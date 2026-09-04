@@ -5,6 +5,7 @@ import * as THREE from "three";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
 import { faceShortLabels } from "../types";
 import { useLoadedTexture } from "../hooks/useTextures";
+import { cropToTextureTransform, type SideImageCrop } from "../lib/faceImageCrop";
 
 const EPS = 0.02;
 
@@ -62,6 +63,7 @@ function FacePlane({
   rotation,
   wireframe,
   textureRotationDeg = 0,
+  crop,
   cleanCapture = false,
 }: {
   url: string | null;
@@ -73,6 +75,8 @@ function FacePlane({
   wireframe: boolean;
   /** Rotate the texture in its plane (degrees), pivot at center. */
   textureRotationDeg?: number;
+  /** Percent-space crop of the original source. Absent = legacy full-image mapping. */
+  crop?: SideImageCrop;
   cleanCapture?: boolean;
 }) {
   const invalidate = useThree((state) => state.invalidate);
@@ -120,10 +124,16 @@ function FacePlane({
 
   useEffect(() => {
     if (!map) return;
-    map.center.set(0.5, 0.5);
-    map.rotation = (textureRotationDeg * Math.PI) / 180;
+    const transform = cropToTextureTransform(crop, textureRotationDeg);
+    map.offset.set(transform.offsetX, transform.offsetY);
+    map.repeat.set(transform.repeatX, transform.repeatY);
+    map.center.set(transform.centerX, transform.centerY);
+    map.rotation = transform.rotationRad;
+    map.wrapS = THREE.ClampToEdgeWrapping;
+    map.wrapT = THREE.ClampToEdgeWrapping;
     map.needsUpdate = true;
-  }, [map, textureRotationDeg]);
+    invalidate();
+  }, [map, crop, textureRotationDeg, invalidate]);
 
   useEffect(() => {
     return () => {
@@ -163,6 +173,8 @@ export interface PackagingBoxProps {
   wireframe: boolean;
   /** Per-face in-plane texture rotation (degrees). */
   textureRotationDeg: Partial<Record<FaceId, number>>;
+  /** Per-face crop of the original source image. */
+  textureCrops?: Partial<Record<FaceId, SideImageCrop>>;
   /** Simpler materials and no shadow casting while recording. */
   cleanCapture?: boolean;
 }
@@ -179,10 +191,12 @@ export function PackagingBox({
   openT,
   wireframe,
   textureRotationDeg: texRot,
+  textureCrops = {},
   cleanCapture = false,
 }: PackagingBoxProps) {
   const angle = openT * ((75 * Math.PI) / 180);
   const rr = texRot;
+  const cropOf = (id: FaceId, fallback?: FaceId) => textureCrops[id] ?? (fallback ? textureCrops[fallback] : undefined);
 
   const topUrlLeft = textures.topLeft ?? textures.top ?? null;
   const topUrlRight = textures.topRight ?? textures.top ?? null;
@@ -202,6 +216,7 @@ export function PackagingBox({
       wireframe={wireframe}
       cleanCapture={cleanCapture}
       textureRotationDeg={faceRotation(rr, "top")}
+      crop={cropOf("top")}
     />
   );
 
@@ -221,6 +236,7 @@ export function PackagingBox({
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topLeft")}
+                crop={cropOf("topLeft", "top")}
               />
             </group>
           </group>
@@ -236,6 +252,7 @@ export function PackagingBox({
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topRight")}
+                crop={cropOf("topRight", "top")}
               />
             </group>
           </group>
@@ -254,6 +271,7 @@ export function PackagingBox({
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topLeft")}
+                crop={cropOf("topLeft", "top")}
               />
             </group>
           </group>
@@ -269,6 +287,7 @@ export function PackagingBox({
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
                 textureRotationDeg={faceRotation(rr, "topRight")}
+                crop={cropOf("topRight", "top")}
               />
             </group>
           </group>
@@ -319,6 +338,7 @@ export function PackagingBox({
         wireframe={wireframe}
         cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "top")}
+        crop={cropOf("top")}
       />
     );
   };
@@ -335,6 +355,7 @@ export function PackagingBox({
         wireframe={wireframe}
         cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "bottom")}
+        crop={cropOf("bottom")}
       />
 
       <FacePlane
@@ -347,6 +368,7 @@ export function PackagingBox({
         wireframe={wireframe}
         cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "front")}
+        crop={cropOf("front")}
       />
 
       <FacePlane
@@ -359,6 +381,7 @@ export function PackagingBox({
         wireframe={wireframe}
         cleanCapture={cleanCapture}
         textureRotationDeg={faceRotation(rr, "back")}
+        crop={cropOf("back")}
       />
 
       {rightSwings ? (
@@ -374,6 +397,7 @@ export function PackagingBox({
               wireframe={wireframe}
               cleanCapture={cleanCapture}
               textureRotationDeg={faceRotation(rr, "right")}
+              crop={cropOf("right")}
             />
           </group>
         </group>
@@ -388,6 +412,7 @@ export function PackagingBox({
           wireframe={wireframe}
           cleanCapture={cleanCapture}
           textureRotationDeg={faceRotation(rr, "right")}
+          crop={cropOf("right")}
         />
       )}
 
@@ -404,6 +429,7 @@ export function PackagingBox({
               wireframe={wireframe}
               cleanCapture={cleanCapture}
               textureRotationDeg={faceRotation(rr, "left")}
+              crop={cropOf("left")}
             />
           </group>
         </group>
@@ -418,6 +444,7 @@ export function PackagingBox({
           wireframe={wireframe}
           cleanCapture={cleanCapture}
           textureRotationDeg={faceRotation(rr, "left")}
+          crop={cropOf("left")}
         />
       )}
 

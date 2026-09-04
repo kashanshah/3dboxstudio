@@ -42,7 +42,7 @@ type CacheEntry = { expiresAt: number; inventory: S3Inventory };
 
 let cache: CacheEntry | null = null;
 
-const FACE_FILE = /\/(front|back|left|right|top|bottom|topLeft|topRight)\.(png|jpe?g|webp|gif)$/i;
+const FACE_FILE = /\/(front|back|left|right|top|bottom|topLeft|topRight|src_[A-Za-z0-9_-]+)\.(png|jpe?g|webp|gif)$/i;
 const OG_FILE = /\/og-preview\.[a-z0-9]+$/i;
 
 export function classifyS3ObjectKey(key: string): S3ObjectKind {

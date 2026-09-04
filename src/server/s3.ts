@@ -57,12 +57,36 @@ export function publicUrlForKey(key: string): string {
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
 }
 
+function sanitizeSourceImageId(sourceId: string): string {
+  const cleaned = sourceId.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64);
+  return cleaned || "src";
+}
+
 export async function uploadShareFaceImage(
   shareId: string,
   faceId: FaceId,
   entry: PersistedImageEntry
 ): Promise<{ s3Key: string; url: string }> {
   const key = `${sharePrefix()}${shareId}/${faceId}${extensionFromMime(entry.mime)}`;
+  const body = Buffer.from(entry.base64, "base64");
+  await getS3Client().send(
+    new PutObjectCommand({
+      Bucket: requireEnv("AWS_S3_BUCKET"),
+      Key: key,
+      Body: body,
+      ContentType: entry.mime,
+      CacheControl: "public, max-age=31536000, immutable",
+    })
+  );
+  return { s3Key: key, url: publicUrlForKey(key) };
+}
+
+export async function uploadShareSourceImage(
+  shareId: string,
+  sourceId: string,
+  entry: PersistedImageEntry
+): Promise<{ s3Key: string; url: string }> {
+  const key = `${sharePrefix()}${shareId}/src_${sanitizeSourceImageId(sourceId)}${extensionFromMime(entry.mime)}`;
   const body = Buffer.from(entry.base64, "base64");
   await getS3Client().send(
     new PutObjectCommand({

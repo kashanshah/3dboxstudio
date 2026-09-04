@@ -14,6 +14,7 @@ describe("classifyS3ObjectKey", () => {
   it("classifies face, OG, and other keys", () => {
     expect(classifyS3ObjectKey("shares/abc/front.png")).toBe("face");
     expect(classifyS3ObjectKey("shares/abc/topLeft.webp")).toBe("face");
+    expect(classifyS3ObjectKey("shares/abc/src_dieline1.jpg")).toBe("face");
     expect(classifyS3ObjectKey("shares/abc/og-preview.png")).toBe("og");
     expect(classifyS3ObjectKey("shares/abc/notes.txt")).toBe("other");
   });

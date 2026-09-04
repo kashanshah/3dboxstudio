@@ -18,6 +18,7 @@ import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
 import { usePerformanceMode } from "../hooks/usePerformanceMode";
 import type { StudioTheme } from "@/lib/studioTheme";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
+import type { SideImageCrop } from "../lib/faceImageCrop";
 
 const VIEWPORT_GRID_COLORS: Record<StudioTheme, { section: string; cell: string; gizmo: string }> = {
   dark: { section: "#3d4a5c", cell: "#252b36", gizmo: "#ffffff" },
@@ -169,6 +170,8 @@ export interface Viewport3DProps {
   onCanvasReady?: (state: RootState) => void;
   /** Per-face texture rotation in degrees (0 / 90 / 180 / 270). */
   textureRotationDeg: Partial<Record<FaceId, number>>;
+  /** Per-face crop of the original source image. */
+  textureCrops?: Partial<Record<FaceId, SideImageCrop>>;
   /**
    * When true, OrbitControls damping is off so the camera follows motion immediately.
    * Recording uses a 2D copy each frame; damped orbit looks like a trailing “shadow” on video.
@@ -201,6 +204,7 @@ function Scene({
   autoRotateReverse,
   envPreset,
   textureRotationDeg,
+  textureCrops,
   zoomFraction,
   onZoomFractionChange,
   snappyOrbit = false,
@@ -268,6 +272,7 @@ function Scene({
         openT={openT}
         wireframe={wireframe}
         textureRotationDeg={textureRotationDeg}
+        textureCrops={textureCrops}
         cleanCapture={cleanCapture}
       />
 
