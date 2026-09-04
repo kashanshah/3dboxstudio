@@ -558,8 +558,7 @@ export default function BoxDesigner({
   });
 
   const openProjects = useCallback(() => {
-    doc.setOpenError(null);
-    doc.setModal("open");
+    doc.requestOpen();
   }, [doc]);
 
   const openAccountSettings = useCallback(
@@ -950,7 +949,17 @@ export default function BoxDesigner({
         viewOnly={doc.viewOnly}
         authLoading={auth.loading}
         user={auth.user}
-        onOpenModal={doc.setModal}
+        onOpenModal={(modal) => {
+          if (modal === "open") {
+            doc.requestOpen();
+            return;
+          }
+          if (modal === "recent") {
+            doc.requestRecent();
+            return;
+          }
+          doc.setModal(modal);
+        }}
         onOpenHelpModal={setHelpModal}
         onSave={() => void doc.saveCloud()}
         onSaveAs={doc.openSaveAsModal}

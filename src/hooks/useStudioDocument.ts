@@ -32,7 +32,19 @@ import { displayShareLabel, DEFAULT_UNTITLED_SHARE_NAME, normalizeShareName, sha
 import { uploadShareOgImageToCloud, type ShareOgImageBlob } from "@/lib/shareOgImage";
 import type { AuthUser } from "@/lib/authTypes";
 
-export type StudioFileModal = "open" | "recent" | "save-as" | "rename" | "share-preview" | "export" | "import" | "new" | null;
+export type StudioFileModal =
+  | "open"
+  | "recent"
+  | "save-as"
+  | "rename"
+  | "share-preview"
+  | "export"
+  | "import"
+  | "new"
+  | "unsaved"
+  | null;
+
+export type StudioLeaveIntent = "new" | "open" | "recent";
 
 type ShareApiResult = {
   id: string;
@@ -153,6 +165,9 @@ export function useStudioDocument({
   const activeShareIdRef = useRef<string | null>(initialShareId);
   const autoSaveInFlightRef = useRef(false);
   const autoSaveQueuedRef = useRef(false);
+  const pendingLeaveRef = useRef<StudioLeaveIntent | null>(null);
+  const [pendingLeaveAction, setPendingLeaveAction] = useState<StudioLeaveIntent | null>(null);
+  const fulfillLeaveRef = useRef<(intent: StudioLeaveIntent) => void>(() => {});
 
   const analyticsCtx = useCallback(
     () => getAnalyticsContext?.() ?? {},
@@ -368,15 +383,16 @@ export function useStudioDocument({
     [applyPersistedState, syncUrlToPreview]
   );
 
-  const saveCloud = useCallback(async () => {
-    if (viewOnly) return;
-    if (!ensureCloudAccess()) return;
+  const saveCloud = useCallback(async (): Promise<boolean> => {
+    if (viewOnly) return false;
+    if (!ensureCloudAccess()) return false;
     if (!activeShareIdRef.current) {
       openSaveAsModal();
-      return;
+      return false;
     }
     setCloudBusy(true);
     setSaveOverlayMessage("Saving design to cloud…");
+    let saved = false;
     try {
       let preview: ShareOgImageBlob | null = null;
       if (capturePreviewImage) {
@@ -406,6 +422,7 @@ export function useStudioDocument({
       rememberRecent(shareId, "saved", undefined, result.name ?? activeShareName);
       markProjectSaved();
       showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
+      saved = true;
     } catch (e) {
       showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
       trackStudioError("cloud_save_failed", "other");
@@ -413,6 +430,7 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
+    return saved;
   }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess, markProjectSaved]);
 
   const autoSaveCloud = useCallback(async () => {
@@ -543,6 +561,13 @@ export function useStudioDocument({
       }
 
       syncUrlToShare(id);
+      if (pendingLeaveRef.current) {
+        const intent = pendingLeaveRef.current;
+        setSaveAsLink(null);
+        setSaveAsPreviewLink(null);
+        fulfillLeaveRef.current(intent);
+        return;
+      }
       setSaveAsLink(url);
       setSaveAsPreviewLink(
         previewUrl ??
@@ -731,14 +756,65 @@ export function useStudioDocument({
     onDesignSessionStart?.();
   }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]);
 
-  const requestNew = useCallback(() => {
-    if (viewOnly) return;
-    if (isDirty) {
-      setModal("new");
+  const fulfillLeaveIntent = useCallback(
+    (intent: StudioLeaveIntent) => {
+      pendingLeaveRef.current = null;
+      setPendingLeaveAction(null);
+      if (intent === "new") {
+        newDocument();
+        return;
+      }
+      if (intent === "open") setOpenError(null);
+      setModal(intent);
+    },
+    [newDocument]
+  );
+  fulfillLeaveRef.current = fulfillLeaveIntent;
+
+  const requestLeave = useCallback(
+    (intent: StudioLeaveIntent) => {
+      if (viewOnly) return;
+      if (!isDirty) {
+        fulfillLeaveIntent(intent);
+        return;
+      }
+      pendingLeaveRef.current = intent;
+      setPendingLeaveAction(intent);
+      setModal("unsaved");
+    },
+    [fulfillLeaveIntent, isDirty, viewOnly]
+  );
+
+  const requestNew = useCallback(() => requestLeave("new"), [requestLeave]);
+  const requestOpen = useCallback(() => requestLeave("open"), [requestLeave]);
+  const requestRecent = useCallback(() => requestLeave("recent"), [requestLeave]);
+
+  const cancelPendingLeave = useCallback(() => {
+    pendingLeaveRef.current = null;
+    setPendingLeaveAction(null);
+    setModal(null);
+  }, []);
+
+  const confirmDiscardAndLeave = useCallback(() => {
+    const intent = pendingLeaveRef.current;
+    if (!intent) {
+      setModal(null);
       return;
     }
-    newDocument();
-  }, [isDirty, newDocument, viewOnly]);
+    fulfillLeaveIntent(intent);
+  }, [fulfillLeaveIntent]);
+
+  const confirmSaveAndLeave = useCallback(async () => {
+    if (!pendingLeaveRef.current) return;
+    if (!activeShareIdRef.current) {
+      openSaveAsModal();
+      return;
+    }
+    const saved = await saveCloud();
+    if (saved && pendingLeaveRef.current) {
+      fulfillLeaveIntent(pendingLeaveRef.current);
+    }
+  }, [fulfillLeaveIntent, openSaveAsModal, saveCloud]);
 
   const documentTitle = viewOnly
     ? `${displayShareLabel(activeShareName, null)} · Preview`
@@ -768,13 +844,12 @@ export function useStudioDocument({
         void saveCloud();
       } else if (key === "o") {
         e.preventDefault();
-        setOpenError(null);
-        setModal("open");
+        requestOpen();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [saveCloud, openSaveAsModal, viewOnly]);
+  }, [saveCloud, openSaveAsModal, requestOpen, viewOnly]);
 
   return {
     activeShareId,
@@ -831,6 +906,12 @@ export function useStudioDocument({
     importJsonFile,
     newDocument,
     requestNew,
+    requestOpen,
+    requestRecent,
+    pendingLeaveAction,
+    cancelPendingLeave,
+    confirmDiscardAndLeave,
+    confirmSaveAndLeave,
     showStatus,
     markClean,
   };

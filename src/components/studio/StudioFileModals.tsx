@@ -190,7 +190,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
         title={doc.saveAsIsCopy ? "Save a Copy" : "Save As"}
         open={doc.modal === "save-as"}
         onClose={() => {
-          doc.setModal(null);
+          doc.cancelPendingLeave();
           doc.setSaveAsLink(null);
           doc.setSaveAsPreviewLink(null);
         }}
@@ -209,7 +209,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
             </>
           ) : (
             <>
-              <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
+              <button type="button" className="btn btn-ghost" onClick={doc.cancelPendingLeave}>
                 Cancel
               </button>
               <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.saveCloudAs()}>
@@ -418,22 +418,34 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
       </StudioDialog>
 
       <StudioDialog
-        title="New Design"
-        open={doc.modal === "new"}
-        onClose={() => doc.setModal(null)}
+        title={doc.pendingLeaveAction === "new" ? "Save before starting a new design?" : "Save before opening another design?"}
+        open={doc.modal === "unsaved" || doc.modal === "new"}
+        onClose={doc.cancelPendingLeave}
         footer={
           <>
-            <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
+            <button type="button" className="btn btn-ghost" onClick={doc.cancelPendingLeave}>
               Cancel
             </button>
-            <button type="button" className="btn btn-primary" onClick={doc.newDocument}>
-              Discard & start new
+            <button type="button" className="btn" onClick={doc.confirmDiscardAndLeave}>
+              Don't Save
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={doc.cloudBusy}
+              onClick={() => void doc.confirmSaveAndLeave()}
+            >
+              {doc.cloudBusy ? "Saving…" : "Save"}
             </button>
           </>
         }
       >
-        <p className="studio-dialog-lead">Start a blank design? Unsaved changes to the current session will be lost.</p>
-        <p className="studio-dialog-hint">Existing cloud share links are not deleted.</p>
+        <p className="studio-dialog-lead">
+          {doc.pendingLeaveAction === "new"
+            ? "You have unsaved changes. Save this design before starting a new one?"
+            : "You have unsaved changes. Save this design before opening another one?"}
+        </p>
+        <p className="studio-dialog-hint">Existing cloud share links are not deleted if you don't save.</p>
       </StudioDialog>
     </>
   );

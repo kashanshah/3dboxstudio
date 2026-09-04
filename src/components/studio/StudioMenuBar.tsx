@@ -181,7 +181,7 @@ export default function StudioMenuBar({
             {!viewOnly && (
               <>
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
-                  <span>New</span>
+                  <span>New Design</span>
                 </button>
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
                   <span>Open…</span>
