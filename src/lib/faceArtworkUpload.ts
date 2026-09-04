@@ -1,4 +1,5 @@
-export const MAX_FACE_ARTWORK_BYTES = 4 * 1024 * 1024;
+/** Same cap as S3 share uploads (`SHARE_MAX_IMAGE_BYTES`). */
+export const MAX_FACE_ARTWORK_BYTES = 2 * 1024 * 1024;
 
 export type FaceArtworkUploadError = {
   fileName: string;

@@ -1,3 +1,5 @@
+import { MAX_FACE_ARTWORK_BYTES } from "@/lib/faceArtworkUpload";
+
 export function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`${name} is not configured`);
@@ -21,8 +23,8 @@ export function shareMaxPayloadBytes(): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 4_500_000;
 }
 
-/** Max decoded bytes per face image (~2 MB). */
-export const SHARE_MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+/** Max decoded bytes per face image. Matches studio upload validation. */
+export const SHARE_MAX_IMAGE_BYTES = MAX_FACE_ARTWORK_BYTES;
 
-/** Max decoded bytes for the saved viewport OG preview (~2 MB). */
-export const SHARE_MAX_OG_IMAGE_BYTES = 2 * 1024 * 1024;
+/** Max decoded bytes for the saved viewport OG preview. */
+export const SHARE_MAX_OG_IMAGE_BYTES = SHARE_MAX_IMAGE_BYTES;
