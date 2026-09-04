@@ -178,30 +178,28 @@ export default function StudioMenuBar({
         </button>
         {openMenu === "file" && (
           <div className="studio-menu-dropdown" role="menu">
+            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
+              <span>New Design</span>
+            </button>
+            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
+              <span>Open…</span>
+              <kbd>⌘O</kbd>
+            </button>
+            <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
+              <span>View Recent</span>
+            </button>
+            <div className="studio-menu-sep" role="separator" />
             {!viewOnly && (
-              <>
-                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
-                  <span>New Design</span>
-                </button>
-                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
-                  <span>Open…</span>
-                  <kbd>⌘O</kbd>
-                </button>
-                <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
-                  <span>View Recent</span>
-                </button>
-                <div className="studio-menu-sep" role="separator" />
-                <button
-                  type="button"
-                  className="studio-menu-action"
-                  role="menuitem"
-                  disabled={cloudBusy || authLoading}
-                  onClick={() => pickFile(onSave)}
-                >
-                  <span>{cloudBusy ? "Saving…" : "Save"}</span>
-                  <kbd>⌘S</kbd>
-                </button>
-              </>
+              <button
+                type="button"
+                className="studio-menu-action"
+                role="menuitem"
+                disabled={cloudBusy || authLoading}
+                onClick={() => pickFile(onSave)}
+              >
+                <span>{cloudBusy ? "Saving…" : "Save"}</span>
+                <kbd>⌘S</kbd>
+              </button>
             )}
             <button
               type="button"

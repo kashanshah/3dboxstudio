@@ -983,7 +983,7 @@ export default function BoxDesigner({
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
-          View-only preview — explore the design, export PNGs or JSON (File menu), or save a copy to your account via File → Save As (sign in required).
+          View-only preview — explore the design, start a new one or open another project (File menu), export PNGs or JSON, or save a copy via File → Save As (sign in required).
         </div>
       )}
       {!doc.viewOnly && auth.user && !auth.user.emailVerified && (

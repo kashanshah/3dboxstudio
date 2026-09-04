@@ -624,8 +624,16 @@ export function useStudioDocument({
     }
   }, [activeShareId, renameInput, showStatus, refreshRecentDesigns, ensureCloudAccess, viewOnly]);
 
+  const leavePreviewToEditor = useCallback((shareId: string) => {
+    window.location.assign(studioSharePath(shareId));
+  }, []);
+
   const openProject = useCallback(
     async (shareId: string) => {
+      if (viewOnly) {
+        leavePreviewToEditor(shareId);
+        return;
+      }
       setModal(null);
       setCloudBusy(true);
       try {
@@ -638,13 +646,17 @@ export function useStudioDocument({
         setCloudBusy(false);
       }
     },
-    [loadShareById, markClean, showStatus]
+    [leavePreviewToEditor, loadShareById, markClean, showStatus, viewOnly]
   );
 
   const openFromInput = useCallback(async () => {
     const shareId = parseShareIdFromInput(openInput);
     if (!shareId) {
       setOpenError("Enter a valid share link or ID.");
+      return;
+    }
+    if (viewOnly) {
+      leavePreviewToEditor(shareId);
       return;
     }
     setOpenError(null);
@@ -659,10 +671,14 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [loadShareById, openInput, showStatus]);
+  }, [leavePreviewToEditor, loadShareById, openInput, showStatus, viewOnly]);
 
   const openRecentDesign = useCallback(
     async (shareId: string) => {
+      if (viewOnly) {
+        leavePreviewToEditor(shareId);
+        return;
+      }
       setCloudBusy(true);
       try {
         await loadShareById(shareId, "opened");
@@ -674,7 +690,7 @@ export function useStudioDocument({
         setCloudBusy(false);
       }
     },
-    [loadShareById, showStatus]
+    [leavePreviewToEditor, loadShareById, showStatus, viewOnly]
   );
 
   const removeRecentDesignEntry = useCallback(
@@ -773,7 +789,19 @@ export function useStudioDocument({
 
   const requestLeave = useCallback(
     (intent: StudioLeaveIntent) => {
-      if (viewOnly) return;
+      if (viewOnly) {
+        if (intent === "new") {
+          window.location.assign("/studio");
+          return;
+        }
+        if (intent === "open") {
+          setOpenError(null);
+          setModal("open");
+          return;
+        }
+        setModal("recent");
+        return;
+      }
       if (!isDirty) {
         fulfillLeaveIntent(intent);
         return;
@@ -831,20 +859,22 @@ export function useStudioDocument({
   }, [isDirty, viewOnly]);
 
   useEffect(() => {
-    if (viewOnly) return;
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
       const key = e.key.toLowerCase();
+      if (key === "o") {
+        e.preventDefault();
+        requestOpen();
+        return;
+      }
+      if (viewOnly) return;
       if (key === "s" && e.shiftKey) {
         e.preventDefault();
         openSaveAsModal();
       } else if (key === "s") {
         e.preventDefault();
         void saveCloud();
-      } else if (key === "o") {
-        e.preventDefault();
-        requestOpen();
       }
     };
     window.addEventListener("keydown", onKey);
