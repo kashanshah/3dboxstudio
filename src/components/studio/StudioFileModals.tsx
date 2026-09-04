@@ -427,7 +427,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
               Cancel
             </button>
             <button type="button" className="btn" onClick={doc.confirmDiscardAndLeave}>
-              Don't Save
+              {"Don't Save"}
             </button>
             <button
               type="button"
@@ -445,7 +445,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
             ? "You have unsaved changes. Save this design before starting a new one?"
             : "You have unsaved changes. Save this design before opening another one?"}
         </p>
-        <p className="studio-dialog-hint">Existing cloud share links are not deleted if you don't save.</p>
+        <p className="studio-dialog-hint">{"Existing cloud share links are not deleted if you don't save."}</p>
       </StudioDialog>
     </>
   );
