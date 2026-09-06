@@ -9,6 +9,11 @@ import { cropToTextureTransform, type SideImageCrop } from "../lib/faceImageCrop
 
 const EPS = 0.02;
 
+/** Extra half-size so neighboring paper-thin walls cross at corners instead of leaving a hairline. */
+function faceSeam(width: number, height: number): number {
+  return Math.min(0.25, Math.max(0.08, Math.min(width, height) * 0.008));
+}
+
 /** Shared unprinted liner (inside the box); BackSide so it is visible from the cavity. */
 let innerLinerMaterial: THREE.MeshStandardMaterial | null = null;
 function getInnerLinerMaterial(): THREE.MeshStandardMaterial {
@@ -83,6 +88,9 @@ function FacePlane({
   const map = useLoadedTexture(url);
   const inset = Math.max(0.06, Math.min(args[0], args[1]) * 0.04);
   const innerMat = getInnerLinerMaterial();
+  const faceW = args[0];
+  const faceH = args[1];
+  const seam = faceSeam(faceW, faceH);
 
   const mat = useMemo(() => {
     if (cleanCapture) {
@@ -144,7 +152,7 @@ function FacePlane({
   return (
     <group position={position} rotation={rotation}>
       <mesh position={[0, 0, 0]} material={mat} castShadow={!cleanCapture} receiveShadow={!cleanCapture}>
-        <planeGeometry args={args} />
+        <planeGeometry args={[faceW + 2 * seam, faceH + 2 * seam]} />
       </mesh>
       {!wireframe && (
         <mesh position={[0, 0, -inset]} material={innerMat} receiveShadow={!cleanCapture}>
