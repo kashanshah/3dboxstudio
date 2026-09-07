@@ -1,12 +1,13 @@
 import Link from "next/link";
 import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
-import type { BlogSection } from "@/content/blogPosts";
+import BlogSectionRenderer from "@/components/BlogSectionRenderer";
 import {
   BLOG_POSTS,
   getBlogPostBySlug,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  type BlogPost,
 } from "@/content/blogPosts";
 import LandingStudioCta from "@/components/LandingStudioCta";
 
@@ -18,35 +19,16 @@ function formatDate(iso: string): string {
   });
 }
 
-function renderSection(section: BlogSection, index: number) {
-  switch (section.type) {
-    case "h2":
-      return (
-        <h2 key={index} className="blog-post-h2">
-          {section.text}
-        </h2>
-      );
-    case "h3":
-      return (
-        <h3 key={index} className="blog-post-h3">
-          {section.text}
-        </h3>
-      );
-    case "ul":
-      return (
-        <ul key={index} className="blog-post-ul">
-          {section.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      );
-    default:
-      return (
-        <p key={index} className="blog-post-p">
-          {section.text}
-        </p>
-      );
+function relatedPostsFor(post: BlogPost): BlogPost[] {
+  if (post.relatedSlugs?.length) {
+    const found: BlogPost[] = [];
+    for (const relatedSlug of post.relatedSlugs) {
+      const item = getBlogPostBySlug(relatedSlug);
+      if (item && item.slug !== post.slug) found.push(item);
+    }
+    if (found.length > 0) return found.slice(0, 6);
   }
+  return BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(0, 3);
 }
 
 type BlogPostPageProps = {
@@ -71,10 +53,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
     );
   }
 
-  const related = BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(
-    0,
-    3,
-  );
+  const related = relatedPostsFor(post);
 
   return (
     <ContentPageShell activeNav="blog">
@@ -87,6 +66,15 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
             <h1 className="landing-display content-page-title">{post.title}</h1>
             <p className="blog-post-meta">
               <time dateTime={post.published}>{formatDate(post.published)}</time>
+              {post.updated ? (
+                <>
+                  <span aria-hidden> · </span>
+                  <span>
+                    Updated{" "}
+                    <time dateTime={post.updated}>{formatDate(post.updated)}</time>
+                  </span>
+                </>
+              ) : null}
               <span aria-hidden> · </span>
               {post.readMinutes} min read
             </p>
@@ -109,9 +97,14 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
 
         <div className="landing-section">
           <div className="landing-container blog-post-body">
-            {post.sections.map((section, index) =>
-              renderSection(section, index),
-            )}
+            {post.sections.map((section, index) => (
+              <BlogSectionRenderer
+                key={`${section.type}-${index}`}
+                section={section}
+                index={index}
+                pageSlug={post.slug}
+              />
+            ))}
             <div className="blog-post-cta">
               <StudioLink
                 href="/studio"
