@@ -2,10 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import StudioLink from "@/components/StudioLink";
 import type { BlogFaq, BlogSection } from "@/content/blogPosts";
+import { isStudioHref } from "@/lib/blogLinks";
 
-function isStudioHref(href: string): boolean {
-  return href === "/studio" || href.startsWith("/studio?");
-}
+export { isStudioHref } from "@/lib/blogLinks";
 
 /** Parse light markdown-style links: [label](/path) — only same-site absolute paths. */
 export function renderInlineContent(text: string): ReactNode[] {
