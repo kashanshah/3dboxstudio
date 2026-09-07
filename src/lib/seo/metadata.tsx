@@ -9,6 +9,7 @@ import {
   BLOG_POSTS,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  plainBlogInlineText,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
@@ -231,7 +232,10 @@ export function createBlogPostMetadata(
   post: BlogPost,
   locale: string = "en"
 ): Metadata {
-  const title = `${post.title} | Free 3D Box Designer | 3D Box Studio`;
+  const seoTitle = post.seoTitle ?? post.title;
+  const title = post.seoTitle
+    ? `${post.seoTitle} | 3D Box Studio`
+    : `${post.title} | Free 3D Box Designer | 3D Box Studio`;
   const path = `/blog/${post.slug}`;
   const localizedPath = locale === "en" ? path : `/${locale}${path}`;
   const origin = getSiteOrigin();
@@ -258,11 +262,11 @@ export function createBlogPostMetadata(
         fr: `/fr${path}`,
       },
     },
-    openGraph: buildOpenGraph(title, post.description, localizedPath, "article", ogImage, {
+    openGraph: buildOpenGraph(seoTitle, post.description, localizedPath, "article", ogImage, {
       publishedTime: post.published,
       modifiedTime: post.updated ?? post.published,
     }),
-    twitter: buildTwitter(title, post.description, imageUrl),
+    twitter: buildTwitter(seoTitle, post.description, imageUrl),
   };
 }
 
@@ -326,8 +330,7 @@ export function BlogIndexJsonLd() {
 export function BlogPostJsonLd({ post }: { post: BlogPost }) {
   const origin = getSiteOrigin();
   const url = `${origin}/blog/${post.slug}`;
-  const data = {
-    "@context": "https://schema.org",
+  const blogPosting = {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
@@ -342,6 +345,31 @@ export function BlogPostJsonLd({ post }: { post: BlogPost }) {
     author: { "@type": "Organization", name: "3D Box Studio" },
     publisher: { "@type": "Organization", name: "3D Box Studio" },
   };
+
+  const data =
+    post.faqs && post.faqs.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@graph": [
+            blogPosting,
+            {
+              "@type": "FAQPage",
+              mainEntity: post.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: plainBlogInlineText(faq.answer),
+                },
+              })),
+            },
+          ],
+        }
+      : {
+          "@context": "https://schema.org",
+          ...blogPosting,
+        };
+
   return (
     <script
       type="application/ld+json"

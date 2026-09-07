@@ -7,6 +7,7 @@ import {
   BLOG_POSTS,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  plainBlogInlineText,
 } from "../content/blogPosts";
 import {
   applySocialMeta,
@@ -55,8 +56,7 @@ function buildBlogIndexJsonLd(origin: string) {
 
 function buildBlogPostJsonLd(origin: string, post: BlogPost) {
   const url = origin ? `${origin}/blog/${post.slug}` : `/blog/${post.slug}`;
-  return {
-    "@context": "https://schema.org",
+  const blogPosting = {
     "@type": "BlogPosting",
     headline: post.title,
     description: post.description,
@@ -79,6 +79,31 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
       "@type": "Organization",
       name: "3D Box Studio",
     },
+  };
+
+  if (post.faqs && post.faqs.length > 0) {
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        blogPosting,
+        {
+          "@type": "FAQPage",
+          mainEntity: post.faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: plainBlogInlineText(faq.answer),
+            },
+          })),
+        },
+      ],
+    };
+  }
+
+  return {
+    "@context": "https://schema.org",
+    ...blogPosting,
   };
 }
 
@@ -125,7 +150,9 @@ export function applyBlogPostRouteSeo(
   origin: string,
   post: BlogPost,
 ): () => void {
-  const title = `${post.title} | 3D Box Studio`;
+  const title = post.seoTitle
+    ? `${post.seoTitle} | 3D Box Studio`
+    : `${post.title} | 3D Box Studio`;
   doc.title = title;
   setMeta(doc, "description", post.description);
   setMeta(
@@ -205,7 +232,9 @@ export function buildBlogIndexHeadHtml(origin: string): string {
 }
 
 export function buildBlogPostHeadHtml(origin: string, post: BlogPost): string {
-  const title = `${post.title} | 3D Box Studio`;
+  const title = post.seoTitle
+    ? `${post.seoTitle} | 3D Box Studio`
+    : `${post.title} | 3D Box Studio`;
   const tags = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(post.description)}" />`,

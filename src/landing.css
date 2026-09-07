@@ -2431,6 +2431,7 @@
   letter-spacing: -0.025em;
   margin: 2rem 0 0.75rem;
   color: var(--l-text);
+  scroll-margin-top: 5.75rem;
 }
 
 .blog-post-h3 {
@@ -2441,19 +2442,66 @@
   color: var(--l-text);
 }
 
+.blog-post-faq {
+  margin: 0 0 1.5rem;
+}
+
+.blog-post-faq.landing-faq {
+  max-width: none;
+}
+
+.blog-post-faq summary h3.blog-post-faq-question {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+
 .blog-post-p,
-.blog-post-ul {
+.blog-post-ul,
+.blog-post-ol {
   margin: 0 0 1rem;
   color: var(--l-text-muted);
   line-height: 1.68;
 }
 
-.blog-post-ul {
+.blog-post-ul,
+.blog-post-ol {
   padding-left: 1.25rem;
 }
 
-.blog-post-ul li + li {
+.blog-post-ul li + li,
+.blog-post-ol li + li {
   margin-top: 0.35rem;
+}
+
+.blog-inline-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.35);
+}
+
+.blog-inline-link:hover {
+  color: #1d4ed8;
+  border-bottom-color: rgba(29, 78, 216, 0.55);
+}
+
+.blog-post-inline-cta {
+  margin: 1.5rem 0 1.75rem;
+}
+
+.blog-post-callout {
+  margin: 0 0 1.25rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  background: rgba(37, 99, 235, 0.06);
+  color: var(--l-text-secondary);
+  line-height: 1.62;
+  font-size: 0.95rem;
 }
 
 .blog-post-cta {
@@ -2901,20 +2949,23 @@ input.faq-search-input:focus {
   padding-bottom: clamp(3rem, 8vw, 5rem);
 }
 
-.legal-page-layout {
+.legal-page-layout,
+.blog-post-layout {
   display: grid;
   gap: clamp(1.25rem, 3vw, 2rem);
   align-items: start;
 }
 
 @media (min-width: 1080px) {
-  .legal-page-layout {
-    grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+  .legal-page-layout,
+  .blog-post-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 260px);
     gap: clamp(2rem, 4vw, 3rem);
   }
 }
 
-.legal-page-main {
+.legal-page-main,
+.blog-post-main {
   min-width: 0;
 }
 
@@ -2922,7 +2973,7 @@ input.faq-search-input:focus {
   max-width: none;
 }
 
-.legal-toc--mobile {
+.on-this-page--mobile {
   margin-bottom: 1rem;
   border: 1px solid var(--l-border-light);
   border-radius: 14px;
@@ -2930,11 +2981,11 @@ input.faq-search-input:focus {
   box-shadow: var(--l-shadow);
 }
 
-.legal-toc--mobile[open] {
+.on-this-page--mobile[open] {
   box-shadow: var(--l-shadow-lg);
 }
 
-.legal-toc-summary {
+.on-this-page-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2947,11 +2998,11 @@ input.faq-search-input:focus {
   list-style: none;
 }
 
-.legal-toc-summary::-webkit-details-marker {
+.on-this-page-summary::-webkit-details-marker {
   display: none;
 }
 
-.legal-toc-summary::after {
+.on-this-page-summary::after {
   content: "";
   width: 0.55rem;
   height: 0.55rem;
@@ -2962,24 +3013,24 @@ input.faq-search-input:focus {
   flex-shrink: 0;
 }
 
-.legal-toc--mobile[open] .legal-toc-summary::after {
+.on-this-page--mobile[open] .on-this-page-summary::after {
   transform: rotate(225deg) translateY(2px);
 }
 
-.legal-toc--mobile .legal-toc-list {
+.on-this-page--mobile .on-this-page-list {
   padding: 0 1rem 0.9rem;
 }
 
-.legal-toc--desktop {
+.on-this-page--desktop {
   display: none;
 }
 
 @media (min-width: 1080px) {
-  .legal-toc--mobile {
+  .on-this-page--mobile {
     display: none;
   }
 
-  .legal-toc--desktop {
+  .on-this-page--desktop {
     display: block;
     position: sticky;
     top: 5.75rem;
@@ -2990,7 +3041,7 @@ input.faq-search-input:focus {
   }
 }
 
-.legal-toc-heading {
+.on-this-page-heading {
   margin: 0 0 0.75rem;
   font-size: 0.78rem;
   font-weight: 700;
@@ -2999,7 +3050,7 @@ input.faq-search-input:focus {
   color: var(--l-text-soft);
 }
 
-.legal-toc-list {
+.on-this-page-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -3007,7 +3058,7 @@ input.faq-search-input:focus {
   gap: 0.35rem;
 }
 
-.legal-toc-link {
+.on-this-page-link {
   display: block;
   padding: 0.35rem 0;
   color: var(--l-text-muted);
@@ -3017,16 +3068,16 @@ input.faq-search-input:focus {
   transition: color 0.2s ease;
 }
 
-.legal-toc-link:hover {
+.on-this-page-link:hover {
   color: #2563eb;
 }
 
-.legal-toc-link.is-active {
+.on-this-page-link.is-active {
   color: var(--l-text);
   font-weight: 700;
 }
 
-.legal-toc-link.is-active:hover {
+.on-this-page-link.is-active:hover {
   color: #1d4ed8;
 }
 

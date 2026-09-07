@@ -1,13 +1,14 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
-import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
+import BlogPostBody from "@/components/BlogPostBody";
 import BlogEnglishOnlyNote from "@/components/BlogEnglishOnlyNote";
-import type { BlogSection } from "@/content/blogPosts";
 import {
   BLOG_POSTS,
+  getBlogPostBySlug,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  type BlogPost,
 } from "@/content/blogPosts";
 import { getLocalizedBlogPost } from "@/content/blogLocales";
 import type { Locale } from "@/i18n/config";
@@ -21,35 +22,17 @@ function formatDate(iso: string, locale: string): string {
   });
 }
 
-function renderSection(section: BlogSection, index: number) {
-  switch (section.type) {
-    case "h2":
-      return (
-        <h2 key={index} className="blog-post-h2">
-          {section.text}
-        </h2>
-      );
-    case "h3":
-      return (
-        <h3 key={index} className="blog-post-h3">
-          {section.text}
-        </h3>
-      );
-    case "ul":
-      return (
-        <ul key={index} className="blog-post-ul">
-          {section.items.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      );
-    default:
-      return (
-        <p key={index} className="blog-post-p">
-          {section.text}
-        </p>
-      );
+function relatedPostsFor(post: BlogPost): BlogPost[] {
+  if (post.relatedSlugs?.length) {
+    const found: BlogPost[] = [];
+    for (const relatedSlug of post.relatedSlugs) {
+      const item = getBlogPostBySlug(relatedSlug);
+      if (item && item.slug !== post.slug) found.push(item);
+    }
+    // Related grid is 3 columns; keep a single row so the section stays compact.
+    if (found.length > 0) return found.slice(0, 3);
   }
+  return BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(0, 3);
 }
 
 type BlogPostPageProps = {
@@ -76,7 +59,9 @@ export default async function BlogPostPage({ slug }: BlogPostPageProps) {
     );
   }
 
-  const related = BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(0, 3);
+  const related = relatedPostsFor(post).map(
+    (item) => getLocalizedBlogPost(item.slug, locale) ?? item,
+  );
 
   return (
     <ContentPageShell activeNav="blog">
@@ -89,6 +74,15 @@ export default async function BlogPostPage({ slug }: BlogPostPageProps) {
             <h1 className="landing-display content-page-title">{post.title}</h1>
             <p className="blog-post-meta">
               <time dateTime={post.published}>{formatDate(post.published, locale)}</time>
+              {post.updated ? (
+                <>
+                  <span aria-hidden> · </span>
+                  <span>
+                    {t("updated")}{" "}
+                    <time dateTime={post.updated}>{formatDate(post.updated, locale)}</time>
+                  </span>
+                </>
+              ) : null}
               <span aria-hidden> · </span>
               {t("readMinutes", { minutes: post.readMinutes })}
             </p>
@@ -108,61 +102,7 @@ export default async function BlogPostPage({ slug }: BlogPostPageProps) {
           </div>
         </header>
 
-        <div className="landing-section">
-          <div className="landing-container blog-post-body">
-            {post.sections.map((section, index) => renderSection(section, index))}
-            <div className="blog-post-cta">
-              <StudioLink
-                href="/studio"
-                className="btn btn-primary"
-                trackCta
-                ctaLocation="article_bottom"
-                sourcePageType="guide"
-                pageSlug={post.slug}
-              >
-                {t("openStudioCta")}
-              </StudioLink>
-            </div>
-          </div>
-        </div>
-
-        {related.length > 0 && (
-          <aside className="landing-section blog-related">
-            <div className="landing-container">
-              <h2 className="blog-related-heading">{t("moreGuides")}</h2>
-              <ul className="blog-index-list blog-index-list--compact">
-                {related.map((item) => {
-                  const localizedRelated = getLocalizedBlogPost(item.slug, locale) ?? item;
-                  return (
-                    <li key={item.slug} className="blog-index-card">
-                      <Link
-                        href={`/blog/${item.slug}`}
-                        className="blog-index-thumb-link"
-                      >
-                        <img
-                          className="blog-index-thumb"
-                          src={getBlogPostImagePath(item.slug)}
-                          alt={getBlogPostImageAlt(localizedRelated)}
-                          width={1200}
-                          height={800}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </Link>
-                      <h3 className="blog-index-title">
-                        <Link href={`/blog/${item.slug}`}>{localizedRelated.title}</Link>
-                      </h3>
-                      <p className="blog-index-desc">{localizedRelated.description}</p>
-                      <Link href={`/blog/${item.slug}`} className="blog-index-link">
-                        {t("readArticle")}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </aside>
-        )}
+        <BlogPostBody post={post} related={related} />
 
         <section className="landing-section">
           <div className="landing-container">

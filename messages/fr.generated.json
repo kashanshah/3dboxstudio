@@ -59,9 +59,12 @@
     "notFoundTitle": "Article introuvable",
     "backToBlog": "Retour au blog",
     "readMinutes": "{minutes} min de lecture",
+    "updated": "Mis à jour",
     "openStudioCta": "Ouvrir le créateur de boîtes 3D gratuit",
     "moreGuides": "Plus de guides",
-    "readArticle": "Lire l’article →"
+    "readArticle": "Lire l’article →",
+    "faqHeading": "FAQ",
+    "onThisPage": "Sur cette page"
   },
   "landing": {
     "hero": {

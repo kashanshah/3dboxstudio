@@ -59,9 +59,12 @@
     "notFoundTitle": "Article not found",
     "backToBlog": "Back to the blog",
     "readMinutes": "{minutes} min read",
+    "updated": "Updated",
     "openStudioCta": "Open the free 3D box maker",
     "moreGuides": "More guides",
-    "readArticle": "Read article →"
+    "readArticle": "Read article →",
+    "faqHeading": "FAQ",
+    "onThisPage": "On this page"
   },
   "landing": {
     "hero": {

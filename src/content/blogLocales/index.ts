@@ -36,7 +36,11 @@ export function getLocalizedBlogPost(
     description: translation.description,
     sections: translation.sections,
     keywords: translation.keywords ?? base.keywords,
+    ...(translation.seoTitle !== undefined
+      ? { seoTitle: translation.seoTitle }
+      : {}),
     ...(translation.imageAlt ? { imageAlt: translation.imageAlt } : {}),
+    ...(translation.faqs ? { faqs: translation.faqs } : {}),
   };
 }
 
