@@ -1,7 +1,12 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import StudioLink from "./StudioLink";
 
 /** Inline CTA used at the bottom of major landing sections. */
 export default function LandingStudioCta() {
+  const t = useTranslations("landing.sectionCta");
+
   return (
     <div className="landing-section-cta">
       <StudioLink
@@ -10,7 +15,7 @@ export default function LandingStudioCta() {
         ctaLocation="inline"
         sourcePageType="homepage"
       >
-        <span>Launch 3D studio</span>
+        <span>{t("launch")}</span>
         <svg className="landing-icon-arrow" width="18" height="18" viewBox="0 0 24 24" aria-hidden>
           <path
             d="M5 12h14m-6-7l7 7-7 7"

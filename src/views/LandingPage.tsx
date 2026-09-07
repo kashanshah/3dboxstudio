@@ -2,7 +2,8 @@
 
 import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import LandingHeader from "../components/LandingHeader";
 import { Link } from "@/i18n/routing";
 import StudioLink from "../components/StudioLink";
@@ -240,47 +241,18 @@ type LandingGalleryItem = {
   caption: string;
 };
 
-const LANDING_PRODUCT_GALLERY: LandingGalleryItem[] = [
-  {
-    src: "/images/screenshot-1.webp",
-    width: 640,
-    height: 400,
-    alt: "3D Box Studio: control panel beside a live 3D viewport with a sample carton",
-    caption:
-      "Editor layout: parameters and live 3D packaging preview side by side.",
-  },
-  {
-    src: "/images/screenshot-2.webp",
-    width: 640,
-    height: 400,
-    alt: "Per-face artwork upload section in the 3D box packaging simulator",
-    caption: "Per-face artwork uploads with quick rotate and clear actions.",
-  },
-  {
-    src: "/images/screenshot-3.webp",
-    width: 640,
-    height: 400,
-    alt: "Opening styles and material presets in the carton 3D simulator",
-    caption:
-      "Opening styles and board presets for realistic packaging visualization.",
-  },
-  {
-    src: "/images/screenshot-4.webp",
-    width: 640,
-    height: 400,
-    alt: "Recording feature in the 3D box packaging simulator",
-    caption: "Recording feature in the 3D box packaging simulator.",
-  },
-];
+const LANDING_PRODUCT_GALLERY_BASE = [
+  { src: "/images/screenshot-1.webp", width: 640, height: 400, altKey: "shot1Alt", captionKey: "shot1Caption" },
+  { src: "/images/screenshot-2.webp", width: 640, height: 400, altKey: "shot2Alt", captionKey: "shot2Caption" },
+  { src: "/images/screenshot-3.webp", width: 640, height: 400, altKey: "shot3Alt", captionKey: "shot3Caption" },
+  { src: "/images/screenshot-4.webp", width: 640, height: 400, altKey: "shot4Alt", captionKey: "shot4Caption" },
+] as const;
 
 const HERO_PREVIEW = {
   src: "/images/hero-img.webp",
   video: "/showcase/videos/kazomo-spin-mop.mp4",
   width: 960,
   height: 540,
-  alt: "Stylized 3D packaging box with studio lighting—representative of the interactive simulator",
-  caption:
-    "Stylized 3D packaging preview—representative of the interactive simulator.",
 } as const;
 
 const LANDING_FEATURED_POSTS = [...BLOG_POSTS]
@@ -289,22 +261,57 @@ const LANDING_FEATURED_POSTS = [...BLOG_POSTS]
 
 /** Scroll past this many pixels before the main nav pins to the top of the viewport. */
 export default function LandingPage() {
-  const openProductTourGallery = useCallback((startIndex: number) => {
-    const slides = LANDING_PRODUCT_GALLERY.map((shot) => ({
-      src: shot.src,
-      type: "image" as const,
-      caption: shot.caption,
-      alt: shot.alt,
-    }));
-    void loadFancybox().then((Fancybox) => {
-      Fancybox.show(slides, {
-        startIndex,
-        closeExisting: true,
-        theme: "auto",
-        placeFocusBack: true,
+  const t = useTranslations("landing");
+  const tHero = useTranslations("landing.hero");
+  const tFeatures = useTranslations("landing.features");
+  const tGallery = useTranslations("landing.gallery");
+  const tSteps = useTranslations("landing.steps");
+  const tGuides = useTranslations("landing.guides");
+  const tFaq = useTranslations("landing.faq");
+  const tCta = useTranslations("landing.ctaBand");
+  const tFaqs = useTranslations("landing.faqs");
+
+  const productGallery: LandingGalleryItem[] = useMemo(
+    () =>
+      LANDING_PRODUCT_GALLERY_BASE.map((shot) => ({
+        src: shot.src,
+        width: shot.width,
+        height: shot.height,
+        alt: tGallery(shot.altKey),
+        caption: tGallery(shot.captionKey),
+      })),
+    [tGallery]
+  );
+
+  const landingFaqs = useMemo(
+    () =>
+      getLandingFaqItems().map((item) => ({
+        ...item,
+        question: tFaqs(`${item.id}.question`),
+        answer: tFaqs(`${item.id}.answer`),
+      })),
+    [tFaqs]
+  );
+
+  const openProductTourGallery = useCallback(
+    (startIndex: number) => {
+      const slides = productGallery.map((shot) => ({
+        src: shot.src,
+        type: "image" as const,
+        caption: shot.caption,
+        alt: shot.alt,
+      }));
+      void loadFancybox().then((Fancybox) => {
+        Fancybox.show(slides, {
+          startIndex,
+          closeExisting: true,
+          theme: "auto",
+          placeFocusBack: true,
+        });
       });
-    });
-  }, []);
+    },
+    [productGallery]
+  );
 
   return (
     <div className="landing-root">
@@ -323,27 +330,15 @@ export default function LandingPage() {
             <div className="landing-container">
               <section className="landing-hero" aria-labelledby="hero-heading">
                 <div className="landing-hero-copy">
-                  <p className="landing-eyebrow">
-                    Free forever · Browser · WebGL · Sign in to save &amp; share
-                  </p>
+                  <p className="landing-eyebrow">{tHero("eyebrow")}</p>
                   <h1 id="hero-heading" className="landing-display">
-                    <span className="landing-hero-title-line">
-                      Free packaging box designer
-                    </span>
-                    <span className="landing-hero-title-accent">
-                      and 3D carton simulator
-                    </span>
+                    <span className="landing-hero-title-line">{tHero("titleLine1")}</span>
+                    <span className="landing-hero-title-accent">{tHero("titleLine2")}</span>
                     <span className="landing-hero-title-line landing-hero-title-sub">
-                      3D Box Studio · in your browser
+                      {tHero("titleLine3")}
                     </span>
                   </h1>
-                  <p className="landing-hero-lead">
-                    Free online box mockup generator for folding cartons and
-                    mailer-style boxes—realistic PBR materials, HDRI lighting,
-                    lid and flap animations, and per-face artwork. Built for
-                    designers, e-commerce sellers, and print shops who need a
-                    fast 3D packaging preview without CAD or subscriptions.
-                  </p>
+                  <p className="landing-hero-lead">{tHero("lead")}</p>
                   <div className="landing-hero-ctas">
                     <StudioLink
                       href="/studio"
@@ -352,27 +347,24 @@ export default function LandingPage() {
                       ctaLocation="hero"
                       sourcePageType="homepage"
                     >
-                      <span>Launch 3D studio</span>
+                      <span>{tHero("launchCta")}</span>
                       <IconArrowRight />
                     </StudioLink>
-                    <a
-                      href="#features"
-                      className="btn landing-btn-hero-secondary"
-                    >
-                      Explore features
+                    <a href="#features" className="btn landing-btn-hero-secondary">
+                      {tHero("exploreCta")}
                     </a>
                   </div>
-                  <ul className="landing-hero-meta" aria-label="Highlights">
-                    <li>Free packaging designer</li>
-                    <li>Free account to start</li>
-                    <li>Cloud save &amp; share</li>
-                    <li>View-only client links</li>
-                    <li>Export PNG</li>
-                    <li>JSON import/export</li>
+                  <ul className="landing-hero-meta" aria-label={tHero("highlightsAria")}>
+                    <li>{tHero("meta1")}</li>
+                    <li>{tHero("meta2")}</li>
+                    <li>{tHero("meta3")}</li>
+                    <li>{tHero("meta4")}</li>
+                    <li>{tHero("meta5")}</li>
+                    <li>{tHero("meta6")}</li>
                   </ul>
                 </div>
                 <figure className="landing-hero-visual">
-                  <span className="landing-hero-badge">WebGL live</span>
+                  <span className="landing-hero-badge">{tHero("badge")}</span>
                   <div className="landing-hero-visual-ring" aria-hidden />
                   <div className="landing-hero-visual-inner">
                     <LandingHeroVideo
@@ -380,31 +372,31 @@ export default function LandingPage() {
                       poster={HERO_PREVIEW.src}
                       width={HERO_PREVIEW.width}
                       height={HERO_PREVIEW.height}
-                      alt={HERO_PREVIEW.alt}
+                      alt={tHero("previewAlt")}
                     />
                   </div>
                 </figure>
               </section>
 
-              <div className="landing-proof" aria-label="Product highlights">
+              <div className="landing-proof" aria-label={tHero("proofAria")}>
                 <div className="landing-proof-item">
-                  <strong>PBR materials</strong>
-                  <span>Kraft, carton, foil &amp; more</span>
+                  <strong>{tHero("proofPbrTitle")}</strong>
+                  <span>{tHero("proofPbrBody")}</span>
                 </div>
                 <div className="landing-proof-divider" aria-hidden />
                 <div className="landing-proof-item">
-                  <strong>HDRI lighting</strong>
-                  <span>Studio-grade reflections</span>
+                  <strong>{tHero("proofHdriTitle")}</strong>
+                  <span>{tHero("proofHdriBody")}</span>
                 </div>
                 <div className="landing-proof-divider" aria-hidden />
                 <div className="landing-proof-item">
-                  <strong>Openings</strong>
-                  <span>Lid, split top, door</span>
+                  <strong>{tHero("proofOpenTitle")}</strong>
+                  <span>{tHero("proofOpenBody")}</span>
                 </div>
                 <div className="landing-proof-divider" aria-hidden />
                 <div className="landing-proof-item">
-                  <strong>Cloud share links</strong>
-                  <span>Save, edit &amp; send previews</span>
+                  <strong>{tHero("proofShareTitle")}</strong>
+                  <span>{tHero("proofShareBody")}</span>
                 </div>
               </div>
             </div>
@@ -422,170 +414,120 @@ export default function LandingPage() {
                 01
               </span>
               <div className="landing-section-head-copy">
-                <p className="landing-eyebrow landing-eyebrow--section">
-                  Capabilities
-                </p>
-                <h2 id="features-heading" className="landing-display">
-                  Everything you need for a convincing 3D packaging preview
-                </h2>
+                <p className="landing-eyebrow landing-eyebrow--section">{tFeatures("eyebrow")}</p>
+                <h2 id="features-heading" className="landing-display">{tFeatures("title")}</h2>
               </div>
             </div>
-            <p className="landing-section-intro">
-              Whether you call it a 3D box simulator, carton configurator, or
-              structural packaging preview, these tools help you validate scale,
-              readability, and shelf presence before you commit to plates or
-              samples.
-            </p>
+            <p className="landing-section-intro">{tFeatures("intro")}</p>
             <div className="landing-features">
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconViewport />
                   </span>
-                  <h3>Real-time 3D viewport</h3>
+                  <h3>{tFeatures("viewportTitle")}</h3>
                 </div>
-                <p>
-                  Orbit, zoom (scroll or slider), HDRI environments, shadows,
-                  and optional grid—ideal for packaging reviews and client
-                  sign-off.
-                </p>
+                <p>{tFeatures("viewportBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconRuler />
                   </span>
-                  <h3>Dimensions & units</h3>
+                  <h3>{tFeatures("dimensionsTitle")}</h3>
                 </div>
-                <p>
-                  Set width, height, and depth in millimeters, centimeters, or
-                  inches. Scene units convert to centimeters for consistent 3D
-                  scale.
-                </p>
+                <p>{tFeatures("dimensionsBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconMaterial />
                   </span>
-                  <h3>PBR material presets</h3>
+                  <h3>{tFeatures("materialsTitle")}</h3>
                 </div>
-                <p>
-                  Kraft, white carton, gloss or matte plastic, corrugated, and
-                  metallic foil—roughness, clearcoat, and environment response
-                  tuned for packaging looks.
-                </p>
+                <p>{tFeatures("materialsBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconOpen />
                   </span>
-                  <h3>Opening mechanisms</h3>
+                  <h3>{tFeatures("openingsTitle")}</h3>
                 </div>
-                <p>
-                  Closed view, lid from back, split top flaps (hinge on long or
-                  short side), and a swinging door-style left panel—animated
-                  open amount.
-                </p>
+                <p>{tFeatures("openingsBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconImage />
                   </span>
-                  <h3>Per-face artwork & rotation</h3>
+                  <h3>{tFeatures("artworkTitle")}</h3>
                 </div>
-                <p>
-                  Upload PNG or JPG per face, rotate in 90° steps, and apply one
-                  image to all faces when you need a quick placeholder wrap.
-                </p>
+                <p>{tFeatures("artworkBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconEnvironmentPreset />
                   </span>
-                  <h3>Environment presets</h3>
+                  <h3>{tFeatures("envTitle")}</h3>
                 </div>
-                <p>
-                  Choose from studio, city, warehouse, sunset, and dawn environments. This is a great way to get feedback on your design.
-                </p>
+                <p>{tFeatures("envBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconSave />
                   </span>
-                  <h3>Cloud save &amp; share links</h3>
+                  <h3>{tFeatures("cloudTitle")}</h3>
                 </div>
-                <p>
-                  Use <strong>File → Save</strong> or <strong>Save As</strong> to upload your design. Get an editor link for
-                  yourself and a separate <strong>view-only preview link</strong> for clients—artwork and settings included.
-                </p>
+                <p>{tFeatures("cloudBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconPreviewLink />
                   </span>
-                  <h3>View-only client previews</h3>
+                  <h3>{tFeatures("previewTitle")}</h3>
                 </div>
-                <p>
-                  Share a presentation link that opens the studio in read-only mode. Clients can orbit, zoom, adjust lighting,
-                  and export PNGs—without changing dimensions, artwork, or saving over your work.
-                </p>
+                <p>{tFeatures("previewBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconJson />
                   </span>
-                  <h3>JSON import &amp; export</h3>
+                  <h3>{tFeatures("jsonTitle")}</h3>
                 </div>
-                <p>
-                  Download a <strong>v1 JSON</strong> backup with dimensions, materials, openings, and embedded
-                  images—or import a file to restore the full scene offline.
-                </p>
+                <p>{tFeatures("jsonBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconSave />
                   </span>
-                  <h3>PNG export</h3>
+                  <h3>{tFeatures("pngTitle")}</h3>
                 </div>
-                <p>
-                  Export a high-resolution <strong>PNG</strong> snapshot of the live viewport for decks, RFQs, and
-                  marketing—alongside cloud share links for interactive review.
-                </p>
+                <p>{tFeatures("pngBody")}</p>
               </article>
               <article className="landing-card">
                 <div className="landing-card-top">
                   <span className="landing-card-icon" aria-hidden>
                     <IconRecord />
                   </span>
-                  <h3>Record presentation</h3>
+                  <h3>{tFeatures("recordTitle")}</h3>
                 </div>
-                <p>
-                  Record a 15-second video of the viewport, then
-                  download the MP4 file. This is a great way to share your 3D
-                  packaging simulator with your team or clients.
-                </p>
+                <p>{tFeatures("recordBody")}</p>
               </article>
             </div>
             <LandingStudioCta />
           </div>
         </section>
 
-        <aside className="landing-pullquote" aria-label="Product philosophy">
+        <aside className="landing-pullquote" aria-label={t("quote.aria")}>
           <div className="landing-container">
             <blockquote>
-              <p>
-                The goal is not to replace die-line CAD—it is to give everyone
-                in the room a shared, believable picture of the box before time
-                and money disappear into the wrong structure.
-              </p>
+              <p>{t("quote.text")}</p>
             </blockquote>
           </div>
         </aside>
@@ -601,31 +543,24 @@ export default function LandingPage() {
                 02
               </span>
               <div className="landing-section-head-copy">
-                <p className="landing-eyebrow landing-eyebrow--section">
-                  Product tour
-                </p>
-                <h2 id="gallery-heading" className="landing-display">
-                  Inside the 3D packaging studio
-                </h2>
+                <p className="landing-eyebrow landing-eyebrow--section">{tGallery("eyebrow")}</p>
+                <h2 id="gallery-heading" className="landing-display">{tGallery("title")}</h2>
               </div>
             </div>
             <p className="landing-section-intro">
-              Below are illustrative screenshots of the interface layout and key
-              workflows. Click any shot to open a full-size lightbox (same
-              viewer as the portfolio—arrow keys to browse, Escape to close).
-              Replace images with real captures from{" "}
-              <StudioLink href="/studio">your live studio</StudioLink> for even stronger
-              social proof and SEO image search coverage.
+              {tGallery("introBefore")}{" "}
+              <StudioLink href="/studio">{tGallery("introLink")}</StudioLink>{" "}
+              {tGallery("introAfter")}
             </p>
             <div className="landing-screens">
-              {LANDING_PRODUCT_GALLERY.map((shot, i) => (
+              {productGallery.map((shot, i) => (
                 <figure key={shot.src} className="landing-shot">
                   <button
                     type="button"
                     className="landing-shot-expand"
                     onClick={() => openProductTourGallery(i)}
                     aria-haspopup="dialog"
-                    aria-label={`Open screenshot ${i + 1} in gallery: ${shot.caption}`}
+                    aria-label={tGallery("openShot", { index: i + 1, caption: shot.caption })}
                   >
                     <BrowserShell>
                       <img
@@ -659,40 +594,23 @@ export default function LandingPage() {
                 04
               </span>
               <div className="landing-section-head-copy">
-                <p className="landing-eyebrow landing-eyebrow--section">
-                  Workflow
-                </p>
-                <h2 id="steps-heading" className="landing-display">
-                  From flat idea to 3D packaging check in minutes
-                </h2>
+                <p className="landing-eyebrow landing-eyebrow--section">{tSteps("eyebrow")}</p>
+                <h2 id="steps-heading" className="landing-display">{tSteps("title")}</h2>
               </div>
             </div>
-            <p className="landing-section-intro">
-              A lightweight workflow for teams who need a believable 3D box
-              mockup without installing heavy CAD packages.
-            </p>
+            <p className="landing-section-intro">{tSteps("intro")}</p>
             <div className="landing-steps">
               <div className="landing-step">
-                <h3>Set structure & board</h3>
-                <p>
-                  Choose outer dimensions, material preset, and how the top or
-                  door should open for your 3D carton preview.
-                </p>
+                <h3>{tSteps("step1Title")}</h3>
+                <p>{tSteps("step1Body")}</p>
               </div>
               <div className="landing-step">
-                <h3>Drop in artwork</h3>
-                <p>
-                  Map prints to faces, rotate to match portrait or landscape
-                  panels, and iterate until the 3D box mockup reads clearly on
-                  screen.
-                </p>
+                <h3>{tSteps("step2Title")}</h3>
+                <p>{tSteps("step2Body")}</p>
               </div>
               <div className="landing-step">
-                <h3>Save &amp; share</h3>
-                <p>
-                  Use File → Save As for editor and view-only preview links, or export a PNG for decks and RFQs. Send clients the
-                  preview link for approvals; keep the editor link for yourself.
-                </p>
+                <h3>{tSteps("step3Title")}</h3>
+                <p>{tSteps("step3Body")}</p>
               </div>
             </div>
             <LandingStudioCta />
@@ -710,18 +628,12 @@ export default function LandingPage() {
                 05
               </span>
               <div className="landing-section-head-copy">
-                <p className="landing-eyebrow landing-eyebrow--section">
-                  Guides
-                </p>
-                <h2 id="guides-heading" className="landing-display">
-                  Learn 3D box design & simulation
-                </h2>
+                <p className="landing-eyebrow landing-eyebrow--section">{tGuides("eyebrow")}</p>
+                <h2 id="guides-heading" className="landing-display">{tGuides("title")}</h2>
               </div>
             </div>
             <p className="landing-section-intro">
-              {BLOG_POSTS.length} practical articles on 3D box makers, free
-              packaging mockup generators, folding carton design, and
-              browser-based previews for designers, sellers, and brand teams.
+              {tGuides("intro", { count: BLOG_POSTS.length })}
             </p>
             <ul className="blog-index-list blog-index-list--landing">
               {LANDING_FEATURED_POSTS.map((post) => (
@@ -745,13 +657,13 @@ export default function LandingPage() {
                   </h3>
                   <p className="blog-index-desc">{post.description}</p>
                   <Link href={`/blog/${post.slug}`} className="blog-index-link">
-                    Read guide →
+                    {tGuides("readGuide")}
                   </Link>
                 </li>
               ))}
             </ul>
             <p className="content-page-more">
-              <Link href="/blog">View all packaging guides →</Link>
+              <Link href="/blog">{tGuides("viewAll")}</Link>
             </p>
           </div>
         </section>
@@ -767,24 +679,14 @@ export default function LandingPage() {
                 06
               </span>
               <div className="landing-section-head-copy">
-                <p className="landing-eyebrow landing-eyebrow--section">
-                  Support
-                </p>
-                <h2 id="faq-heading" className="landing-display">
-                  Frequently asked questions
-                </h2>
+                <p className="landing-eyebrow landing-eyebrow--section">{tFaq("eyebrow")}</p>
+                <h2 id="faq-heading" className="landing-display">{tFaq("title")}</h2>
               </div>
             </div>
-            <p className="landing-section-intro">
-              Straight answers about our free 3D box designer, online mockup
-              generator, Pacdora alternative, export options, and how it compares
-              to packaging CAD tools.
-            </p>
-            <FaqList items={getLandingFaqItems()} openFirst />
+            <p className="landing-section-intro">{tFaq("intro")}</p>
+            <FaqList items={landingFaqs} openFirst />
             <p className="content-page-more landing-faq-more">
-              <Link href="/faq">
-                Browse all {FAQ_ITEMS.length} questions with search & filters →
-              </Link>
+              <Link href="/faq">{tFaq("browseAll", { count: FAQ_ITEMS.length })}</Link>
             </p>
           </div>
         </section>
@@ -794,13 +696,8 @@ export default function LandingPage() {
             <div className="landing-cta-band-card">
               <div className="landing-cta-band-glow" aria-hidden />
               <div className="landing-cta-band-inner">
-                <h2 id="cta-heading" className="landing-display">
-                  Ready to spin up your carton in 3D?
-                </h2>
-                <p>
-                  Open the studio and iterate on materials, openings, and
-                  artwork until the packaging story clicks.
-                </p>
+                <h2 id="cta-heading" className="landing-display">{tCta("title")}</h2>
+                <p>{tCta("body")}</p>
                 <StudioLink
                   href="/studio"
                   className="btn btn-primary landing-btn-hero-primary"
@@ -808,7 +705,7 @@ export default function LandingPage() {
                   ctaLocation="inline"
                   sourcePageType="homepage"
                 >
-                  <span>Start the 3D packaging simulator</span>
+                  <span>{tCta("button")}</span>
                   <IconArrowRight />
                 </StudioLink>
               </div>

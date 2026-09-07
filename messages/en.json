@@ -55,5 +55,164 @@
   },
   "blog": {
     "englishOnlyNote": "This article is currently available in English."
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Free forever · Browser · WebGL · Sign in to save & share",
+      "titleLine1": "Free packaging box designer",
+      "titleLine2": "and 3D carton simulator",
+      "titleLine3": "3D Box Studio · in your browser",
+      "lead": "Free online box mockup generator for folding cartons and mailer-style boxes—realistic PBR materials, HDRI lighting, lid and flap animations, and per-face artwork. Built for designers, e-commerce sellers, and print shops who need a fast 3D packaging preview without CAD or subscriptions.",
+      "launchCta": "Launch 3D studio",
+      "exploreCta": "Explore features",
+      "highlightsAria": "Highlights",
+      "meta1": "Free packaging designer",
+      "meta2": "Free account to start",
+      "meta3": "Cloud save & share",
+      "meta4": "View-only client links",
+      "meta5": "Export PNG",
+      "meta6": "JSON import/export",
+      "badge": "WebGL live",
+      "previewAlt": "Stylized 3D packaging box with studio lighting—representative of the interactive simulator",
+      "proofAria": "Product highlights",
+      "proofPbrTitle": "PBR materials",
+      "proofPbrBody": "Kraft, carton, foil & more",
+      "proofHdriTitle": "HDRI lighting",
+      "proofHdriBody": "Studio-grade reflections",
+      "proofOpenTitle": "Openings",
+      "proofOpenBody": "Lid, split top, door",
+      "proofShareTitle": "Cloud share links",
+      "proofShareBody": "Save, edit & send previews"
+    },
+    "features": {
+      "eyebrow": "Capabilities",
+      "title": "Everything you need for a convincing 3D packaging preview",
+      "intro": "Whether you call it a 3D box simulator, carton configurator, or structural packaging preview, these tools help you validate scale, readability, and shelf presence before you commit to plates or samples.",
+      "viewportTitle": "Real-time 3D viewport",
+      "viewportBody": "Orbit, zoom (scroll or slider), HDRI environments, shadows, and optional grid—ideal for packaging reviews and client sign-off.",
+      "dimensionsTitle": "Dimensions & units",
+      "dimensionsBody": "Set width, height, and depth in millimeters, centimeters, or inches. Scene units convert to centimeters for consistent 3D scale.",
+      "materialsTitle": "PBR material presets",
+      "materialsBody": "Kraft, white carton, gloss or matte plastic, corrugated, and metallic foil—roughness, clearcoat, and environment response tuned for packaging looks.",
+      "openingsTitle": "Opening mechanisms",
+      "openingsBody": "Closed view, lid from back, split top flaps (hinge on long or short side), and a swinging door-style left panel—animated open amount.",
+      "artworkTitle": "Per-face artwork & rotation",
+      "artworkBody": "Upload PNG or JPG per face, rotate in 90° steps, and apply one image to all faces when you need a quick placeholder wrap.",
+      "envTitle": "Environment presets",
+      "envBody": "Choose from studio, city, warehouse, sunset, and dawn environments. This is a great way to get feedback on your design.",
+      "cloudTitle": "Cloud save & share links",
+      "cloudBody": "Use File → Save or Save As to upload your design. Get an editor link for yourself and a separate view-only preview link for clients—artwork and settings included.",
+      "previewTitle": "View-only client previews",
+      "previewBody": "Share a presentation link that opens the studio in read-only mode. Clients can orbit, zoom, adjust lighting, and export PNGs—without changing dimensions, artwork, or saving over your work.",
+      "jsonTitle": "JSON import & export",
+      "jsonBody": "Download a v1 JSON backup with dimensions, materials, openings, and embedded images—or import a file to restore the full scene offline.",
+      "pngTitle": "PNG export",
+      "pngBody": "Export a high-resolution PNG snapshot of the live viewport for decks, RFQs, and marketing—alongside cloud share links for interactive review.",
+      "recordTitle": "Record presentation",
+      "recordBody": "Record a 15-second video of the viewport, then download the MP4 file. This is a great way to share your 3D packaging simulator with your team or clients."
+    },
+    "quote": {
+      "aria": "Product philosophy",
+      "text": "The goal is not to replace die-line CAD—it is to give everyone in the room a shared, believable picture of the box before time and money disappear into the wrong structure."
+    },
+    "gallery": {
+      "eyebrow": "Product tour",
+      "title": "Inside the 3D packaging studio",
+      "introBefore": "Below are illustrative screenshots of the interface layout and key workflows. Click any shot to open a full-size lightbox (same viewer as the portfolio—arrow keys to browse, Escape to close). Replace images with real captures from",
+      "introLink": "your live studio",
+      "introAfter": "for even stronger social proof and SEO image search coverage.",
+      "openShot": "Open screenshot {index} in gallery: {caption}",
+      "shot1Alt": "3D Box Studio: control panel beside a live 3D viewport with a sample carton",
+      "shot1Caption": "Editor layout: parameters and live 3D packaging preview side by side.",
+      "shot2Alt": "Per-face artwork upload section in the 3D box packaging simulator",
+      "shot2Caption": "Per-face artwork uploads with quick rotate and clear actions.",
+      "shot3Alt": "Opening styles and material presets in the carton 3D simulator",
+      "shot3Caption": "Opening styles and board presets for realistic packaging visualization.",
+      "shot4Alt": "Recording feature in the 3D box packaging simulator",
+      "shot4Caption": "Recording feature in the 3D box packaging simulator."
+    },
+    "showcase": {
+      "eyebrow": "Portfolio",
+      "title": "Packaging visuals & motion",
+      "intro": "Stills and short clips we ship to sell structure, print, and motion in one breath—turntable captures for PDPs, board-and-foil looks for pitch decks, and in-app shots that show how teams actually work inside 3D Box Studio. The grid below mixes photos and video; filter when you only want one format.",
+      "filtersAria": "Showcase filters",
+      "showLabel": "Show",
+      "filterAll": "All",
+      "filterPhotos": "Photos",
+      "filterVideos": "Videos",
+      "empty": "No items match this filter. Switch to All or add entries in public/showcase/manifest.json.",
+      "footnote": "Curating your own reel? Drop files under public/showcase/images/ or public/showcase/videos/, list them in manifest.json, and use optional layout: \"standard\", \"tall\", or \"wide\" for wider or taller tiles in the grid.",
+      "openGallery": "Open gallery: {alt}",
+      "openVideo": "Open video in fullscreen gallery",
+      "openImage": "Open image in fullscreen gallery",
+      "videoFallbackAlt": "Showcase video",
+      "imageFallbackAlt": "Showcase image"
+    },
+    "steps": {
+      "eyebrow": "Workflow",
+      "title": "From flat idea to 3D packaging check in minutes",
+      "intro": "A lightweight workflow for teams who need a believable 3D box mockup without installing heavy CAD packages.",
+      "step1Title": "Set structure & board",
+      "step1Body": "Choose outer dimensions, material preset, and how the top or door should open for your 3D carton preview.",
+      "step2Title": "Drop in artwork",
+      "step2Body": "Map prints to faces, rotate to match portrait or landscape panels, and iterate until the 3D box mockup reads clearly on screen.",
+      "step3Title": "Save & share",
+      "step3Body": "Use File → Save As for editor and view-only preview links, or export a PNG for decks and RFQs. Send clients the preview link for approvals; keep the editor link for yourself."
+    },
+    "guides": {
+      "eyebrow": "Guides",
+      "title": "Learn 3D box design & simulation",
+      "intro": "{count} practical articles on 3D box makers, free packaging mockup generators, folding carton design, and browser-based previews for designers, sellers, and brand teams.",
+      "readGuide": "Read guide →",
+      "viewAll": "View all packaging guides →"
+    },
+    "faq": {
+      "eyebrow": "Support",
+      "title": "Frequently asked questions",
+      "intro": "Straight answers about our free 3D box designer, online mockup generator, Pacdora alternative, export options, and how it compares to packaging CAD tools.",
+      "browseAll": "Browse all {count} questions with search & filters →"
+    },
+    "ctaBand": {
+      "title": "Ready to spin up your carton in 3D?",
+      "body": "Open the studio and iterate on materials, openings, and artwork until the packaging story clicks.",
+      "button": "Start the 3D packaging simulator"
+    },
+    "sectionCta": {
+      "launch": "Launch 3D studio"
+    },
+    "faqs": {
+      "what-is-3d-box-designer": {
+        "question": "What is a 3D box designer or packaging simulator?",
+        "answer": "A 3D box designer lets you preview how flat packaging artwork and structural choices look on a three-dimensional carton or mailer. A packaging simulator applies realistic lighting and materials so stakeholders can review proportions, openings, and branding before print."
+      },
+      "free-3d-box-maker": {
+        "question": "Is 3D Box Studio a free 3D box maker?",
+        "answer": "Yes. 3D Box Studio is a free 3D box maker and design tool that runs entirely in your browser. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. Create a free account to open the studio and start designing. Email verification is optional for now—you can save, share, and export right after signing up."
+      },
+      "3d-box-simulation-use": {
+        "question": "What is 3D box simulation used for?",
+        "answer": "3D box simulation helps packaging designers, brand teams, and printers validate scale, graphic placement, and opening behavior before committing to plates or physical samples. It is ideal for client presentations, e-commerce mockups, and internal design reviews—not for engineering production die-lines."
+      },
+      "vs-esko-artioscad": {
+        "question": "Is this a substitute for Esko, ArtiosCAD, or dedicated packaging CAD?",
+        "answer": "No. Those platforms engineer production die-lines. This 3D packaging simulator helps you communicate look and feel, camera angles, and rough scale early. Export is a viewport PNG, not a print plate."
+      },
+      "vs-mockup-templates": {
+        "question": "How is a 3D box design maker different from a mockup template site?",
+        "answer": "Template libraries give you fixed box shapes with uploaded artwork. A 3D box design maker like 3D Box Studio lets you adjust width, height, depth, materials, lid and flap openings, and per-face graphics in one interactive viewport—better for custom carton sizes and structural previews."
+      },
+      "mobile-support": {
+        "question": "Does the 3D box simulator work on mobile?",
+        "answer": "The studio is built for desktop browsers with WebGL. Phones may run it, but the control density is optimized for keyboard and mouse users."
+      },
+      "data-storage": {
+        "question": "Where is my data stored?",
+        "answer": "While you work, your design stays in the browser session. When you upload face artwork, the studio auto-saves to the cloud as “Untitled” (rename anytime via File → Rename). Images upload to AWS S3 and configuration is stored in a Postgres database. You can also save manually with File → Save (⌘S)."
+      },
+      "cloud-share": {
+        "question": "How do cloud save and share links work?",
+        "answer": "Uploading face artwork auto-saves your design to the cloud as “Untitled”. Use File → Rename to change the name. File → Save (⌘S) updates an existing project; File → Save As creates a copy with a new link. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (/preview/…). Editor links use /studio/… and are not exposed in preview mode."
+      }
+    }
   }
 }

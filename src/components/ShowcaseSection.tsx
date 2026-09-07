@@ -2,6 +2,7 @@
 
 import { loadFancybox } from "../lib/loadFancybox";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import LazyShowcaseVideo from "./LazyShowcaseVideo";
 import LandingStudioCta from "./LandingStudioCta";
 
@@ -83,6 +84,7 @@ function ShowcaseEnlargeIcon() {
 }
 
 export default function ShowcaseSection() {
+  const t = useTranslations("landing.showcase");
   const [allItems, setAllItems] = useState<ShowcaseItem[]>(FALLBACK_ITEMS);
   const [filter, setFilter] = useState<ShowcaseFilter>("all");
 
@@ -150,30 +152,26 @@ export default function ShowcaseSection() {
             03
           </span>
           <div className="landing-section-head-copy">
-            <p className="landing-eyebrow landing-eyebrow--section">Portfolio</p>
+            <p className="landing-eyebrow landing-eyebrow--section">{t("eyebrow")}</p>
             <h2 id="showcase-heading" className="landing-display">
-              Packaging visuals &amp; motion
+              {t("title")}
             </h2>
           </div>
         </div>
 
-        <p className="landing-section-intro">
-          Stills and short clips we ship to sell structure, print, and motion in one breath—turntable captures for PDPs,
-          board-and-foil looks for pitch decks, and in-app shots that show how teams actually work inside{" "}
-          <strong>3D Box Studio</strong>. The grid below mixes photos and video; filter when you only want one format.
-        </p>
+        <p className="landing-section-intro">{t("intro")}</p>
 
-        <div className="landing-showcase-toolbar" role="group" aria-label="Showcase filters">
+        <div className="landing-showcase-toolbar" role="group" aria-label={t("filtersAria")}>
           <div className="landing-showcase-filters">
             <span className="landing-showcase-filters-label" id="showcase-filter-label">
-              Show
+              {t("showLabel")}
             </span>
             <div className="landing-showcase-filter-buttons" aria-labelledby="showcase-filter-label">
               {(
                 [
-                  { id: "all" as const, label: "All", count: counts.all },
-                  { id: "image" as const, label: "Photos", count: counts.image },
-                  { id: "video" as const, label: "Videos", count: counts.video },
+                  { id: "all" as const, label: t("filterAll"), count: counts.all },
+                  { id: "image" as const, label: t("filterPhotos"), count: counts.image },
+                  { id: "video" as const, label: t("filterVideos"), count: counts.video },
                 ] as const
               ).map(({ id, label, count }) => (
                 <button
@@ -195,8 +193,7 @@ export default function ShowcaseSection() {
 
         {filtered.length === 0 ? (
           <p className="landing-showcase-empty" role="status">
-            No items match this filter. Switch to <strong>All</strong> or add entries in{" "}
-            <code>public/showcase/manifest.json</code>.
+            {t("empty")}
           </p>
         ) : (
           <div className="landing-showcase-grid" role="list">
@@ -211,14 +208,14 @@ export default function ShowcaseSection() {
                     <>
                       <LazyShowcaseVideo
                         src={item.src}
-                        ariaLabel={item.alt ?? "Showcase video"}
+                        ariaLabel={item.alt ?? t("videoFallbackAlt")}
                       />
                       <button
                         type="button"
                         className="landing-showcase-tile-enlarge"
                         onClick={() => openShowcaseGallery(i)}
                         aria-label={
-                          item.alt ? `Open gallery: ${item.alt}` : "Open video in fullscreen gallery"
+                          item.alt ? t("openGallery", { alt: item.alt }) : t("openVideo")
                         }
                       >
                         <ShowcaseEnlargeIcon />
@@ -230,13 +227,13 @@ export default function ShowcaseSection() {
                       className="landing-showcase-tile-zoom"
                       onClick={() => openShowcaseGallery(i)}
                       aria-label={
-                        item.alt ? `Open gallery: ${item.alt}` : "Open image in fullscreen gallery"
+                        item.alt ? t("openGallery", { alt: item.alt }) : t("openImage")
                       }
                     >
                       <img
                         className="landing-showcase-tile-img"
                         src={item.src}
-                        alt={item.alt ?? "Showcase image"}
+                        alt={item.alt ?? t("imageFallbackAlt")}
                         loading="lazy"
                         decoding="async"
                       />
@@ -249,12 +246,7 @@ export default function ShowcaseSection() {
           </div>
         )}
 
-        <p className="landing-showcase-footnote">
-          Curating your own reel? Drop files under <code>public/showcase/images/</code> or{" "}
-          <code>public/showcase/videos/</code>, list them in <code>manifest.json</code>, and use optional{" "}
-          <code>layout</code>: <code>&quot;standard&quot;</code>, <code>&quot;tall&quot;</code>, or{" "}
-          <code>&quot;wide&quot;</code> for wider or taller tiles in the grid.
-        </p>
+        <p className="landing-showcase-footnote">{t("footnote")}</p>
         <LandingStudioCta />
       </div>
     </section>
