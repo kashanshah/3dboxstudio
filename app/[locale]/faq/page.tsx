@@ -10,10 +10,11 @@ export async function generateMetadata({ params }: PageProps) {
   return createFaqMetadata(locale);
 }
 
-export default function FaqRoute() {
+export default async function FaqRoute({ params }: PageProps) {
+  const { locale } = await params;
   return (
     <>
-      <FaqJsonLd />
+      <FaqJsonLd locale={locale} />
       <FaqPage />
     </>
   );

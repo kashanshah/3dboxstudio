@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { BLOG_POSTS } from "@/content/blogPosts";
 import { hasBlogTranslation } from "@/content/blogLocales";
 import { locales, type Locale } from "@/i18n/config";
+import { getStaticPageAlternateLocales, staticPaths } from "@/i18n/staticPageTranslations";
 import { getSiteOrigin } from "@/lib/siteOrigin";
 
 function localizedPath(path: string, locale: Locale): string {
@@ -14,13 +15,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const origin = getSiteOrigin();
   const lastModified = new Date();
 
-  const paths = ["/", "/studio", "/faq", "/contact", "/privacy", "/terms", "/blog"];
-  const staticRoutes: MetadataRoute.Sitemap = paths.flatMap((path) => {
+  const staticRoutes: MetadataRoute.Sitemap = staticPaths.flatMap((path) => {
+    const pageLocales = getStaticPageAlternateLocales(path);
     const alternates = Object.fromEntries(
-      locales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
+      pageLocales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
     );
 
-    return locales.map((locale) => ({
+    return pageLocales.map((locale) => ({
       url: `${origin}${localizedPath(path, locale)}`,
       lastModified,
       changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
