@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { BLOG_POSTS } from "@/content/blogPosts";
+import { hasBlogTranslation } from "@/content/blogLocales";
 import { locales, type Locale } from "@/i18n/config";
 import { getSiteOrigin } from "@/lib/siteOrigin";
 
@@ -44,11 +45,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.flatMap((post) => {
     const modified = new Date(post.updated ?? post.published);
     const path = `/blog/${post.slug}`;
+    const articleLocales = locales.filter((locale) => locale === "en" || hasBlogTranslation(locale, post.slug));
     const alternates = Object.fromEntries(
-      locales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
+      articleLocales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
     );
 
-    return locales.map((locale) => ({
+    return articleLocales.map((locale) => ({
       url: `${origin}${localizedPath(path, locale)}`,
       lastModified: modified,
       changeFrequency: "monthly" as const,

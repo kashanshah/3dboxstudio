@@ -15,6 +15,7 @@ import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
 import { PRIVACY_PAGE_DESCRIPTION, PRIVACY_PAGE_TITLE } from "@/content/privacy";
 import { TERMS_PAGE_DESCRIPTION, TERMS_PAGE_TITLE } from "@/content/terms";
+import { hasBlogTranslation } from "@/content/blogLocales";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
@@ -56,6 +57,15 @@ function localizePath(path: string, locale: string = "en"): string {
 function localizedAlternates(path: string): NonNullable<Metadata["alternates"]>["languages"] {
   return Object.fromEntries(
     locales.map((locale) => [locale, localizePath(path, locale as Locale)]),
+  );
+}
+
+function localizedBlogAlternates(slug: string): NonNullable<Metadata["alternates"]>["languages"] {
+  const path = `/blog/${slug}`;
+  return Object.fromEntries(
+    locales
+      .filter((locale) => locale === "en" || hasBlogTranslation(locale, slug))
+      .map((locale) => [locale, localizePath(path, locale)]),
   );
 }
 
@@ -251,12 +261,14 @@ export function createBlogPostMetadata(
   post: BlogPost,
   locale: string = "en"
 ): Metadata {
+  const localizedLocale =
+    locale !== "en" && hasBlogTranslation(locale as Locale, post.slug) ? locale : "en";
   const seoTitle = post.seoTitle ?? post.title;
   const title = post.seoTitle
     ? `${post.seoTitle} | 3D Box Studio`
     : `${post.title} | Free 3D Box Designer | 3D Box Studio`;
   const path = `/blog/${post.slug}`;
-  const localizedPath = localizePath(path, locale);
+  const localizedPath = localizePath(path, localizedLocale);
   const origin = getSiteOrigin();
   const imageUrl = getBlogPostOgImageUrl(origin, post.slug);
   const imageAlt = getBlogPostImageAlt(post);
@@ -276,7 +288,7 @@ export function createBlogPostMetadata(
     keywords,
     alternates: {
       canonical: localizedPath,
-      languages: localizedAlternates(path),
+      languages: localizedBlogAlternates(post.slug),
     },
     openGraph: buildOpenGraph(seoTitle, post.description, localizedPath, "article", ogImage, {
       publishedTime: post.published,
