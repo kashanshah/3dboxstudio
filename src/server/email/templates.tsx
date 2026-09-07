@@ -69,15 +69,22 @@ type PreviewEntry = {
 
 const SOURCE_PATH = "src/server/email/templates.tsx";
 
-function escapeHtml(value: string): string {
-  return value
+function stringifyValue(value: unknown): string {
+  if (value == null) return "";
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function escapeHtml(value: unknown): string {
+  const text = stringifyValue(value);
+  return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
 
-function nl2br(value: string): string {
+function nl2br(value: unknown): string {
   return escapeHtml(value).replace(/\n/g, "<br />");
 }
 
@@ -122,7 +129,7 @@ function renderInfoTable(rows: string[]): string {
   return `<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;"><tbody>${rows.join("")}</tbody></table>`;
 }
 
-function renderMono(value: string): string {
+function renderMono(value: unknown): string {
   return `<span style="font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;">${escapeHtml(value)}</span>`;
 }
 
