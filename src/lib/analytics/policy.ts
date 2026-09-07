@@ -1,5 +1,7 @@
 /** Shared GA enablement policy — loader and custom events must use the same rules. */
 
+import { stripLocalePrefix } from "@/i18n/pathname";
+
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? "";
 export const GA_DEBUG = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -11,11 +13,12 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 export const GA_ENABLED = Boolean(GA_MEASUREMENT_ID) && (IS_PRODUCTION || GA_DEBUG);
 
 export function isAdminPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+  const path = stripLocalePrefix(pathname);
+  return path === "/admin" || path.startsWith("/admin/");
 }
 
 export function isStudioPath(pathname: string): boolean {
-  const path = (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   return path === "/studio" || path.startsWith("/studio/") || path.startsWith("/preview/");
 }
 

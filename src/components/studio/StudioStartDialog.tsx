@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import type { AuthUser } from "@/lib/authTypes";
 import StudioDialog from "./StudioDialog";
 import StudioProjectsPanel from "./StudioProjectsPanel";

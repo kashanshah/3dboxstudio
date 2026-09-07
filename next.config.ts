@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const shareTokenPattern = "[0-9A-Za-z]{10,24}";
 
@@ -19,8 +22,20 @@ const nextConfig: NextConfig = {
         destination: "/preview/:previewToken",
         permanent: true,
       },
+      {
+        source: "/fr/studio",
+        has: [{ type: "query", key: "share", value: `(?<shareId>${shareTokenPattern})` }],
+        destination: "/fr/studio/:shareId",
+        permanent: true,
+      },
+      {
+        source: "/fr/studio",
+        has: [{ type: "query", key: "preview", value: `(?<previewToken>${shareTokenPattern})` }],
+        destination: "/fr/preview/:previewToken",
+        permanent: true,
+      },
     ];
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

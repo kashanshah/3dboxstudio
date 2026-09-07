@@ -4,7 +4,7 @@ import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
 import { useCallback } from "react";
 import LandingHeader from "../components/LandingHeader";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import StudioLink from "../components/StudioLink";
 import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";

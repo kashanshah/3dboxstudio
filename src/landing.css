@@ -174,6 +174,45 @@
   width: 100%;
 }
 
+.landing-nav-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.language-switcher select {
+  appearance: none;
+  background: color-mix(in srgb, var(--panel, #fff) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--l-border, #cbd5e1) 80%, transparent);
+  border-radius: 0.55rem;
+  color: var(--l-text, #0f172a);
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  padding: 0.35rem 1.6rem 0.35rem 0.55rem;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 0.75rem) 55%, calc(100% - 0.5rem) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.language-switcher select:focus-visible {
+  outline: 2px solid var(--landing-accent, #2563eb);
+  outline-offset: 2px;
+}
+
+.blog-locale-note {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--l-border, #cbd5e1) 80%, transparent);
+  background: color-mix(in srgb, var(--panel, #fff) 70%, transparent);
+  color: var(--l-muted, #64748b);
+  font-size: 0.9rem;
+}
+
 .landing-brand {
   display: inline-flex;
   align-items: center;
@@ -360,6 +399,11 @@
 
   .landing-nav-toggle {
     display: inline-flex;
+    z-index: 125;
+    position: relative;
+  }
+
+  .landing-nav-tools {
     z-index: 125;
     position: relative;
   }

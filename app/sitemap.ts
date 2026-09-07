@@ -6,22 +6,59 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const origin = getSiteOrigin();
   const lastModified = new Date();
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${origin}/`, lastModified, changeFrequency: "weekly", priority: 1 },
-    { url: `${origin}/studio`, lastModified, changeFrequency: "weekly", priority: 0.95 },
-    { url: `${origin}/faq`, lastModified, changeFrequency: "monthly", priority: 0.85 },
-    { url: `${origin}/contact`, lastModified, changeFrequency: "monthly", priority: 0.75 },
-    { url: `${origin}/privacy`, lastModified, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${origin}/terms`, lastModified, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${origin}/blog`, lastModified, changeFrequency: "weekly", priority: 0.9 },
-  ];
+  const paths = ["/", "/studio", "/faq", "/contact", "/privacy", "/terms", "/blog"];
+  const staticRoutes: MetadataRoute.Sitemap = paths.flatMap((path) => {
+    const enUrl = `${origin}${path === "/" ? "/" : path}`;
+    const frUrl = `${origin}/fr${path === "/" ? "" : path}`;
+    return [
+      {
+        url: enUrl,
+        lastModified,
+        changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
+        priority: path === "/" ? 1 : path === "/studio" ? 0.95 : path === "/blog" ? 0.9 : 0.75,
+        alternates: {
+          languages: {
+            en: enUrl,
+            fr: frUrl,
+          },
+        },
+      },
+      {
+        url: frUrl,
+        lastModified,
+        changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
+        priority: path === "/" ? 0.9 : path === "/studio" ? 0.85 : 0.7,
+        alternates: {
+          languages: {
+            en: enUrl,
+            fr: frUrl,
+          },
+        },
+      },
+    ];
+  });
 
-  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
-    url: `${origin}/blog/${post.slug}`,
-    lastModified: new Date(post.updated ?? post.published),
-    changeFrequency: "monthly",
-    priority: 0.8,
-  }));
+  const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.flatMap((post) => {
+    const enUrl = `${origin}/blog/${post.slug}`;
+    const frUrl = `${origin}/fr/blog/${post.slug}`;
+    const modified = new Date(post.updated ?? post.published);
+    return [
+      {
+        url: enUrl,
+        lastModified: modified,
+        changeFrequency: "monthly" as const,
+        priority: 0.8,
+        alternates: { languages: { en: enUrl, fr: frUrl } },
+      },
+      {
+        url: frUrl,
+        lastModified: modified,
+        changeFrequency: "monthly" as const,
+        priority: 0.7,
+        alternates: { languages: { en: enUrl, fr: frUrl } },
+      },
+    ];
+  });
 
   return [...staticRoutes, ...blogRoutes];
 }

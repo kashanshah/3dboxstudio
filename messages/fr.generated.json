@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "features": "Fonctionnalités",
+    "screenshots": "Captures d’écran",
+    "showcase": "Vitrine",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "contact": "Contact",
+    "openStudio": "Ouvrir le studio",
+    "menuOpen": "Ouvrir le menu",
+    "menuClose": "Fermer le menu"
+  },
+  "footer": {
+    "description": "Concepteur de boîtes 3D et simulateur d’emballage gratuits dans le navigateur. Définissez dimensions, matériaux, ouvertures et illustrations par face — puis exportez des mockups PNG ou partagez des liens de prévisualisation avec clients et équipes.",
+    "openStudio": "Ouvrir le studio 3D gratuit",
+    "product": "Produit",
+    "productAria": "Produit",
+    "studio": "Studio de boîtes 3D",
+    "features": "Fonctionnalités",
+    "screenshots": "Captures d’écran",
+    "showcase": "Vitrine",
+    "howItWorks": "Comment ça marche",
+    "packagingGuides": "Guides d’emballage",
+    "guidesTools": "Guides et outils",
+    "guidesAria": "Guides d’emballage",
+    "allArticles": "Tous les articles emballage",
+    "helpSupport": "Aide et support",
+    "helpAria": "Aide et support",
+    "faqCount": "FAQ ({count} réponses)",
+    "contactSupport": "Contacter le support",
+    "industryMockups": "Mockups par secteur",
+    "industryAria": "Guides d’emballage par secteur",
+    "popularTopics": "Sujets d’emballage populaires",
+    "topicsLead": "Liens rapides pour les équipes qui cherchent un créateur de boîtes 3D gratuit, un simulateur de carton ou un générateur de mockups d’emballage en ligne.",
+    "legalLine": "© {year} 3D Box Studio · {domain} · Concepteur de boîtes 3D et simulateur d’emballage gratuits dans votre navigateur.",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "buyMeACoffee": "Offrez-moi un café",
+    "canonical": "Canonique :"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "common": {
+    "brand": "3D Box Studio"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Cette page n’existe pas ou a été déplacée.",
+    "home": "Retour à l’accueil",
+    "studio": "Ouvrir le studio"
+  },
+  "blog": {
+    "englishOnlyNote": "Cet article est actuellement disponible en anglais."
+  }
+}

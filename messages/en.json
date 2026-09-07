@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "home": "Home",
+    "features": "Features",
+    "screenshots": "Screenshots",
+    "showcase": "Showcase",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "contact": "Contact",
+    "openStudio": "Open studio",
+    "menuOpen": "Open menu",
+    "menuClose": "Close menu"
+  },
+  "footer": {
+    "description": "Free browser-based 3D box designer and packaging simulator. Set custom dimensions, materials, openings, and per-face artwork—then export PNG mockups or share preview links with clients and teammates.",
+    "openStudio": "Open free 3D studio",
+    "product": "Product",
+    "productAria": "Product",
+    "studio": "3D box studio",
+    "features": "Features",
+    "screenshots": "Screenshots",
+    "showcase": "Showcase",
+    "howItWorks": "How it works",
+    "packagingGuides": "Packaging guides",
+    "guidesTools": "Guides & tools",
+    "guidesAria": "Packaging guides",
+    "allArticles": "All packaging articles",
+    "helpSupport": "Help & support",
+    "helpAria": "Help and support",
+    "faqCount": "FAQ ({count} answers)",
+    "contactSupport": "Contact support",
+    "industryMockups": "Industry mockups",
+    "industryAria": "Industry packaging guides",
+    "popularTopics": "Popular packaging topics",
+    "topicsLead": "Quick links for teams searching for a free 3D box design maker, carton simulator, or online packaging mockup generator.",
+    "legalLine": "© {year} 3D Box Studio · {domain} · Free 3D box designer & packaging simulator in your browser.",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "buyMeACoffee": "Buy me a coffee",
+    "canonical": "Canonical:"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "common": {
+    "brand": "3D Box Studio"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "That page doesn’t exist or was moved.",
+    "home": "Back to home",
+    "studio": "Open studio"
+  },
+  "blog": {
+    "englishOnlyNote": "This article is currently available in English."
+  }
+}

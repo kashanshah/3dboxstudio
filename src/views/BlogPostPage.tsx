@@ -1,6 +1,7 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
+import BlogEnglishOnlyNote from "@/components/BlogEnglishOnlyNote";
 import type { BlogSection } from "@/content/blogPosts";
 import {
   BLOG_POSTS,
@@ -93,6 +94,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
             <p className="landing-section-intro content-page-intro">
               {post.description}
             </p>
+            <BlogEnglishOnlyNote />
             <figure className="blog-post-hero-figure">
               <img
                 className="blog-post-hero-image"

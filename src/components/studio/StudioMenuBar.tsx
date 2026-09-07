@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { StudioFileModal } from "@/hooks/useStudioDocument";
 import type { StudioHelpModal } from "./StudioHelpModals";

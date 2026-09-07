@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { Link } from "@/i18n/routing";
 import { CONTACT_TOPICS } from "@/content/contact";
 import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 
@@ -314,7 +315,7 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
         </button>
         <p className="contact-form-note">
           We usually reply within a few business days. For quick answers, check the{" "}
-          <a href="/faq">FAQ</a>.
+          <Link href="/faq">FAQ</Link>.
         </p>
       </div>
     </form>
