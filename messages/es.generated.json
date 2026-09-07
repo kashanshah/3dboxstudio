@@ -16,7 +16,7 @@
     "openStudio": "Estudio 3D gratuito abierto",
     "product": "Producto",
     "productAria": "Producto",
-    "studio": "Estudio de cajas 3D",
+    "studio": "3D Box Studio",
     "features": "Características",
     "screenshots": "Capturas de pantalla",
     "showcase": "Escaparate",
@@ -45,7 +45,7 @@
     "fr": "Francés"
   },
   "common": {
-    "brand": "Estudio de cajas 3D"
+    "brand": "3D Box Studio"
   },
   "notFound": {
     "title": "Página no encontrada",
@@ -254,7 +254,7 @@
       "close": "Cerca"
     },
     "authGate": {
-      "eyebrow": "Estudio de cajas 3D",
+      "eyebrow": "3D Box Studio",
       "title": "Crea una cuenta gratuita para empezar a diseñar.",
       "lead": "Regístrate para acceder al diseñador de cajas 3D: define las dimensiones, los materiales, las aberturas y el diseño de cada cara. Guarda en la nube, comparte enlaces de vista previa y exporta maquetas en formato PNG.",
       "createAccount": "Crea una cuenta gratuita",
@@ -263,7 +263,7 @@
       "backHome": "← Volver a la página principal"
     },
     "startDialog": {
-      "title": "Estudio de cajas 3D",
+      "title": "3D Box Studio",
       "goToWebsite": "Ir al sitio web",
       "createNew": "Crear nuevo diseño",
       "lead": "Retoma el diseño donde lo dejaste o empieza con un diseño de caja nuevo.",

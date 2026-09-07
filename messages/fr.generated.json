@@ -16,7 +16,7 @@
     "openStudio": "Ouvrir le studio 3D gratuit",
     "product": "Produit",
     "productAria": "Produit",
-    "studio": "Studio de boîtes 3D",
+    "studio": "3D Box Studio",
     "features": "Fonctionnalités",
     "screenshots": "Captures d’écran",
     "showcase": "Vitrine",
@@ -254,7 +254,7 @@
       "close": "Fermer"
     },
     "authGate": {
-      "eyebrow": "Studio 3D Box",
+      "eyebrow": "3D Box Studio",
       "title": "Créez un compte gratuit pour commencer à concevoir",
       "lead": "Inscrivez-vous pour accéder à l'outil de conception de boîtes 3D : définissez les dimensions, les matériaux, les ouvertures et les illustrations de chaque face. Enregistrez vos créations dans le cloud, partagez des liens de prévisualisation et exportez des maquettes au format PNG.",
       "createAccount": "Créer un compte gratuit",
@@ -263,7 +263,7 @@
       "backHome": "← Retour à la page d'accueil"
     },
     "startDialog": {
-      "title": "Studio 3D Box",
+      "title": "3D Box Studio",
       "goToWebsite": "Aller sur le site web",
       "createNew": "Créer un nouveau design",
       "lead": "Reprenez là où vous en étiez, ou commencez un nouveau design de boîte.",
