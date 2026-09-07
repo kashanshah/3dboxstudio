@@ -1,11 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-<<<<<<< Updated upstream
-=======
 import { useLocale } from "next-intl";
-import { Link } from "@/i18n/routing";
->>>>>>> Stashed changes
 import { CONTACT_TOPICS } from "@/content/contact";
 import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 
