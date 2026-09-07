@@ -11,10 +11,13 @@ describe("blog localization", () => {
     expect(hasBlogTranslation("fr", SLUG)).toBe(true);
 
     const fr = getLocalizedBlogPost(SLUG, "fr");
-    expect(fr?.title).toContain("mockup de boîte produit 3D");
+    expect(fr?.title).toContain("mockup de boîte 3D");
+    expect(fr?.seoTitle).toContain("guide complet");
+    expect(fr?.faqs?.length).toBeGreaterThan(0);
     expect(fr?.sections.some((s) => s.type === "h2" && s.text.includes("Étape 1"))).toBe(
       true
     );
+    expect(fr?.sections.some((s) => s.type === "cta")).toBe(true);
     expect(fr?.slug).toBe(SLUG);
   });
 
