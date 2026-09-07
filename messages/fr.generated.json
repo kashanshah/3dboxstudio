@@ -224,5 +224,94 @@
         "answer": "L’upload d’illustrations de face enregistre automatiquement votre design dans le cloud sous « Untitled ». Utilisez Fichier → Renommer pour changer le nom. Fichier → Enregistrer (⌘S) met à jour un projet existant ; Fichier → Enregistrer sous crée une copie avec un nouveau lien. Fichier → Ouvrir permet de coller un lien ou un ID pour recharger un design. Après enregistrement, utilisez Fichier → Partager le lien d’aperçu ou Copier le lien d’aperçu pour envoyer aux clients une URL en lecture seule (/preview/…). Les liens éditeur utilisent /studio/… et ne sont pas exposés en mode aperçu."
       }
     }
+  },
+  "studio": {
+    "dialog": {
+      "close": "Fermer"
+    },
+    "authGate": {
+      "eyebrow": "Studio 3D Box",
+      "title": "Créez un compte gratuit pour commencer à concevoir",
+      "lead": "Inscrivez-vous pour accéder à l'outil de conception de boîtes 3D : définissez les dimensions, les matériaux, les ouvertures et les illustrations de chaque face. Enregistrez vos créations dans le cloud, partagez des liens de prévisualisation et exportez des maquettes au format PNG.",
+      "createAccount": "Créer un compte gratuit",
+      "signInEmail": "Se connecter avec un e-mail",
+      "hint": "Les liens de partage de projet et les aperçus en lecture seule restent accessibles sans compte. Les adresses e-mail temporaires (YOPmail, Mailinator, etc.) ne sont pas acceptées.",
+      "backHome": "← Retour à la page d'accueil"
+    },
+    "startDialog": {
+      "title": "Studio 3D Box",
+      "goToWebsite": "Aller sur le site web",
+      "createNew": "Créer un nouveau design",
+      "lead": "Reprenez là où vous en étiez, ou commencez un nouveau design de boîte.",
+      "savedDesigns": "Vos créations enregistrées",
+      "empty": "Vous n'avez enregistré aucun dessin. Créez-en un nouveau : les illustrations téléchargées sont automatiquement enregistrées dans le cloud.",
+      "offlineBefore": "Vous préférez travailler hors ligne ?",
+      "importJson": "Importer un fichier JSON",
+      "offlineAfter": "d'une exportation précédente."
+    },
+    "projects": {
+      "errors": {
+        "load": "Impossible de charger vos projets.",
+        "network": "Erreur réseau. Veuillez réessayer.",
+        "rename": "Impossible de renommer le projet.",
+        "delete": "Impossible de supprimer le projet."
+      },
+      "status": {
+        "renamed": "Projet renommé.",
+        "deleted": "Projet supprimé."
+      },
+      "signInHint": "Connectez-vous pour consulter les projets enregistrés sur votre compte.",
+      "signIn": "Se connecter",
+      "loading": "Chargement de vos projets…",
+      "empty": "Vous n'avez encore enregistré aucun projet. Créez une boîte, puis utilisez Fichier → Enregistrer sous pour l'enregistrer ici.",
+      "updated": "Mise à jour {date}",
+      "open": "Ouvrir",
+      "rename": "Rebaptiser",
+      "delete": "Supprimer",
+      "renameProjectTitle": "Renommer le projet",
+      "cancel": "Annuler",
+      "saving": "Économie…",
+      "renameLead": "Modifiez le nom d'affichage de ce projet enregistré.",
+      "projectName": "Nom du projet",
+      "renamePlaceholder": "Laisser vide pour supprimer le nom",
+      "deleteProjectTitle": "Supprimer le projet",
+      "deleting": "Suppression…",
+      "deleteProject": "Supprimer le projet",
+      "thisProject": "ce projet",
+      "deleteLead": "Supprimer <strong>{project}</strong> ? Cette action est irréversible.",
+      "deleteHint": "Les liens de partage de ce projet cesseront de fonctionner après leur suppression."
+    },
+    "status": {
+      "checkingAccount": "Vérification de votre compte…",
+      "previewLinkCopied": "Lien de prévisualisation en lecture seule copié.",
+      "couldNotCopyPreviewLink": "Impossible de copier le lien de prévisualisation.",
+      "editorLinkCopied": "Lien de l'éditeur copié.",
+      "couldNotCopyEditorLink": "Impossible de copier le lien de l'éditeur.",
+      "savingToCloud": "Sauvegarde du design dans le cloud…",
+      "namedSavedToCloud": "« {name} » enregistré dans le cloud.",
+      "designSavedToCloud": "Conception enregistrée dans le cloud.",
+      "couldNotSaveDesign": "Impossible d'enregistrer le design.",
+      "autoSaveFailed": "L'enregistrement automatique a échoué.",
+      "namedSavedAndLinkCopied": "« {name} » enregistré et lien copié.",
+      "newShareLinkCreatedAndCopied": "Nouveau lien de partage créé et copié.",
+      "newShareLinkCreated": "Nouveau lien de partage créé.",
+      "couldNotCreateShareLink": "Impossible de créer le lien de partage.",
+      "renamedTo": "Renommé « {nom} ».",
+      "designNameCleared": "Nom du design validé.",
+      "couldNotRenameDesign": "Impossible de renommer le motif.",
+      "projectOpened": "Projet ouvert.",
+      "couldNotOpenProject": "Impossible d'ouvrir le projet.",
+      "enterValidShareLink": "Saisissez un lien de partage ou un identifiant valide.",
+      "designOpenedFromCloud": "Conception ouverte depuis le cloud.",
+      "couldNotOpenDesign": "Impossible d'ouvrir le fichier de conception.",
+      "designOpenedFromRecent": "Conception ouverte à partir de récemment.",
+      "recentListCleared": "Liste récente effacée.",
+      "jsonDownloaded": "Fichier JSON téléchargé (images intégrées incluses).",
+      "couldNotExportJson": "Impossible d'exporter le JSON.",
+      "couldNotReadFile": "Impossible de lire ce fichier.",
+      "invalidJson": "JSON invalide : un export de conception v1 était attendu de ce studio.",
+      "importedDesignFile": "Fichier de conception importé.",
+      "newDesignStarted": "Nouveau projet lancé."
+    }
   }
 }

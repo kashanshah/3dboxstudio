@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   trackExportClicked,
   trackExportCompleted,
@@ -140,6 +141,7 @@ export function useStudioDocument({
   getAnalyticsContext,
   onDesignSessionStart,
 }: UseStudioDocumentOptions) {
+  const t = useTranslations("studio.status");
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
   const [activeShareName, setActiveShareName] = useState<string | null>(null);
@@ -198,7 +200,7 @@ export function useStudioDocument({
   // Cloud save/share requires a signed-in user.
   const ensureCloudAccess = useCallback((): boolean => {
     if (authLoading) {
-      showStatus("Checking your account…", 2000);
+      showStatus(t("checkingAccount"), 2000);
       return false;
     }
     if (!authUser) {
@@ -311,10 +313,10 @@ export function useStudioDocument({
     if (!url) return false;
     try {
       await navigator.clipboard.writeText(url);
-      showStatus("View-only preview link copied.");
+      showStatus(t("previewLinkCopied"));
       return true;
     } catch {
-      showStatus("Could not copy preview link.", 5000);
+      showStatus(t("couldNotCopyPreviewLink"), 5000);
       return false;
     }
   }, [getPreviewLink, showStatus]);
@@ -325,10 +327,10 @@ export function useStudioDocument({
       if (!url) return false;
       try {
         await navigator.clipboard.writeText(url);
-        showStatus("Editor link copied.");
+        showStatus(t("editorLinkCopied"));
         return true;
       } catch {
-        showStatus("Could not copy editor link.", 5000);
+        showStatus(t("couldNotCopyEditorLink"), 5000);
         return false;
       }
     },
@@ -391,7 +393,7 @@ export function useStudioDocument({
       return false;
     }
     setCloudBusy(true);
-    setSaveOverlayMessage("Saving design to cloud…");
+      setSaveOverlayMessage(t("savingToCloud"));
     let saved = false;
     try {
       let preview: ShareOgImageBlob | null = null;
@@ -421,10 +423,10 @@ export function useStudioDocument({
       setIsDirty(false);
       rememberRecent(shareId, "saved", undefined, result.name ?? activeShareName);
       markProjectSaved();
-      showStatus(activeShareName ? `“${activeShareName}” saved to cloud.` : "Design saved to cloud.");
+      showStatus(activeShareName ? t("namedSavedToCloud", { name: activeShareName }) : t("designSavedToCloud"));
       saved = true;
     } catch (e) {
-      showStatus(e instanceof Error ? e.message : "Could not save design.", 6000);
+      showStatus(e instanceof Error ? e.message : t("couldNotSaveDesign"), 6000);
       trackStudioError("cloud_save_failed", "other");
     } finally {
       setSaveOverlayMessage(null);
@@ -486,7 +488,7 @@ export function useStudioDocument({
       setIsDirty(false);
       markProjectSaved();
     } catch (e) {
-      showStatus(e instanceof Error ? e.message : "Auto-save failed.", 6000);
+      showStatus(e instanceof Error ? e.message : t("autoSaveFailed"), 6000);
       trackStudioError("cloud_save_failed", "other");
     } finally {
       setCloudBusy(false);
@@ -518,7 +520,7 @@ export function useStudioDocument({
     const normalizedName = normalizeShareName(saveAsName);
     setSaveAsNameError(null);
     setCloudBusy(true);
-    setSaveOverlayMessage("Saving design to cloud…");
+    setSaveOverlayMessage(t("savingToCloud"));
     setSaveAsLink(null);
     try {
       let preview: ShareOgImageBlob | null = null;
@@ -575,12 +577,12 @@ export function useStudioDocument({
       );
       try {
         await navigator.clipboard.writeText(url);
-        showStatus(resolvedName ? `“${resolvedName}” saved and link copied.` : "New share link created and copied.");
+        showStatus(resolvedName ? t("namedSavedAndLinkCopied", { name: resolvedName }) : t("newShareLinkCreatedAndCopied"));
       } catch {
-        showStatus(resolvedName ? `“${resolvedName}” saved to cloud.` : "New share link created.");
+        showStatus(resolvedName ? t("namedSavedToCloud", { name: resolvedName }) : t("newShareLinkCreated"));
       }
     } catch (e) {
-      showStatus(e instanceof Error ? e.message : "Could not create share link.", 6000);
+      showStatus(e instanceof Error ? e.message : t("couldNotCreateShareLink"), 6000);
       trackStudioError("cloud_save_failed", "other");
     } finally {
       setSaveOverlayMessage(null);
@@ -616,9 +618,9 @@ export function useStudioDocument({
       updateRecentDesignName(activeShareId, resolvedName);
       refreshRecentDesigns();
       setModal(null);
-      showStatus(resolvedName ? `Renamed to “${resolvedName}”.` : "Design name cleared.");
+      showStatus(resolvedName ? t("renamedTo", { name: resolvedName }) : t("designNameCleared"));
     } catch (e) {
-      setRenameError(e instanceof Error ? e.message : "Could not rename design.");
+      setRenameError(e instanceof Error ? e.message : t("couldNotRenameDesign"));
     } finally {
       setCloudBusy(false);
     }
@@ -639,9 +641,9 @@ export function useStudioDocument({
       try {
         await loadShareById(shareId, "opened");
         markClean();
-        showStatus("Project opened.");
+        showStatus(t("projectOpened"));
       } catch (e) {
-        showStatus(e instanceof Error ? e.message : "Could not open project.", 5000);
+        showStatus(e instanceof Error ? e.message : t("couldNotOpenProject"), 5000);
       } finally {
         setCloudBusy(false);
       }
@@ -652,7 +654,7 @@ export function useStudioDocument({
   const openFromInput = useCallback(async () => {
     const shareId = parseShareIdFromInput(openInput);
     if (!shareId) {
-      setOpenError("Enter a valid share link or ID.");
+      setOpenError(t("enterValidShareLink"));
       return;
     }
     if (viewOnly) {
@@ -665,9 +667,9 @@ export function useStudioDocument({
       await loadShareById(shareId);
       setModal(null);
       setOpenInput("");
-      showStatus("Design opened from cloud.");
+      showStatus(t("designOpenedFromCloud"));
     } catch (e) {
-      setOpenError(e instanceof Error ? e.message : "Could not open design.");
+      setOpenError(e instanceof Error ? e.message : t("couldNotOpenDesign"));
     } finally {
       setCloudBusy(false);
     }
@@ -683,9 +685,9 @@ export function useStudioDocument({
       try {
         await loadShareById(shareId, "opened");
         setModal(null);
-        showStatus("Design opened from recent.");
+        showStatus(t("designOpenedFromRecent"));
       } catch (e) {
-        showStatus(e instanceof Error ? e.message : "Could not open design.", 6000);
+        showStatus(e instanceof Error ? e.message : t("couldNotOpenDesign"), 6000);
       } finally {
         setCloudBusy(false);
       }
@@ -704,7 +706,7 @@ export function useStudioDocument({
   const clearAllRecentDesigns = useCallback(() => {
     clearRecentDesigns();
     refreshRecentDesigns();
-    showStatus("Recent list cleared.");
+    showStatus(t("recentListCleared"));
   }, [refreshRecentDesigns, showStatus]);
 
   const exportJson = useCallback(async () => {
@@ -720,12 +722,12 @@ export function useStudioDocument({
       a.click();
       URL.revokeObjectURL(url);
       setModal(null);
-      showStatus("JSON file downloaded (includes embedded images).");
+      showStatus(t("jsonDownloaded"));
       trackExportCompleted("json", "standard", ctx);
     } catch {
       trackExportFailed("json", "serialization_failed", ctx);
       trackStudioError("export_failed", "export");
-      showStatus("Could not export JSON.", 5000);
+      showStatus(t("couldNotExportJson"), 5000);
     }
   }, [buildPersistState, showStatus, analyticsCtx]);
 
@@ -736,12 +738,12 @@ export function useStudioDocument({
       try {
         text = await file.text();
       } catch {
-        showStatus("Could not read that file.", 5000);
+        showStatus(t("couldNotReadFile"), 5000);
         return;
       }
       const restored = await deserializeDesign(text);
       if (!restored) {
-        showStatus("Invalid JSON: expected a v1 design export from this studio.", 6000);
+        showStatus(t("invalidJson"), 6000);
         return;
       }
       applyPersistedState(restored);
@@ -752,7 +754,7 @@ export function useStudioDocument({
       syncUrlToShare(null);
       setIsDirty(true);
       setModal(null);
-      showStatus("Imported design file.");
+      showStatus(t("importedDesignFile"));
       onDesignSessionStart?.();
     },
     [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]
@@ -768,7 +770,7 @@ export function useStudioDocument({
     syncUrlToShare(null);
     setIsDirty(false);
     setModal(null);
-    showStatus("New design started.");
+    showStatus(t("newDesignStarted"));
     onDesignSessionStart?.();
   }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]);
 

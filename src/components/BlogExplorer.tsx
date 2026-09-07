@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
+import { useLocale } from "next-intl";
 import { useMemo, useState } from "react";
 import {
   BLOG_CATEGORIES,
@@ -12,6 +13,8 @@ import {
   type BlogCategoryId,
   type BlogPost,
 } from "@/content/blogPosts";
+import { getLocalizedBlogPost } from "@/content/blogLocales";
+import type { Locale } from "@/i18n/config";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -40,6 +43,7 @@ function matchesSearch(post: BlogPost, query: string): boolean {
 }
 
 export default function BlogExplorer() {
+  const locale = useLocale() as Locale;
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<BlogCategoryId | "all">("all");
 
@@ -47,8 +51,10 @@ export default function BlogExplorer() {
 
   const sortedPosts = useMemo(
     () =>
-      [...BLOG_POSTS].sort((a, b) => b.published.localeCompare(a.published)),
-    [],
+      BLOG_POSTS.map((post) => getLocalizedBlogPost(post.slug, locale) ?? post).sort((a, b) =>
+        b.published.localeCompare(a.published)
+      ),
+    [locale],
   );
 
   const filteredPosts = useMemo(() => {

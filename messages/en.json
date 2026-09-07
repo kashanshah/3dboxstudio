@@ -224,5 +224,94 @@
         "answer": "Uploading face artwork auto-saves your design to the cloud as “Untitled”. Use File → Rename to change the name. File → Save (⌘S) updates an existing project; File → Save As creates a copy with a new link. File → Open lets you paste a share link or ID to reload a saved design. After saving, use File → Share Preview Link or Copy Preview Link to send clients a separate view-only URL (/preview/…). Editor links use /studio/… and are not exposed in preview mode."
       }
     }
+  },
+  "studio": {
+    "dialog": {
+      "close": "Close"
+    },
+    "authGate": {
+      "eyebrow": "3D Box Studio",
+      "title": "Create a free account to start designing",
+      "lead": "Sign up to open the 3D box designer—set dimensions, materials, openings, and per-face artwork. Save to the cloud, share preview links, and export PNG mockups.",
+      "createAccount": "Create free account",
+      "signInEmail": "Sign in with email",
+      "hint": "Shared project links and view-only previews stay open without an account. Temporary email addresses (YOPmail, Mailinator, etc.) are not accepted.",
+      "backHome": "← Back to homepage"
+    },
+    "startDialog": {
+      "title": "3D Box Studio",
+      "goToWebsite": "Go to website",
+      "createNew": "Create new design",
+      "lead": "Pick up where you left off, or start a fresh box design.",
+      "savedDesigns": "Your saved designs",
+      "empty": "You haven't saved any designs yet. Create a new design — artwork uploads auto-save to the cloud.",
+      "offlineBefore": "Prefer working offline?",
+      "importJson": "Import a JSON file",
+      "offlineAfter": "from a previous export."
+    },
+    "projects": {
+      "errors": {
+        "load": "Could not load your projects.",
+        "network": "Network error. Please try again.",
+        "rename": "Could not rename project.",
+        "delete": "Could not delete project."
+      },
+      "status": {
+        "renamed": "Project renamed.",
+        "deleted": "Project deleted."
+      },
+      "signInHint": "Sign in to browse projects saved to your account.",
+      "signIn": "Sign in",
+      "loading": "Loading your projects…",
+      "empty": "You haven't saved any projects yet. Design a box, then use File → Save As to store it here.",
+      "updated": "Updated {date}",
+      "open": "Open",
+      "rename": "Rename",
+      "delete": "Delete",
+      "renameProjectTitle": "Rename project",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "renameLead": "Change the display name for this saved project.",
+      "projectName": "Project name",
+      "renamePlaceholder": "Leave blank to remove the name",
+      "deleteProjectTitle": "Delete project",
+      "deleting": "Deleting…",
+      "deleteProject": "Delete project",
+      "thisProject": "this project",
+      "deleteLead": "Delete <strong>{project}</strong>? This cannot be undone.",
+      "deleteHint": "Share links for this project will stop working after deletion."
+    },
+    "status": {
+      "checkingAccount": "Checking your account…",
+      "previewLinkCopied": "View-only preview link copied.",
+      "couldNotCopyPreviewLink": "Could not copy preview link.",
+      "editorLinkCopied": "Editor link copied.",
+      "couldNotCopyEditorLink": "Could not copy editor link.",
+      "savingToCloud": "Saving design to cloud…",
+      "namedSavedToCloud": "“{name}” saved to cloud.",
+      "designSavedToCloud": "Design saved to cloud.",
+      "couldNotSaveDesign": "Could not save design.",
+      "autoSaveFailed": "Auto-save failed.",
+      "namedSavedAndLinkCopied": "“{name}” saved and link copied.",
+      "newShareLinkCreatedAndCopied": "New share link created and copied.",
+      "newShareLinkCreated": "New share link created.",
+      "couldNotCreateShareLink": "Could not create share link.",
+      "renamedTo": "Renamed to “{name}”.",
+      "designNameCleared": "Design name cleared.",
+      "couldNotRenameDesign": "Could not rename design.",
+      "projectOpened": "Project opened.",
+      "couldNotOpenProject": "Could not open project.",
+      "enterValidShareLink": "Enter a valid share link or ID.",
+      "designOpenedFromCloud": "Design opened from cloud.",
+      "couldNotOpenDesign": "Could not open design.",
+      "designOpenedFromRecent": "Design opened from recent.",
+      "recentListCleared": "Recent list cleared.",
+      "jsonDownloaded": "JSON file downloaded (includes embedded images).",
+      "couldNotExportJson": "Could not export JSON.",
+      "couldNotReadFile": "Could not read that file.",
+      "invalidJson": "Invalid JSON: expected a v1 design export from this studio.",
+      "importedDesignFile": "Imported design file.",
+      "newDesignStarted": "New design started."
+    }
   }
 }

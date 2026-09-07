@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/routing";
 import { useEffect, useRef, useState, type RefObject } from "react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import type { StudioFileModal } from "@/hooks/useStudioDocument";
 import type { StudioHelpModal } from "./StudioHelpModals";
 import { IconExternalLink, IconRename } from "./StudioIcons";
@@ -406,6 +407,10 @@ export default function StudioMenuBar({
       )}
 
       {authGate ? <div className="studio-menu-auth-gate-spacer" aria-hidden /> : null}
+
+      <div className="studio-menu-locale">
+        <LanguageSwitcher className="language-switcher--studio" />
+      </div>
 
       <div className="studio-menu-item studio-menu-account-item" ref={accountRef}>
         {authLoading ? (

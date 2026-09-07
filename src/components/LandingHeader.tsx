@@ -111,7 +111,6 @@ export default function LandingHeader({ activeNav }: LandingHeaderProps) {
             <span className="landing-brand-text">{tCommon("brand")}</span>
           </Link>
           <div className="landing-nav-tools">
-            <LanguageSwitcher />
             <button
               type="button"
               className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
@@ -138,6 +137,7 @@ export default function LandingHeader({ activeNav }: LandingHeaderProps) {
             }}
           >
             <SiteNav activeNav={activeNav} />
+            <LanguageSwitcher />
           </nav>
         </div>
       </header>

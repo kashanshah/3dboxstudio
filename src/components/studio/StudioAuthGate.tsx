@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
@@ -10,16 +11,16 @@ type StudioAuthGateProps = {
 };
 
 export default function StudioAuthGate({ onSignUp, onSignIn, oauthError }: StudioAuthGateProps) {
+  const t = useTranslations("studio.authGate");
   return (
     <div className="studio-auth-gate" role="region" aria-labelledby="studio-auth-gate-title">
       <div className="studio-auth-gate-card">
-        <p className="studio-auth-gate-eyebrow">3D Box Studio</p>
+        <p className="studio-auth-gate-eyebrow">{t("eyebrow")}</p>
         <h1 id="studio-auth-gate-title" className="studio-auth-gate-title">
-          Create a free account to start designing
+          {t("title")}
         </h1>
         <p className="studio-auth-gate-lead">
-          Sign up to open the 3D box designer—set dimensions, materials, openings, and
-          per-face artwork. Save to the cloud, share preview links, and export PNG mockups.
+          {t("lead")}
         </p>
         {oauthError && (
           <p className="studio-auth-gate-error" role="alert">
@@ -29,19 +30,18 @@ export default function StudioAuthGate({ onSignUp, onSignIn, oauthError }: Studi
         <div className="studio-auth-gate-actions">
           <GoogleSignInButton className="studio-auth-gate-google mb-3" />
           <button type="button" className="btn btn-primary" onClick={onSignUp}>
-            Create free account
+            {t("createAccount")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onSignIn}>
-            Sign in with email
+            {t("signInEmail")}
           </button>
         </div>
         <p className="studio-auth-gate-hint">
-          Shared project links and view-only previews stay open without an account.
-          Temporary email addresses (YOPmail, Mailinator, etc.) are not accepted.
+          {t("hint")}
         </p>
         <p className="studio-auth-gate-home">
           <Link href="/" className="studio-auth-gate-home-link">
-            ← Back to homepage
+            {t("backHome")}
           </Link>
         </p>
       </div>

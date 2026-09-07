@@ -24,6 +24,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const messagesDir = resolve(root, "messages");
+const envFiles = [resolve(root, ".env.local"), resolve(root, ".env")];
+const MAX_TEXT_SEGMENTS_PER_REQUEST = 100;
 
 function parseArgs(argv) {
   const out = { to: ["fr"], force: false };
@@ -70,6 +72,27 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
+function loadDotEnvFile(path) {
+  if (!existsSync(path)) return;
+  const raw = readFileSync(path, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    if (!key || process.env[key] !== undefined) continue;
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
+
 async function translateBatch(texts, target, apiKey) {
   const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url, {
@@ -90,7 +113,18 @@ async function translateBatch(texts, target, apiKey) {
   return data.data.translations.map((t) => t.translatedText);
 }
 
+async function translateInChunks(texts, target, apiKey) {
+  const translated = [];
+  for (let i = 0; i < texts.length; i += MAX_TEXT_SEGMENTS_PER_REQUEST) {
+    const chunk = texts.slice(i, i + MAX_TEXT_SEGMENTS_PER_REQUEST);
+    const chunkTranslated = await translateBatch(chunk, target, apiKey);
+    translated.push(...chunkTranslated);
+  }
+  return translated;
+}
+
 async function main() {
+  envFiles.forEach(loadDotEnvFile);
   const { to, force } = parseArgs(process.argv.slice(2));
   const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY?.trim();
 
@@ -131,7 +165,7 @@ To refresh missing keys from Google Cloud Translation:
     }
 
     console.log(`[${locale}] translating ${missing.length} string(s)…`);
-    const translated = await translateBatch(
+    const translated = await translateInChunks(
       missing.map((m) => m.value),
       locale,
       apiKey

@@ -1,0 +1,316 @@
+{
+  "nav": {
+    "features": "特征",
+    "screenshots": "屏幕截图",
+    "showcase": "展示",
+    "faq": "常问问题",
+    "blog": "博客",
+    "contact": "接触",
+    "openStudio": "开放工作室",
+    "menuOpen": "打开菜单",
+    "menuClose": "关闭菜单"
+  },
+  "footer": {
+    "description": "免费的基于浏览器的 3D 包装盒设计器和包装模拟器。设置自定义尺寸、材料、开口和单面图案——然后导出 PNG 模型或与客户和团队成员分享预览链接。",
+    "openStudio": "开放的免费3D工作室",
+    "product": "产品",
+    "productAria": "产品",
+    "studio": "3D盒子工作室",
+    "features": "特征",
+    "screenshots": "屏幕截图",
+    "showcase": "展示",
+    "howItWorks": "工作原理",
+    "packagingGuides": "包装指南",
+    "guidesTools": "指南和工具",
+    "guidesAria": "包装指南",
+    "allArticles": "所有包装材料",
+    "helpSupport": "帮助与支持",
+    "helpAria": "帮助和支持",
+    "faqCount": "常见问题解答（{count} 个答案）",
+    "contactSupport": "联系客服",
+    "industryMockups": "行业模型",
+    "industryAria": "行业包装指南",
+    "popularTopics": "热门包装话题",
+    "topicsLead": "为正在寻找免费 3D 包装盒设计制作工具、纸箱模拟器或在线包装模型生成器的团队提供的快速链接。",
+    "legalLine": "© {year} 3D Box Studio · {domain} · 浏览器中的免费 3D 盒子设计器和包装模拟器。",
+    "privacy": "隐私",
+    "terms": "条款",
+    "buyMeACoffee": "请我喝杯咖啡",
+    "canonical": "典范："
+  },
+  "language": {
+    "label": "语言",
+    "en": "英语",
+    "fr": "法语"
+  },
+  "common": {
+    "brand": "3D Box Studio"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "body": "该页面不存在或已被移动。",
+    "home": "返回首页",
+    "studio": "开放工作室"
+  },
+  "blog": {
+    "englishOnlyNote": "本文目前提供英文版本。",
+    "label": "博客",
+    "notFoundTitle": "未找到文章",
+    "backToBlog": "返回博客",
+    "readMinutes": "{分钟}分钟阅读",
+    "updated": "更新",
+    "openStudioCta": "打开免费的3D盒子制作工具",
+    "moreGuides": "更多指南",
+    "readArticle": "阅读文章 →",
+    "faqHeading": "常问问题",
+    "onThisPage": "本页"
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "永久免费 · 浏览器 · WebGL · 登录以保存和分享",
+      "titleLine1": "免费包装盒设计",
+      "titleLine2": "以及 3D 纸箱模拟器",
+      "titleLine3": "3D Box Studio · 在浏览器中",
+      "lead": "免费在线包装盒模型生成器，适用于折叠纸盒和邮寄包装盒——逼真的PBR材质、HDRI光照、盒盖和盒舌动画，以及单面图案设计。专为需要快速预览3D包装效果的设计师、电商卖家和印刷厂打造，无需CAD软件或订阅服务。",
+      "launchCta": "Launch 3D工作室",
+      "exploreCta": "探索功能",
+      "highlightsAria": "精彩片段",
+      "meta1": "免费包装设计师",
+      "meta2": "免费注册账号即可开始",
+      "meta3": "云保存和共享",
+      "meta4": "只读客户端链接",
+      "meta5": "导出PNG",
+      "meta6": "JSON 导入/导出",
+      "badge": "WebGL 实时",
+      "previewAlt": "带有摄影棚灯光的风格化 3D 包装盒——代表交互式模拟器",
+      "proofAria": "产品亮点",
+      "proofPbrTitle": "PBR材料",
+      "proofPbrBody": "牛皮纸、纸盒、铝箔等等",
+      "proofHdriTitle": "HDRI 照明",
+      "proofHdriBody": "录音棚级反射",
+      "proofOpenTitle": "职位空缺",
+      "proofOpenBody": "盖子，分体式顶盖，门",
+      "proofShareTitle": "云共享链接",
+      "proofShareBody": "保存、编辑和发送预览。"
+    },
+    "features": {
+      "eyebrow": "能力",
+      "title": "打造逼真的 3D 包装预览所需的一切",
+      "intro": "无论你称之为 3D 盒子模拟器、纸箱配置器还是结构包装预览，这些工具都能帮助你在决定使用印版或样品之前验证尺寸、可读性和货架展示效果。",
+      "viewportTitle": "实时3D视口",
+      "viewportBody": "旋转、缩放（滚动或滑动）、HDRI 环境、阴影和可选网格——非常适合包装审核和客户签字确认。",
+      "dimensionsTitle": "尺寸和单位",
+      "dimensionsBody": "以毫米、厘米或英寸为单位设置宽度、高度和深度。场景单位将转换为厘米，以保持一致的 3D 比例。",
+      "materialsTitle": "PBR材质预设",
+      "materialsBody": "牛皮纸、白色纸板、光面或哑光塑料、瓦楞纸和金属箔——粗糙度、透明涂层和环境响应，均经过调整，以适应包装外观。",
+      "openingsTitle": "开启机制",
+      "openingsBody": "关闭视图，从背面看盖子，分体式顶部翻盖（铰链在长边或短边），以及摆动门式左侧面板——动画显示打开程度。",
+      "artworkTitle": "每张脸的艺术作品和轮换",
+      "artworkBody": "为每张脸上传 PNG 或 JPG 格式图片，以 90° 为步长旋转，当您需要快速占位符包裹时，可以将一张图片应用到所有脸部。",
+      "envTitle": "环境预设",
+      "envBody": "您可以选择工作室、城市、仓库、日落和黎明等场景。这是获取设计反馈的绝佳方式。",
+      "cloudTitle": "云保存和共享链接",
+      "cloudBody": "使用“文件”→“保存”或“另存为”上传您的设计。您将获得一个供自己使用的编辑器链接，以及一个单独的供客户查看的只读预览链接——其中包含设计稿和设置。",
+      "previewTitle": "仅查看客户端预览",
+      "previewBody": "分享一个演示链接，即可在只读模式下打开工作室。客户可以旋转、缩放、调整光线并导出 PNG 图片——而不会更改尺寸、图像或覆盖您的作品。",
+      "jsonTitle": "JSON 导入和导出",
+      "jsonBody": "下载包含尺寸、材质、开口和嵌入图像的 v1 JSON 备份，或者导入文件以离线恢复完整场景。",
+      "pngTitle": "PNG导出",
+      "pngBody": "导出实时视口的高分辨率 PNG 快照，用于演示文稿、询价和市场营销——同时提供云端共享链接，以便进行交互式审阅。",
+      "recordTitle": "记录演示",
+      "recordBody": "录制一段 15 秒的视口视频，然后下载 MP4 文件。这是与您的团队或客户分享 3D 包装模拟器的绝佳方式。"
+    },
+    "quote": {
+      "aria": "产品理念",
+      "text": "目标不是取代模切线 CAD，而是让房间里的每个人都能共享一个可信的盒子图像，以免时间和金钱浪费在错误的结构上。"
+    },
+    "gallery": {
+      "eyebrow": "产品巡展",
+      "title": "3D包装工作室内部",
+      "introBefore": "以下是界面布局和主要工作流程的示例截图。点击任意图片即可打开全尺寸灯箱（与作品集查看器相同——使用方向键浏览，按 Esc 键关闭）。将图片替换为实际拍摄的照片。",
+      "introLink": "你的直播工作室",
+      "introAfter": "为了获得更强的社会认同和SEO图片搜索覆盖率。",
+      "openShot": "打开图库中的屏幕截图 {index}：{caption}",
+      "shot1Alt": "3D Box Studio：控制面板位于带有样品纸箱的实时 3D 视口旁边",
+      "shot1Caption": "编辑器布局：参数和实时 3D 包装预览并排显示。",
+      "shot2Alt": "3D包装盒模拟器中的单面图案上传部分",
+      "shot2Caption": "支持单张人脸图像上传，可快速旋转和清晰操作。",
+      "shot3Alt": "纸箱 3D 模拟器中的开口样式和材质预设",
+      "shot3Caption": "逼真的包装可视化开启样式和面板预设。",
+      "shot4Alt": "3D盒子包装模拟器中的录制功能",
+      "shot4Caption": "3D包装盒模拟器中的录制功能。"
+    },
+    "showcase": {
+      "eyebrow": "文件夹",
+      "title": "包装视觉效果及动态效果",
+      "intro": "我们提供静态图片和短视频，旨在同时展示结构、印刷和动态效果——例如用于产品展示页的旋转镜头、用于项目推介的板面和箔片效果图，以及展示团队在 3D Box Studio 中实际工作方式的应用内截图。下方的网格混合了照片和视频；如果您只需要一种格式，可以使用筛选功能。",
+      "filtersAria": "展示过滤器",
+      "showLabel": "展示",
+      "filterAll": "全部",
+      "filterPhotos": "照片",
+      "filterVideos": "视频",
+      "empty": "没有符合此筛选条件的条目。请切换到“全部”或在 public/showcase/manifest.json 文件中添加条目。",
+      "footnote": "策划自己的作品集？将文件拖放到 public/showcase/images/ 或 public/showcase/videos/ 目录下，在 manifest.json 中列出它们，并使用可选的布局：“standard”、“tall”或“wide”来在网格中显示更宽或更高的图块。",
+      "openGallery": "打开图库：{alt}",
+      "openVideo": "在全屏图库中打开视频",
+      "openImage": "在全屏图库中打开图片",
+      "videoFallbackAlt": "展示视频",
+      "imageFallbackAlt": "展示图片"
+    },
+    "steps": {
+      "eyebrow": "工作流程",
+      "title": "从平面设计到 3D 包装设计，只需几分钟",
+      "intro": "为需要逼真的 3D 盒子模型但又不想安装笨重 CAD 软件包的团队提供轻量级的工作流程。",
+      "step1Title": "设置结构和棋盘",
+      "step1Body": "选择外部尺寸、材质预设以及顶部或门的打开方式，以预览您的 3D 纸箱。",
+      "step2Title": "插入艺术作品",
+      "step2Body": "将印刷图案映射到面上，旋转以匹配纵向或横向面板，并反复迭代，直到 3D 盒子模型在屏幕上清晰可见。",
+      "step3Title": "保存并分享",
+      "step3Body": "使用“文件”→“另存为”保存编辑器和只读预览链接，或导出 PNG 文件用于演示文稿和询价单。将预览链接发送给客户以供审批；编辑器链接留作自用。"
+    },
+    "guides": {
+      "eyebrow": "指南",
+      "title": "学习3D盒子设计与模拟",
+      "intro": "{count} 篇关于 3D 盒子制作工具、免费包装模型生成器、折叠纸盒设计以及面向设计师、销售人员和品牌团队的基于浏览器的预览的实用文章。",
+      "readGuide": "阅读指南 →",
+      "viewAll": "查看所有包装指南 →"
+    },
+    "faq": {
+      "eyebrow": "支持",
+      "title": "常见问题解答",
+      "intro": "关于我们的免费 3D 包装盒设计器、在线模型生成器、Pacdora 替代方案、导出选项以及它与包装 CAD 工具的比较，我们将直接给出答案。",
+      "browseAll": "使用搜索和筛选功能浏览所有 {count} 个问题 →"
+    },
+    "ctaBand": {
+      "title": "准备好让你的纸箱呈现 3D 效果了吗？",
+      "body": "打开工作室，反复试验材料、开口和艺术设计，直到包装故事达到理想效果。",
+      "button": "启动 3D 包装模拟器"
+    },
+    "sectionCta": {
+      "launch": "Launch 3D工作室"
+    },
+    "faqs": {
+      "what-is-3d-box-designer": {
+        "question": "什么是3D包装盒设计器或包装模拟器？",
+        "answer": "3D包装盒设计器可让您预览平面包装设计和结构选择在三维纸盒或邮寄包装上的效果。包装模拟器应用逼真的光照和材质，以便相关人员在印刷前检查比例、开口和品牌标识。"
+      },
+      "free-3d-box-maker": {
+        "question": "3D Box Studio 是一款免费的 3D 盒子制作工具吗？",
+        "answer": "是的。3D Box Studio 是一款完全在浏览器中运行的免费 3D 盒子制作和设计工具。尺寸、材质、开口、单面图案、HDRI 照明、PNG 导出以及 JSON 导入/导出等功能均免费。创建免费帐户即可打开工作室并开始设计。目前邮箱验证是可选的——注册后即可保存、分享和导出。"
+      },
+      "3d-box-simulation-use": {
+        "question": "3D盒状模拟有什么用途？",
+        "answer": "3D 包装盒模拟可以帮助包装设计师、品牌团队和印刷商在制作印版或实物样品之前验证尺寸、图形布局和开启方式。它非常适合用于客户演示、电商模型和内部设计评审，但不适用于工程生产模切线设计。"
+      },
+      "vs-esko-artioscad": {
+        "question": "它能否替代 Esko、ArtiosCAD 或专用包装 CAD 软件？",
+        "answer": "不。这些平台用于设计生产模切线。这款 3D 包装模拟器可以帮助您尽早沟通外观、触感、拍摄角度和大致尺寸。导出的是视口 PNG 文件，而不是印刷版。"
+      },
+      "vs-mockup-templates": {
+        "question": "3D包装盒设计工具与模型模板网站有何不同？",
+        "answer": "模板库提供固定的盒子形状，您可以上传设计稿。而像 3D Box Studio 这样的 3D 盒子设计工具，则允许您在一个交互式视口中调整宽度、高度、深度、材质、盒盖和盒盖开口以及单面图案——这更适合定制纸箱尺寸和结构预览。"
+      },
+      "mobile-support": {
+        "question": "3D盒子模拟器可以在手机上运行吗？",
+        "answer": "该工作室专为使用 WebGL 的桌面浏览器而设计。虽然手机也能运行，但其控制密度针对键盘和鼠标用户进行了优化。"
+      },
+      "data-storage": {
+        "question": "我的数据存储在哪里？",
+        "answer": "在您工作时，您的设计会保留在浏览器会话中。当您上传人脸图像时，工作室会自动将其保存到云端，文件名为“未命名”（您可以随时通过“文件”→“重命名”进行重命名）。图像会上传到 AWS S3，配置信息则存储在 Postgres 数据库中。您也可以使用“文件”→“保存”（⌘S）手动保存。"
+      },
+      "cloud-share": {
+        "question": "云端保存和分享链接是如何工作的？",
+        "answer": "上传人脸设计图后，您的设计会自动以“未命名”的名称保存到云端。使用“文件”→“重命名”即可更改名称。“文件”→“保存”(⌘S) 可更新现有项目；“文件”→“另存为”可创建一个带有新链接的副本。“文件”→“打开”允许您粘贴共享链接或 ID 以重新加载已保存的设计。保存后，使用“文件”→“共享预览链接”或“复制预览链接”可向客户发送单独的只读 URL（/preview/…）。编辑器链接使用 /studio/…，并且在预览模式下不可见。"
+      }
+    }
+  },
+  "studio": {
+    "dialog": {
+      "close": "关闭"
+    },
+    "authGate": {
+      "eyebrow": "3D Box Studio",
+      "title": "创建免费帐户即可开始设计",
+      "lead": "注册即可使用3D包装盒设计器——设置尺寸、材质、开口和单面图案。保存到云端，分享预览链接，并导出PNG格式的样机。",
+      "createAccount": "创建免费账户",
+      "signInEmail": "使用邮箱登录",
+      "hint": "共享项目链接和只读预览无需注册账号即可保持打开状态。我们不接受临时邮箱地址（例如 YOPmail、Mailinator 等）。",
+      "backHome": "← 返回首页"
+    },
+    "startDialog": {
+      "title": "3D Box Studio",
+      "goToWebsite": "访问网站",
+      "createNew": "创建新设计",
+      "lead": "继续你上次的工作，或者开始设计一个新的盒子。",
+      "savedDesigns": "您保存的设计",
+      "empty": "您尚未保存任何设计。创建新设计——作品上传后会自动保存到云端。",
+      "offlineBefore": "更喜欢离线工作？",
+      "importJson": "导入 JSON 文件",
+      "offlineAfter": "来自之前的出口。"
+    },
+    "projects": {
+      "errors": {
+        "load": "无法加载您的项目。",
+        "network": "网络错误，请重试。",
+        "rename": "无法重命名项目。",
+        "delete": "无法删除项目。"
+      },
+      "status": {
+        "renamed": "项目已更名。",
+        "deleted": "项目已删除。"
+      },
+      "signInHint": "登录即可浏览您帐户中保存的项目。",
+      "signIn": "登入",
+      "loading": "正在加载您的项目…",
+      "empty": "您尚未保存任何项目。请设计一个盒子，然后使用“文件”→“另存为”将其保存到这里。",
+      "updated": "更新于 {date}",
+      "open": "打开",
+      "rename": "重命名",
+      "delete": "删除",
+      "renameProjectTitle": "重命名项目",
+      "cancel": "取消",
+      "saving": "保存…",
+      "renameLead": "更改此已保存项目的显示名称。",
+      "projectName": "项目名称",
+      "renamePlaceholder": "留空则删除名称",
+      "deleteProjectTitle": "删除项目",
+      "deleting": "正在删除…",
+      "deleteProject": "删除项目",
+      "thisProject": "这个项目",
+      "deleteLead": "删除<strong>{project}</strong>？此操作无法撤销。",
+      "deleteHint": "删除后，此项目的分享链接将失效。"
+    },
+    "status": {
+      "checkingAccount": "正在查看您的账户……",
+      "previewLinkCopied": "已复制只读预览链接。",
+      "couldNotCopyPreviewLink": "无法复制预览链接。",
+      "editorLinkCopied": "编辑器链接已复制。",
+      "couldNotCopyEditorLink": "无法复制编辑器链接。",
+      "savingToCloud": "将设计保存到云端…",
+      "namedSavedToCloud": "“{name}”已保存到云端。",
+      "designSavedToCloud": "设计稿已保存至云端。",
+      "couldNotSaveDesign": "设计无法保存。",
+      "autoSaveFailed": "自动保存失败。",
+      "namedSavedAndLinkCopied": "“{name}”已保存并复制链接。",
+      "newShareLinkCreatedAndCopied": "已创建并复制新的分享链接。",
+      "newShareLinkCreated": "已创建新的分享链接。",
+      "couldNotCreateShareLink": "无法创建共享链接。",
+      "renamedTo": "已更名为“{name}”。",
+      "designNameCleared": "设计名称已获批准。",
+      "couldNotRenameDesign": "无法重命名设计。",
+      "projectOpened": "项目启动。",
+      "couldNotOpenProject": "无法打开项目。",
+      "enterValidShareLink": "请输入有效的分享链接或ID。",
+      "designOpenedFromCloud": "设计从云端启动。",
+      "couldNotOpenDesign": "无法打开设计文件。",
+      "designOpenedFromRecent": "设计始于近期。",
+      "recentListCleared": "最近的列表已清除。",
+      "jsonDownloaded": "已下载 JSON 文件（包含嵌入式图像）。",
+      "couldNotExportJson": "无法导出JSON。",
+      "couldNotReadFile": "无法读取该文件。",
+      "invalidJson": "无效的 JSON：此工作室应导出 v1 设计版本。",
+      "importedDesignFile": "导入的设计文件。",
+      "newDesignStarted": "新设计方案已启动。"
+    }
+  }
+}
