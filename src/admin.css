@@ -694,12 +694,69 @@
   margin-top: 0.6rem;
 }
 
-.admin-reply-form {
-  margin-top: 0.75rem;
-  padding: 0.85rem;
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(3, 7, 18, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.admin-modal {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 2.5rem);
+  overflow: auto;
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 18px;
+  background: #0f1218;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+
+.admin-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem 0.85rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.admin-modal-header h3 {
+  margin: 0.2rem 0 0;
+  font-size: 1.15rem;
+}
+
+.admin-modal-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-modal-close {
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-modal-close:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-reply-form {
+  padding: 1rem 1.1rem 1.1rem;
 }
 
 .admin-reply-reference {
@@ -707,11 +764,40 @@
   line-height: 1.45;
 }
 
+.admin-reply-reference-card {
+  margin-bottom: 0.9rem;
+  padding: 0.85rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.admin-reply-reference-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.admin-reply-reference-meta span {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.76rem;
+}
+
 .admin-reply-actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.65rem;
   margin-top: 0.85rem;
+}
+
+.admin-reply-actions .admin-muted {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 .admin-rich-editor {
@@ -750,7 +836,7 @@
 }
 
 .admin-rich-editor-input {
-  min-height: 180px;
+  min-height: 260px;
   padding: 0.75rem;
   border: 1px solid var(--panel-border);
   border-radius: 10px;
