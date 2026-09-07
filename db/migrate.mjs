@@ -177,3 +177,79 @@ await sql`CREATE INDEX IF NOT EXISTS idx_users_utm_source ON users (utm_source) 
 await sql`CREATE INDEX IF NOT EXISTS idx_users_signup_method ON users (signup_method) WHERE signup_method IS NOT NULL`;
 await sql`CREATE INDEX IF NOT EXISTS idx_users_signup_landing_type ON users (signup_landing_type) WHERE signup_landing_type IS NOT NULL`;
 console.log("OK: users signup attribution columns are ready.");
+
+// --- Contact submissions -------------------------------------------------
+
+await sql`
+  CREATE TABLE IF NOT EXISTS contact_submissions (
+    id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,
+    source TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new',
+    email TEXT NOT NULL,
+    name TEXT,
+    topic TEXT,
+    subject TEXT,
+    message TEXT,
+    locale TEXT,
+    page_path TEXT,
+    referrer TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS kind TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS source TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS status TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS email TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS name TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS topic TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS subject TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS message TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS locale TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS page_path TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS referrer TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS ip_address TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS user_agent TEXT`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS payload JSONB`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+await sql`ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+await sql`UPDATE contact_submissions SET status = 'new' WHERE status IS NULL`;
+await sql`UPDATE contact_submissions SET source = 'website_contact_form' WHERE source IS NULL OR BTRIM(source) = ''`;
+await sql`UPDATE contact_submissions SET payload = '{}'::jsonb WHERE payload IS NULL`;
+try {
+  await sql`
+    ALTER TABLE contact_submissions
+    ADD CONSTRAINT contact_submissions_kind_check
+    CHECK (kind IN ('contact_message', 'newsletter_subscription'))
+  `;
+} catch {}
+try {
+  await sql`
+    ALTER TABLE contact_submissions
+    ADD CONSTRAINT contact_submissions_status_check
+    CHECK (status IN ('new', 'reviewed', 'archived'))
+  `;
+} catch {}
+await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_created_at ON contact_submissions (created_at DESC)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_kind ON contact_submissions (kind)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON contact_submissions (status)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_email ON contact_submissions (email)`;
+console.log("OK: contact_submissions table is ready.");
+
+// --- Admin settings ------------------------------------------------------
+
+await sql`
+  CREATE TABLE IF NOT EXISTS admin_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS value JSONB`;
+await sql`ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+await sql`UPDATE admin_settings SET value = '{}'::jsonb WHERE value IS NULL`;
+console.log("OK: admin_settings table is ready.");

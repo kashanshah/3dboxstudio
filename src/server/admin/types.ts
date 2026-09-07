@@ -98,6 +98,28 @@ export type AdminDesignRow = {
   thumbnailUrl: string | null;
 };
 
+export type AdminSubmissionKind = "contact_message" | "newsletter_subscription";
+export type AdminSubmissionStatus = "new" | "reviewed" | "archived";
+
+export type AdminSubmissionRow = {
+  id: string;
+  kind: AdminSubmissionKind;
+  source: string;
+  status: AdminSubmissionStatus;
+  name: string | null;
+  email: string;
+  topic: string | null;
+  subject: string | null;
+  message: string | null;
+  locale: string | null;
+  pagePath: string | null;
+  referrer: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PaginatedResult<T> = {
   items: T[];
   total: number;

@@ -8,6 +8,9 @@ import {
   startOfAdminPeriod,
 } from "@/lib/adminTimeZone";
 import type {
+  SubmissionKindFilter,
+  SubmissionSort,
+  SubmissionStatusFilter,
   DesignFilter,
   DesignSort,
   SortDir,
@@ -16,7 +19,7 @@ import type {
   UserVerifiedFilter,
 } from "@/lib/adminListQuery";
 import { getS3UsageStats } from "../s3Stats";
-import type { AdminDesignRow, AdminStats, AdminUserRow, PaginatedResult } from "./types";
+import type { AdminDesignRow, AdminStats, AdminSubmissionRow, AdminUserRow, PaginatedResult } from "./types";
 
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
@@ -35,6 +38,25 @@ type DesignDbRow = {
   og_image_key: string | null;
   images: unknown;
   is_expired: boolean;
+};
+
+type SubmissionDbRow = {
+  id: string;
+  kind: "contact_message" | "newsletter_subscription";
+  source: string;
+  status: "new" | "reviewed" | "archived";
+  name: string | null;
+  email: string;
+  topic: string | null;
+  subject: string | null;
+  message: string | null;
+  locale: string | null;
+  page_path: string | null;
+  referrer: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 function clampPageSize(n: number): number {
@@ -79,6 +101,27 @@ function mapDesignRow(row: DesignDbRow): AdminDesignRow {
     hasOgImage: Boolean(row.og_image_key),
     faceImageCount: countFaceImages(row.images),
     thumbnailUrl: buildShareThumbnailUrl(row.og_image_key, row.updated_at),
+  };
+}
+
+function mapSubmissionRow(row: SubmissionDbRow): AdminSubmissionRow {
+  return {
+    id: row.id,
+    kind: row.kind,
+    source: row.source,
+    status: row.status,
+    name: row.name,
+    email: row.email,
+    topic: row.topic,
+    subject: row.subject,
+    message: row.message,
+    locale: row.locale,
+    pagePath: row.page_path,
+    referrer: row.referrer,
+    ipAddress: row.ip_address,
+    userAgent: row.user_agent,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -564,6 +607,99 @@ export async function listAdminDesigns(options?: {
 
   return {
     items: rows.map(mapDesignRow),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
+}
+
+export async function listAdminSubmissions(options?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  kind?: SubmissionKindFilter;
+  status?: SubmissionStatusFilter;
+  sort?: SubmissionSort;
+  dir?: SortDir;
+}): Promise<PaginatedResult<AdminSubmissionRow>> {
+  const sql = getSql();
+  const page = clampPage(options?.page ?? 1);
+  const pageSize = clampPageSize(options?.pageSize ?? DEFAULT_PAGE_SIZE);
+  const offset = (page - 1) * pageSize;
+  const pattern = likePattern(options?.search);
+  const applySearch = pattern ? 1 : 0;
+  const kind = options?.kind ?? "all";
+  const status = options?.status ?? "all";
+  const sort = options?.sort ?? "created";
+  const dir = options?.dir ?? "desc";
+
+  const countRows = (await sql`
+    SELECT COUNT(*)::int AS total
+    FROM contact_submissions cs
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(cs.email) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.topic, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.subject, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.message, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(cs.id) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (${kind} = 'all' OR cs.kind = ${kind})
+      AND (${status} = 'all' OR cs.status = ${status})
+  `) as { total: number }[];
+
+  const total = countRows[0]?.total ?? 0;
+
+  const rows = (await sql`
+    SELECT
+      cs.id,
+      cs.kind,
+      cs.source,
+      cs.status,
+      cs.name,
+      cs.email,
+      cs.topic,
+      cs.subject,
+      cs.message,
+      cs.locale,
+      cs.page_path,
+      cs.referrer,
+      cs.ip_address,
+      cs.user_agent,
+      cs.created_at,
+      cs.updated_at
+    FROM contact_submissions cs
+    WHERE
+      (
+        ${applySearch} = 0
+        OR LOWER(cs.email) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.name, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.topic, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.subject, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(COALESCE(cs.message, '')) LIKE ${pattern} ESCAPE ${"\\"}
+        OR LOWER(cs.id) LIKE ${pattern} ESCAPE ${"\\"}
+      )
+      AND (${kind} = 'all' OR cs.kind = ${kind})
+      AND (${status} = 'all' OR cs.status = ${status})
+    ORDER BY
+      CASE WHEN ${sort} = 'email' AND ${dir} = 'asc' THEN LOWER(cs.email) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'email' AND ${dir} = 'desc' THEN LOWER(cs.email) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'topic' AND ${dir} = 'asc' THEN LOWER(COALESCE(cs.topic, cs.subject, '')) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'topic' AND ${dir} = 'desc' THEN LOWER(COALESCE(cs.topic, cs.subject, '')) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'status' AND ${dir} = 'asc' THEN LOWER(cs.status) END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'status' AND ${dir} = 'desc' THEN LOWER(cs.status) END DESC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'asc' THEN cs.created_at END ASC NULLS LAST,
+      CASE WHEN ${sort} = 'created' AND ${dir} = 'desc' THEN cs.created_at END DESC NULLS LAST,
+      cs.created_at DESC,
+      cs.id DESC
+    LIMIT ${pageSize} OFFSET ${offset}
+  `) as SubmissionDbRow[];
+
+  return {
+    items: rows.map(mapSubmissionRow),
     total,
     page,
     pageSize,

@@ -1,4 +1,12 @@
 import { requireEnv, optionalEnv } from "../env";
+import { getAdminSettings } from "@/server/admin/settings";
+import {
+  renderAdminContactSubmissionTemplate,
+  renderAdminRegistrationTemplate,
+  renderEmailChangeTemplate,
+  renderPasswordResetTemplate,
+  renderVerificationTemplate,
+} from "./templates";
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
@@ -29,32 +37,9 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
   }
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 export async function sendVerificationEmail(to: string, name: string | null, verifyUrl: string): Promise<void> {
-  const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
-  const safeUrl = escapeHtml(verifyUrl);
-  const html = `
-    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
-      <h1 style="font-size: 20px; margin: 0 0 16px;">Verify your email</h1>
-      <p style="margin: 0 0 12px;">${greeting}</p>
-      <p style="margin: 0 0 16px;">Thanks for signing up for <strong>3D Box Studio</strong>. Confirm your email address to start saving and sharing your projects.</p>
-      <p style="margin: 0 0 24px;">
-        <a href="${safeUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 600;">Verify email</a>
-      </p>
-      <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">Or paste this link into your browser:</p>
-      <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${safeUrl}" style="color: #2563eb;">${safeUrl}</a></p>
-      <p style="margin: 0; font-size: 12px; color: #94a3b8;">This link expires in 48 hours. If you didn't create an account, you can ignore this email.</p>
-    </div>
-  `;
-  const text = `${name ? `Hi ${name},` : "Hi,"}\n\nVerify your email for 3D Box Studio:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
-  await sendEmail({ to, subject: "Verify your email · 3D Box Studio", html, text });
+  const rendered = renderVerificationTemplate({ name, verifyUrl });
+  await sendEmail({ to, ...rendered });
 }
 
 export async function sendEmailChangeVerificationEmail(
@@ -62,48 +47,19 @@ export async function sendEmailChangeVerificationEmail(
   name: string | null,
   verifyUrl: string
 ): Promise<void> {
-  const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
-  const safeUrl = escapeHtml(verifyUrl);
-  const html = `
-    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
-      <h1 style="font-size: 20px; margin: 0 0 16px;">Confirm your new email</h1>
-      <p style="margin: 0 0 12px;">${greeting}</p>
-      <p style="margin: 0 0 16px;">You requested to change the email address on your <strong>3D Box Studio</strong> account. Confirm this address to finish the update and restore cloud save access.</p>
-      <p style="margin: 0 0 24px;">
-        <a href="${safeUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 600;">Confirm new email</a>
-      </p>
-      <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">Or paste this link into your browser:</p>
-      <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${safeUrl}" style="color: #2563eb;">${safeUrl}</a></p>
-      <p style="margin: 0; font-size: 12px; color: #94a3b8;">This link expires in 48 hours. If you didn't request this change, sign in and update your password right away.</p>
-    </div>
-  `;
-  const text = `${name ? `Hi ${name},` : "Hi,"}\n\nConfirm your new email for 3D Box Studio:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
-  await sendEmail({ to, subject: "Confirm your new email · 3D Box Studio", html, text });
+  const rendered = renderEmailChangeTemplate({ name, verifyUrl });
+  await sendEmail({ to, ...rendered });
 }
 
 export async function sendPasswordResetEmail(to: string, name: string | null, resetUrl: string): Promise<void> {
-  const greeting = name ? `Hi ${escapeHtml(name)},` : "Hi,";
-  const safeUrl = escapeHtml(resetUrl);
-  const html = `
-    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
-      <h1 style="font-size: 20px; margin: 0 0 16px;">Reset your password</h1>
-      <p style="margin: 0 0 12px;">${greeting}</p>
-      <p style="margin: 0 0 16px;">We received a request to reset the password for your <strong>3D Box Studio</strong> account. Click below to choose a new password.</p>
-      <p style="margin: 0 0 24px;">
-        <a href="${safeUrl}" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 11px 20px; border-radius: 8px; font-weight: 600;">Reset password</a>
-      </p>
-      <p style="margin: 0 0 8px; font-size: 13px; color: #64748b;">Or paste this link into your browser:</p>
-      <p style="margin: 0 0 24px; font-size: 13px; word-break: break-all;"><a href="${safeUrl}" style="color: #2563eb;">${safeUrl}</a></p>
-      <p style="margin: 0; font-size: 12px; color: #94a3b8;">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>
-    </div>
-  `;
-  const text = `${name ? `Hi ${name},` : "Hi,"}\n\nReset your 3D Box Studio password:\n${resetUrl}\n\nThis link expires in 1 hour. If you didn't request this, ignore this email.`;
-  await sendEmail({ to, subject: "Reset your password · 3D Box Studio", html, text });
+  const rendered = renderPasswordResetTemplate({ name, resetUrl });
+  await sendEmail({ to, ...rendered });
 }
 
 /** Recipient for admin operational alerts (new registrations, etc.). */
-export function adminAlertEmail(): string {
-  return optionalEnv("ADMIN_EMAIL", "kashanshah@hotmail.com");
+export async function adminAlertEmail(): Promise<string> {
+  const settings = await getAdminSettings().catch(() => null);
+  return settings?.notificationEmail || optionalEnv("ADMIN_EMAIL", "kashanshah@hotmail.com");
 }
 
 /** Notifies the admin that a new user just registered. */
@@ -114,51 +70,30 @@ export async function sendAdminNewRegistrationEmail(user: {
   createdAt: string;
   attributionSummary?: string;
 }): Promise<void> {
-  const to = adminAlertEmail();
-  const safeEmail = escapeHtml(user.email);
-  const safeName = user.name ? escapeHtml(user.name) : "—";
-  const safeId = escapeHtml(user.id);
-  const safeCreated = escapeHtml(user.createdAt);
-  const safeAttribution = user.attributionSummary ? escapeHtml(user.attributionSummary) : null;
-  const html = `
-    <div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #0f172a;">
-      <h1 style="font-size: 20px; margin: 0 0 16px;">New registration</h1>
-      <p style="margin: 0 0 16px;">A new account was created on <strong>3D Box Studio</strong>.</p>
-      <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
-        <tr>
-          <td style="padding: 6px 0; color: #64748b; width: 88px;">Name</td>
-          <td style="padding: 6px 0;">${safeName}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Email</td>
-          <td style="padding: 6px 0;"><a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a></td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">User ID</td>
-          <td style="padding: 6px 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;">${safeId}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px 0; color: #64748b;">Created</td>
-          <td style="padding: 6px 0;">${safeCreated}</td>
-        </tr>
-        ${
-          safeAttribution
-            ? `<tr>
-          <td style="padding: 6px 0; color: #64748b;">Traffic</td>
-          <td style="padding: 6px 0;">${safeAttribution}</td>
-        </tr>`
-            : ""
-        }
-      </table>
-    </div>
-  `;
-  const text = `New registration on 3D Box Studio\n\nName: ${user.name ?? "—"}\nEmail: ${user.email}\nUser ID: ${user.id}\nCreated: ${user.createdAt}${
-    user.attributionSummary ? `\nTraffic: ${user.attributionSummary}` : ""
-  }`;
+  const to = await adminAlertEmail();
+  const rendered = renderAdminRegistrationTemplate(user);
   await sendEmail({
     to,
-    subject: `New registration · ${user.email}`,
-    html,
-    text,
+    ...rendered,
+  });
+}
+
+export async function sendAdminContactSubmissionEmail(submission: {
+  id: string;
+  name: string | null;
+  email: string;
+  topic: string | null;
+  subject: string | null;
+  message: string | null;
+  locale: string | null;
+  pagePath: string | null;
+  referrer: string | null;
+  submittedAt: string;
+}): Promise<void> {
+  const to = await adminAlertEmail();
+  const rendered = renderAdminContactSubmissionTemplate(submission);
+  await sendEmail({
+    to,
+    ...rendered,
   });
 }
