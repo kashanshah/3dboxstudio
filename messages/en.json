@@ -64,7 +64,31 @@
     "moreGuides": "More guides",
     "readArticle": "Read article →",
     "faqHeading": "FAQ",
-    "onThisPage": "On this page"
+    "onThisPage": "On this page",
+    "index": {
+      "eyebrow": "Guides",
+      "title": "Free 3D box design & packaging mockup guides",
+      "intro": "{count} practical articles on free 3D box designers, online packaging mockup generators, folding carton and mailer previews, Pacdora alternatives, and browser-based box makers for designers, e-commerce sellers, and brand teams.",
+      "searchLabel": "Search articles",
+      "searchPlaceholder": "Search titles, topics, summaries...",
+      "clearSearch": "Clear search",
+      "filterByTopic": "Filter by topic",
+      "all": "All",
+      "resultsAll": "{count} articles",
+      "resultsFiltered": "{count} of {total} articles",
+      "fullArticleEnglishOnly": "Full article currently available in English.",
+      "empty": "No articles match your search.",
+      "clearFilters": "Clear filters",
+      "readArticle": "Read article →",
+      "readMinutes": "{minutes} min read",
+      "categories": {
+        "getting-started": "Getting started",
+        "workflow": "Workflow & teams",
+        "ecommerce": "E-commerce & DTC",
+        "industry": "Industry guides",
+        "tools": "Tools & structure"
+      }
+    }
   },
   "landing": {
     "hero": {

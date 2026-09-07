@@ -12,3 +12,11 @@ export type BlogPostTranslation = {
 };
 
 export type BlogLocaleCatalog = Record<string, BlogPostTranslation>;
+
+export type BlogPostIndexTranslation = {
+  title: string;
+  description: string;
+  imageAlt?: string;
+};
+
+export type BlogIndexLocaleCatalog = Record<string, BlogPostIndexTranslation>;

@@ -64,7 +64,31 @@
     "moreGuides": "Plus de guides",
     "readArticle": "Lire l’article →",
     "faqHeading": "FAQ",
-    "onThisPage": "Sur cette page"
+    "onThisPage": "Sur cette page",
+    "index": {
+      "eyebrow": "Guides",
+      "title": "Guides gratuits de design de boîtes 3D et de mockups d’emballage",
+      "intro": "{count} articles pratiques sur les concepteurs de boîtes 3D gratuits, les générateurs de mockups d’emballage en ligne, les aperçus de cartons pliants et de boîtes mailer, les alternatives à Pacdora et les outils de création de boîtes dans le navigateur pour designers, vendeurs e-commerce et équipes de marque.",
+      "searchLabel": "Rechercher des articles",
+      "searchPlaceholder": "Rechercher par titre, sujet ou résumé...",
+      "clearSearch": "Effacer la recherche",
+      "filterByTopic": "Filtrer par sujet",
+      "all": "Tous",
+      "resultsAll": "{count} articles",
+      "resultsFiltered": "{count} sur {total} articles",
+      "fullArticleEnglishOnly": "L’article complet est actuellement disponible en anglais.",
+      "empty": "Aucun article ne correspond à votre recherche.",
+      "clearFilters": "Effacer les filtres",
+      "readArticle": "Lire l’article →",
+      "readMinutes": "{minutes} min de lecture",
+      "categories": {
+        "getting-started": "Bien démarrer",
+        "workflow": "Workflow et équipes",
+        "ecommerce": "E-commerce et DTC",
+        "industry": "Guides sectoriels",
+        "tools": "Outils et structure"
+      }
+    }
   },
   "landing": {
     "hero": {

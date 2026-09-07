@@ -10,10 +10,11 @@ export async function generateMetadata({ params }: PageProps) {
   return createBlogIndexMetadata(locale);
 }
 
-export default function BlogRoute() {
+export default async function BlogRoute({ params }: PageProps) {
+  const { locale } = await params;
   return (
     <>
-      <BlogIndexJsonLd />
+      <BlogIndexJsonLd locale={locale} />
       <BlogIndexPage />
     </>
   );

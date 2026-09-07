@@ -1,23 +1,22 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
   BLOG_CATEGORIES,
   BLOG_POSTS,
   getBlogCategory,
-  getBlogCategoryLabel,
   getBlogPostImageAlt,
   getBlogPostImagePath,
   type BlogCategoryId,
   type BlogPost,
 } from "@/content/blogPosts";
-import { getLocalizedBlogPost } from "@/content/blogLocales";
+import { getLocalizedBlogIndexPost, hasBlogTranslation } from "@/content/blogLocales";
 import type { Locale } from "@/i18n/config";
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+function formatDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -28,14 +27,12 @@ function normalizeQuery(value: string): string {
   return value.trim().toLowerCase();
 }
 
-function matchesSearch(post: BlogPost, query: string): boolean {
+function matchesSearch(post: BlogPost, query: string, categoryLabel: string): boolean {
   if (!query) return true;
-  const category = getBlogCategoryLabel(getBlogCategory(post.slug));
   const haystack = [
     post.title,
     post.description,
-    post.keywords.join(" "),
-    category,
+    categoryLabel,
   ]
     .join(" ")
     .toLowerCase();
@@ -44,14 +41,19 @@ function matchesSearch(post: BlogPost, query: string): boolean {
 
 export default function BlogExplorer() {
   const locale = useLocale() as Locale;
+  const t = useTranslations("blog.index");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<BlogCategoryId | "all">("all");
 
   const normalizedQuery = normalizeQuery(query);
 
+  function getCategoryLabel(id: BlogCategoryId): string {
+    return t(`categories.${id}`);
+  }
+
   const sortedPosts = useMemo(
     () =>
-      BLOG_POSTS.map((post) => getLocalizedBlogPost(post.slug, locale) ?? post).sort((a, b) =>
+      BLOG_POSTS.map((post) => getLocalizedBlogIndexPost(post.slug, locale) ?? post).sort((a, b) =>
         b.published.localeCompare(a.published)
       ),
     [locale],
@@ -61,9 +63,9 @@ export default function BlogExplorer() {
     return sortedPosts.filter((post) => {
       const postCategory = getBlogCategory(post.slug);
       const categoryMatch = category === "all" || postCategory === category;
-      return categoryMatch && matchesSearch(post, normalizedQuery);
+      return categoryMatch && matchesSearch(post, normalizedQuery, getCategoryLabel(postCategory));
     });
-  }, [category, normalizedQuery, sortedPosts]);
+  }, [category, normalizedQuery, sortedPosts, t]);
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<BlogCategoryId | "all", number>();
@@ -82,7 +84,7 @@ export default function BlogExplorer() {
     <div className="blog-explorer">
       <div className="faq-explorer-toolbar">
         <label className="faq-search">
-          <span className="visually-hidden">Search articles</span>
+          <span className="visually-hidden">{t("searchLabel")}</span>
           <svg
             className="faq-search-icon"
             viewBox="0 0 24 24"
@@ -109,7 +111,7 @@ export default function BlogExplorer() {
           <input
             type="search"
             className="faq-search-input"
-            placeholder="Search titles, topics, keywords…"
+            placeholder={t("searchPlaceholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
@@ -120,7 +122,7 @@ export default function BlogExplorer() {
               type="button"
               className="faq-search-clear"
               onClick={() => setQuery("")}
-              aria-label="Clear search"
+              aria-label={t("clearSearch")}
             >
               ×
             </button>
@@ -130,7 +132,7 @@ export default function BlogExplorer() {
         <div
           className="faq-filters"
           role="group"
-          aria-label="Filter by topic"
+          aria-label={t("filterByTopic")}
         >
           <button
             type="button"
@@ -138,10 +140,10 @@ export default function BlogExplorer() {
             aria-pressed={category === "all"}
             onClick={() => setCategory("all")}
           >
-            All
+            {t("all")}
             <span className="faq-filter-count">{categoryCounts.get("all")}</span>
           </button>
-          {BLOG_CATEGORIES.map(({ id, label }) => (
+          {BLOG_CATEGORIES.map(({ id }) => (
             <button
               key={id}
               type="button"
@@ -149,7 +151,7 @@ export default function BlogExplorer() {
               aria-pressed={category === id}
               onClick={() => setCategory(id)}
             >
-              {label}
+              {getCategoryLabel(id)}
               <span className="faq-filter-count">{categoryCounts.get(id)}</span>
             </button>
           ))}
@@ -160,8 +162,11 @@ export default function BlogExplorer() {
         {filteredPosts.length === BLOG_POSTS.length &&
         !normalizedQuery &&
         category === "all"
-          ? `${BLOG_POSTS.length} articles`
-          : `${filteredPosts.length} of ${BLOG_POSTS.length} articles`}
+          ? t("resultsAll", { count: BLOG_POSTS.length })
+          : t("resultsFiltered", {
+              count: filteredPosts.length,
+              total: BLOG_POSTS.length,
+            })}
       </p>
 
       {filteredPosts.length > 0 ? (
@@ -183,29 +188,29 @@ export default function BlogExplorer() {
                 />
               </Link>
               <span className="faq-item-category">
-                {getBlogCategoryLabel(getBlogCategory(post.slug))}
+                {getCategoryLabel(getBlogCategory(post.slug))}
               </span>
               <p className="blog-index-meta">
-                <time dateTime={post.published}>{formatDate(post.published)}</time>
+                <time dateTime={post.published}>{formatDate(post.published, locale)}</time>
                 <span aria-hidden> · </span>
-                {post.readMinutes} min read
+                {t("readMinutes", { minutes: post.readMinutes })}
               </p>
               <h2 className="blog-index-title">
                 <Link href={`/blog/${post.slug}`}>{post.title}</Link>
               </h2>
               <p className="blog-index-desc">{post.description}</p>
-              <p className="blog-index-keywords">
-                {post.keywords.join(" · ")}
-              </p>
+              {locale !== "en" && !hasBlogTranslation(locale, post.slug) ? (
+                <p className="blog-locale-note">{t("fullArticleEnglishOnly")}</p>
+              ) : null}
               <Link href={`/blog/${post.slug}`} className="blog-index-link">
-                Read article →
+                {t("readArticle")}
               </Link>
             </li>
           ))}
         </ul>
       ) : (
         <div className="faq-empty">
-          <p>No articles match your search.</p>
+          <p>{t("empty")}</p>
           <button
             type="button"
             className="faq-empty-reset"
@@ -214,7 +219,7 @@ export default function BlogExplorer() {
               setCategory("all");
             }}
           >
-            Clear filters
+            {t("clearFilters")}
           </button>
         </div>
       )}

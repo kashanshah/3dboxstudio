@@ -64,7 +64,31 @@
     "moreGuides": "Más guías",
     "readArticle": "Leer artículo →",
     "faqHeading": "Preguntas frecuentes",
-    "onThisPage": "En esta página"
+    "onThisPage": "En esta página",
+    "index": {
+      "eyebrow": "Guías",
+      "title": "Guías gratuitas de diseño de cajas 3D y mockups de packaging",
+      "intro": "{count} artículos prácticos sobre creadores de cajas 3D gratuitos, generadores online de mockups de packaging, vistas previas de cartones plegables y mailers, alternativas a Pacdora y herramientas de cajas basadas en navegador para diseñadores, vendedores e-commerce y equipos de marca.",
+      "searchLabel": "Buscar artículos",
+      "searchPlaceholder": "Buscar por título, tema o resumen...",
+      "clearSearch": "Borrar búsqueda",
+      "filterByTopic": "Filtrar por tema",
+      "all": "Todos",
+      "resultsAll": "{count} artículos",
+      "resultsFiltered": "{count} de {total} artículos",
+      "fullArticleEnglishOnly": "El artículo completo está disponible actualmente en inglés.",
+      "empty": "Ningún artículo coincide con tu búsqueda.",
+      "clearFilters": "Borrar filtros",
+      "readArticle": "Leer artículo →",
+      "readMinutes": "{minutes} min de lectura",
+      "categories": {
+        "getting-started": "Primeros pasos",
+        "workflow": "Flujo de trabajo y equipos",
+        "ecommerce": "E-commerce y DTC",
+        "industry": "Guías sectoriales",
+        "tools": "Herramientas y estructura"
+      }
+    }
   },
   "landing": {
     "hero": {
