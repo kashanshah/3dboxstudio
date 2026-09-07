@@ -1,9 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import type { ReactNode } from "react";
 import StudioLink from "@/components/StudioLink";
-import type { BlogSection } from "@/content/blogPosts";
+import type { BlogFaq, BlogSection } from "@/content/blogPosts";
+
+function isStudioHref(href: string): boolean {
+  return href === "/studio" || href.startsWith("/studio?");
+}
 
 /** Parse light markdown-style links: [label](/path) — only same-site absolute paths. */
 export function renderInlineContent(text: string): ReactNode[] {
@@ -19,7 +21,7 @@ export function renderInlineContent(text: string): ReactNode[] {
     }
     const label = match[1];
     const href = match[2];
-    if (href === "/studio" || href.startsWith("/studio?")) {
+    if (isStudioHref(href)) {
       nodes.push(
         <StudioLink key={`lnk-${key++}`} href={href} className="blog-inline-link">
           {label}
@@ -46,12 +48,15 @@ type BlogSectionRendererProps = {
   section: BlogSection;
   index: number;
   pageSlug: string;
+  /** Used when `section.type === "faq"` — single source with FAQPage JSON-LD. */
+  faqs?: BlogFaq[];
 };
 
 export default function BlogSectionRenderer({
   section,
   index,
   pageSlug,
+  faqs,
 }: BlogSectionRendererProps) {
   switch (section.type) {
     case "h2":
@@ -82,27 +87,49 @@ export default function BlogSectionRenderer({
           ))}
         </ol>
       );
-    case "cta":
+    case "cta": {
+      const href = section.href ?? "/studio";
+      const className = "btn btn-primary";
       return (
         <p key={index} className="blog-post-inline-cta">
-          <StudioLink
-            href={section.href ?? "/studio"}
-            className="btn btn-primary"
-            trackCta
-            ctaLocation="inline"
-            sourcePageType="guide"
-            pageSlug={pageSlug}
-          >
-            {section.label}
-          </StudioLink>
+          {isStudioHref(href) ? (
+            <StudioLink
+              href={href}
+              className={className}
+              trackCta
+              ctaLocation="inline"
+              sourcePageType="guide"
+              pageSlug={pageSlug}
+            >
+              {section.label}
+            </StudioLink>
+          ) : (
+            <Link href={href} className={className}>
+              {section.label}
+            </Link>
+          )}
         </p>
       );
+    }
     case "callout":
       return (
         <aside key={index} className="blog-post-callout" role="note">
           {renderInlineContent(section.text)}
         </aside>
       );
+    case "faq": {
+      if (!faqs?.length) return null;
+      return (
+        <div key={index} className="blog-post-faq">
+          {faqs.map((faq) => (
+            <div key={faq.question} className="blog-post-faq-item">
+              <h3 className="blog-post-h3">{faq.question}</h3>
+              <p className="blog-post-p">{renderInlineContent(faq.answer)}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
     default:
       return (
         <p key={index} className="blog-post-p">

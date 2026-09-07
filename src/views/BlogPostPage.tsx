@@ -26,7 +26,8 @@ function relatedPostsFor(post: BlogPost): BlogPost[] {
       const item = getBlogPostBySlug(relatedSlug);
       if (item && item.slug !== post.slug) found.push(item);
     }
-    if (found.length > 0) return found.slice(0, 6);
+    // Related grid is 3 columns; keep a single row so the section stays compact.
+    if (found.length > 0) return found.slice(0, 3);
   }
   return BLOG_POSTS.filter((item) => item.slug !== post.slug).slice(0, 3);
 }
@@ -103,6 +104,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
                 section={section}
                 index={index}
                 pageSlug={post.slug}
+                faqs={post.faqs}
               />
             ))}
             <div className="blog-post-cta">

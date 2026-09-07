@@ -5,7 +5,9 @@ export type BlogSection =
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
   | { type: "cta"; label: string; href?: string }
-  | { type: "callout"; text: string };
+  | { type: "callout"; text: string }
+  /** Renders visible FAQ from `post.faqs` (same source as FAQPage JSON-LD). */
+  | { type: "faq" };
 
 export type BlogFaq = {
   question: string;
@@ -48,6 +50,11 @@ export function getBlogPostImagePath(slug: string): string {
 
 export function getBlogPostImageAlt(post: BlogPost): string {
   return post.imageAlt ?? `${post.title} — packaging preview thumbnail`;
+}
+
+/** Strip light markdown links for plain-text consumers (e.g. FAQPage JSON-LD). */
+export function plainBlogInlineText(text: string): string {
+  return text.replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, "$1");
 }
 
 export const BLOG_CATEGORIES: { id: BlogCategoryId; label: string }[] = [
@@ -895,12 +902,12 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         question: "Can I create a 3D box mockup for free?",
         answer:
-          "Yes. 3D Box Studio is free to use in the browser. Create a free account to open the studio. There is no paywall for dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, or JSON import/export. Email verification is optional for now.",
+          "Yes. 3D Box Studio offers a free way to create 3D packaging mockups in your browser. Open the Studio to see the current save, sharing and export options.",
       },
       {
         question: "Can I make a packaging mockup without Photoshop?",
         answer:
-          "Yes. The studio runs in your browser. Upload PNG or JPG artwork directly to each face—you do not need Photoshop smart objects or layered mockup templates.",
+          "Yes. The studio runs in your browser. Upload PNG or JPG artwork directly to each face—you do not need Photoshop smart objects or layered mockup templates. See also [packaging mockups without Photoshop](/blog/packaging-mockup-without-photoshop).",
       },
       {
         question: "Can I use custom box dimensions?",
@@ -915,7 +922,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         question: "Can I design the inside of a box?",
         answer:
-          "Not yet as editable interior artwork. When you open a lid or flaps, you can inspect the cavity, but the inside liner is a fixed unprinted surface. Use the studio to validate exterior branding and opening behavior; plan interior print separately with your converter or printer.",
+          "Not yet as editable interior artwork. When you open a lid or flaps, you can inspect the cavity, but the inside liner is a fixed unprinted surface. Use the studio to validate exterior branding and opening behavior; prepare interior print separately with your converter or printer.",
       },
       {
         question: "Can I preview the box open?",
@@ -940,7 +947,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         question: "Is 3D Box Studio a packaging CAD tool?",
         answer:
-          "No. It is a browser-based 3D packaging simulator and mockup generator—not a substitute for Esko, ArtiosCAD, or other structural CAD. It complements those tools when you need a fast visual preview.",
+          "No. It is a browser-based 3D packaging simulator and mockup generator. It complements structural packaging CAD and dieline workflows rather than replacing them. New to the category? Start with [what a 3D box designer is](/blog/what-is-a-3d-box-designer) or the [free 3D box maker overview](/blog/free-3d-box-maker-online).",
       },
     ],
     sections: [
@@ -988,7 +995,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "You do not need Photoshop smart objects or a finished dieline to start. Create a free account to open the studio; email verification is optional for now, and you can save, share, and export after signing up.",
+        text: "You do not need Photoshop smart objects or a finished dieline to start. Open the Studio in your browser to create a mockup with the currently available save, sharing, and export options.",
       },
       {
         type: "h2",
@@ -1012,11 +1019,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "Material presets change how the board looks under your graphics—roughness, sheen, and base color. Available options include kraft paper, white folding carton, corrugated brown, gloss and matte plastic, soft-touch black, gloss black, recycled kraft, pearlescent white, and foil finishes (gold, silver, rose gold, copper), plus frosted plastic.",
+        text: "Material presets change how the board looks under your graphics—roughness, sheen, and base color. Options include materials such as kraft, white carton, corrugated board, matte or gloss finishes, and premium foil-style surfaces.",
       },
       {
         type: "p",
-        text: "Pick a base that matches how the unprinted board should feel (kraft for eco shippers, white carton for retail folding cartons, foil for premium gift packaging). Uploaded artwork sits on top of that material response in the 3D preview.",
+        text: "Pick a base that matches how the unprinted board should feel (kraft for eco shippers, white carton for retail folding cartons, foil for premium gift packaging). The material choice changes how light catches the surface and how your artwork reads in the 3D preview; uploaded graphics sit on top of that material response.",
       },
       {
         type: "h2",
@@ -1069,11 +1076,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "callout",
-        text: "Interior artwork is not editable yet. When you open a lid or flaps, you can see into the cavity, but the inside liner is a fixed unprinted surface. Use the studio to validate exterior graphics and opening behavior; specify interior print with your printer or converter separately.",
+        text: "Interior artwork is not editable in the 3D Studio today. When you open a lid or flaps, you can still see into the cavity and judge how much of the interior is visible at different open amounts—useful for presentation and unboxing framing. Prepare any interior print separately for your printer or converter; the Studio does not apply interior artwork to the 3D model.",
       },
       {
         type: "p",
-        text: "Many clothing and subscription brands want a branded message inside the lid. You can still plan that concept visually by treating the inside lid as a separate flat proof, then use the 3D open preview to check how much of the cavity is visible at different open amounts. Full per-face interior uploads are a common request and are not available in the current studio build.",
+        text: "Many clothing and subscription brands want a branded message inside the lid. Treat that as a separate production brief. Use the open-box preview only to understand cavity visibility and exterior reveal—not as a place to design or mock interior graphics.",
       },
       {
         type: "h2",
@@ -1142,18 +1149,18 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         type: "ol",
         items: [
-          "Create a free account and open the studio.",
+          "Open the Studio and start a new project.",
           "Start from the Mailer / shipping box template (or enter exact cm sizes from the carton quote).",
           "Confirm the lid-from-back opening and set open amount to about 35–50% for a mid-open hero shot.",
           "Choose white folding carton or kraft depending on brand positioning.",
           "Upload lid (top) artwork with the logo centered; upload side and front panels with brand color fields.",
           "Orbit to a three-quarter camera; switch HDRI to studio lighting; export a closed PNG and an open PNG.",
-          "Save to the cloud and send a view-only preview link to merchandising for approval.",
+          "Save your project and share a view-only preview link with merchandising for approval.",
         ],
       },
       {
         type: "p",
-        text: "They still cannot paint a custom message on the inside lid in the 3D tool today—that line goes on a separate interior print brief—but the open mailer preview shows how much of the cavity appears on camera, which is often enough for early creative buy-in.",
+        text: "Interior lid messaging is still prepared outside the Studio for print—there is no editable interior artwork in the 3D tool. The open mailer preview is still useful for judging how much of the cavity appears on camera during early creative buy-in.",
       },
       {
         type: "h2",
@@ -1208,84 +1215,7 @@ export const BLOG_POSTS: BlogPost[] = [
         text: "FAQ",
       },
       {
-        type: "h3",
-        text: "Can I create a 3D box mockup for free?",
-      },
-      {
-        type: "p",
-        text: "Yes. 3D Box Studio is free in the browser. Create a free account to open the studio. Dimensions, materials, openings, per-face artwork, HDRI lighting, PNG export, and JSON import/export are not paywalled. Email verification is optional for now.",
-      },
-      {
-        type: "h3",
-        text: "Can I make a box mockup without Photoshop?",
-      },
-      {
-        type: "p",
-        text: "Yes. Upload PNG or JPG artwork directly in the browser—no smart-object templates required. See also [packaging mockups without Photoshop](/blog/packaging-mockup-without-photoshop).",
-      },
-      {
-        type: "h3",
-        text: "Can I use custom box dimensions?",
-      },
-      {
-        type: "p",
-        text: "Yes. Set width, height, and length in mm, cm, or in. Templates such as mailer or tuck-end are optional starting points.",
-      },
-      {
-        type: "h3",
-        text: "Can I add different artwork to every side?",
-      },
-      {
-        type: "p",
-        text: "Yes. Front, back, left, right, top, and bottom each accept their own upload. Split-top mode adds separate top-flap slots. Rotate art in 90° increments; art fills each face rectangle.",
-      },
-      {
-        type: "h3",
-        text: "Can I design the inside of a box?",
-      },
-      {
-        type: "p",
-        text: "Not as editable interior faces today. Opening the box reveals a fixed unprinted liner. Plan interior branding with your print partner while using the open preview for exterior and reveal checks.",
-      },
-      {
-        type: "h3",
-        text: "Can I preview the box open?",
-      },
-      {
-        type: "p",
-        text: "Yes, when you select a lid, door, or split-top opening. Use the open-amount slider; choose Closed if you only need a sealed pack.",
-      },
-      {
-        type: "h3",
-        text: "Can I create a clothing packaging mockup?",
-      },
-      {
-        type: "p",
-        text: "Yes. Use mailer proportions or custom apparel-carton sizes, brand the lid and sides, and export open and closed PNGs for listings and lookbooks.",
-      },
-      {
-        type: "h3",
-        text: "Can I export the mockup as PNG?",
-      },
-      {
-        type: "p",
-        text: "Yes—export the current viewport as PNG. You can also record a short opening video or download JSON. Transparent-background PNG export is not offered.",
-      },
-      {
-        type: "h3",
-        text: "Do I need a packaging dieline?",
-      },
-      {
-        type: "p",
-        text: "For manufacturing, yes. Use the 3D mockup for visualization and approvals; use a structural dieline for cuts, folds, and print production.",
-      },
-      {
-        type: "h3",
-        text: "Is 3D Box Studio a packaging CAD tool?",
-      },
-      {
-        type: "p",
-        text: "No. It is a free browser 3D box mockup generator and packaging simulator. It complements—not replaces—tools like Esko or ArtiosCAD. New to the category? Start with [what a 3D box designer is](/blog/what-is-a-3d-box-designer) or the [free 3D box maker overview](/blog/free-3d-box-maker-online).",
+        type: "faq",
       },
       {
         type: "h2",

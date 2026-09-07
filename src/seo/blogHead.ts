@@ -7,6 +7,7 @@ import {
   BLOG_POSTS,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  plainBlogInlineText,
 } from "../content/blogPosts";
 import {
   applySocialMeta,
@@ -57,7 +58,7 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
   const url = origin ? `${origin}/blog/${post.slug}` : `/blog/${post.slug}`;
   const blogPosting = {
     "@type": "BlogPosting",
-    headline: post.seoTitle ?? post.title,
+    headline: post.title,
     description: post.description,
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
@@ -92,7 +93,7 @@ function buildBlogPostJsonLd(origin: string, post: BlogPost) {
             name: faq.question,
             acceptedAnswer: {
               "@type": "Answer",
-              text: faq.answer,
+              text: plainBlogInlineText(faq.answer),
             },
           })),
         },

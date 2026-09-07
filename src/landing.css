@@ -2397,6 +2397,18 @@
   color: var(--l-text);
 }
 
+.blog-post-faq-item + .blog-post-faq-item {
+  margin-top: 0.35rem;
+}
+
+.blog-post-faq-item .blog-post-h3 {
+  margin-top: 1.35rem;
+}
+
+.blog-post-faq-item:first-child .blog-post-h3 {
+  margin-top: 1rem;
+}
+
 .blog-post-p,
 .blog-post-ul,
 .blog-post-ol {

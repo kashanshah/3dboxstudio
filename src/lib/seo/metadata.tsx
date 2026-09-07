@@ -9,6 +9,7 @@ import {
   BLOG_POSTS,
   getBlogPostImageAlt,
   getBlogPostImagePath,
+  plainBlogInlineText,
 } from "@/content/blogPosts";
 import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
@@ -228,7 +229,7 @@ export function createBlogIndexMetadata(): Metadata {
 }
 
 export function createBlogPostMetadata(post: BlogPost): Metadata {
-  const headline = post.seoTitle ?? post.title;
+  const seoTitle = post.seoTitle ?? post.title;
   const title = post.seoTitle
     ? `${post.seoTitle} | 3D Box Studio`
     : `${post.title} | Free 3D Box Designer | 3D Box Studio`;
@@ -251,11 +252,11 @@ export function createBlogPostMetadata(post: BlogPost): Metadata {
     description: post.description,
     keywords,
     alternates: { canonical: path },
-    openGraph: buildOpenGraph(headline, post.description, path, "article", ogImage, {
+    openGraph: buildOpenGraph(seoTitle, post.description, path, "article", ogImage, {
       publishedTime: post.published,
       modifiedTime: post.updated ?? post.published,
     }),
-    twitter: buildTwitter(headline, post.description, imageUrl),
+    twitter: buildTwitter(seoTitle, post.description, imageUrl),
   };
 }
 
@@ -321,7 +322,7 @@ export function BlogPostJsonLd({ post }: { post: BlogPost }) {
   const url = `${origin}/blog/${post.slug}`;
   const blogPosting = {
     "@type": "BlogPosting",
-    headline: post.seoTitle ?? post.title,
+    headline: post.title,
     description: post.description,
     datePublished: post.published,
     dateModified: post.updated ?? post.published,
@@ -348,7 +349,7 @@ export function BlogPostJsonLd({ post }: { post: BlogPost }) {
                 name: faq.question,
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: faq.answer,
+                  text: plainBlogInlineText(faq.answer),
                 },
               })),
             },
