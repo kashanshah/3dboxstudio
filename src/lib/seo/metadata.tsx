@@ -227,9 +227,13 @@ export function createBlogIndexMetadata(): Metadata {
   };
 }
 
-export function createBlogPostMetadata(post: BlogPost): Metadata {
+export function createBlogPostMetadata(
+  post: BlogPost,
+  locale: string = "en"
+): Metadata {
   const title = `${post.title} | Free 3D Box Designer | 3D Box Studio`;
   const path = `/blog/${post.slug}`;
+  const localizedPath = locale === "en" ? path : `/${locale}${path}`;
   const origin = getSiteOrigin();
   const imageUrl = getBlogPostOgImageUrl(origin, post.slug);
   const imageAlt = getBlogPostImageAlt(post);
@@ -247,8 +251,14 @@ export function createBlogPostMetadata(post: BlogPost): Metadata {
     title: absoluteTitle(title),
     description: post.description,
     keywords,
-    alternates: { canonical: path },
-    openGraph: buildOpenGraph(title, post.description, path, "article", ogImage, {
+    alternates: {
+      canonical: localizedPath,
+      languages: {
+        en: path,
+        fr: `/fr${path}`,
+      },
+    },
+    openGraph: buildOpenGraph(title, post.description, localizedPath, "article", ogImage, {
       publishedTime: post.published,
       modifiedTime: post.updated ?? post.published,
     }),

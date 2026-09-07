@@ -54,7 +54,14 @@
     "studio": "Ouvrir le studio"
   },
   "blog": {
-    "englishOnlyNote": "Cet article est actuellement disponible en anglais."
+    "englishOnlyNote": "Cet article est actuellement disponible en anglais.",
+    "label": "Blog",
+    "notFoundTitle": "Article introuvable",
+    "backToBlog": "Retour au blog",
+    "readMinutes": "{minutes} min de lecture",
+    "openStudioCta": "Ouvrir le créateur de boîtes 3D gratuit",
+    "moreGuides": "Plus de guides",
+    "readArticle": "Lire l’article →"
   },
   "landing": {
     "hero": {

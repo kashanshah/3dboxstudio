@@ -54,7 +54,14 @@
     "studio": "Open studio"
   },
   "blog": {
-    "englishOnlyNote": "This article is currently available in English."
+    "englishOnlyNote": "This article is currently available in English.",
+    "label": "Blog",
+    "notFoundTitle": "Article not found",
+    "backToBlog": "Back to the blog",
+    "readMinutes": "{minutes} min read",
+    "openStudioCta": "Open the free 3D box maker",
+    "moreGuides": "More guides",
+    "readArticle": "Read article →"
   },
   "landing": {
     "hero": {

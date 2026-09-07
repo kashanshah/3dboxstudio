@@ -3,7 +3,7 @@
 import { loadFancybox } from "../lib/loadFancybox";
 import LandingHeroVideo from "../components/LandingHeroVideo";
 import { useCallback, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import LandingHeader from "../components/LandingHeader";
 import { Link } from "@/i18n/routing";
 import StudioLink from "../components/StudioLink";
@@ -12,7 +12,9 @@ import ShowcaseSection from "../components/ShowcaseSection";
 import FaqList from "../components/FaqList";
 import SiteFooter from "../components/SiteFooter";
 import { BLOG_POSTS, getBlogPostImageAlt, getBlogPostImagePath } from "../content/blogPosts";
+import { getLocalizedBlogPost } from "../content/blogLocales";
 import { FAQ_ITEMS, getLandingFaqItems } from "../content/faq";
+import type { Locale } from "@/i18n/config";
 import "../landing.css";
 
 function IconViewport() {
@@ -270,6 +272,7 @@ export default function LandingPage() {
   const tFaq = useTranslations("landing.faq");
   const tCta = useTranslations("landing.ctaBand");
   const tFaqs = useTranslations("landing.faqs");
+  const locale = useLocale() as Locale;
 
   const productGallery: LandingGalleryItem[] = useMemo(
     () =>
@@ -636,7 +639,9 @@ export default function LandingPage() {
               {tGuides("intro", { count: BLOG_POSTS.length })}
             </p>
             <ul className="blog-index-list blog-index-list--landing">
-              {LANDING_FEATURED_POSTS.map((post) => (
+              {LANDING_FEATURED_POSTS.map((post) => {
+                const localized = getLocalizedBlogPost(post.slug, locale) ?? post;
+                return (
                 <li key={post.slug} className="blog-index-card">
                   <Link
                     href={`/blog/${post.slug}`}
@@ -645,7 +650,7 @@ export default function LandingPage() {
                     <img
                       className="blog-index-thumb"
                       src={getBlogPostImagePath(post.slug)}
-                      alt={getBlogPostImageAlt(post)}
+                      alt={getBlogPostImageAlt(localized)}
                       width={1200}
                       height={800}
                       loading="lazy"
@@ -653,14 +658,15 @@ export default function LandingPage() {
                     />
                   </Link>
                   <h3 className="blog-index-title">
-                    <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                    <Link href={`/blog/${post.slug}`}>{localized.title}</Link>
                   </h3>
-                  <p className="blog-index-desc">{post.description}</p>
+                  <p className="blog-index-desc">{localized.description}</p>
                   <Link href={`/blog/${post.slug}`} className="blog-index-link">
                     {tGuides("readGuide")}
                   </Link>
                 </li>
-              ))}
+                );
+              })}
             </ul>
             <p className="content-page-more">
               <Link href="/blog">{tGuides("viewAll")}</Link>
