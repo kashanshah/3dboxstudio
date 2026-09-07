@@ -13,6 +13,8 @@ type BlogSectionRendererProps = {
   pageSlug: string;
   /** Used when `section.type === "faq"` — single source with FAQPage JSON-LD. */
   faqs?: BlogFaq[];
+  /** Anchor id for H2 headings (table of contents). */
+  headingId?: string;
 };
 
 export default function BlogSectionRenderer({
@@ -20,11 +22,12 @@ export default function BlogSectionRenderer({
   index,
   pageSlug,
   faqs,
+  headingId,
 }: BlogSectionRendererProps) {
   switch (section.type) {
     case "h2":
       return (
-        <h2 key={index} className="blog-post-h2">
+        <h2 key={index} id={headingId} className="blog-post-h2">
           {section.text}
         </h2>
       );

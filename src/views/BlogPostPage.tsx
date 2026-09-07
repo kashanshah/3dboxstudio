@@ -1,8 +1,6 @@
 import Link from "next/link";
-import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
-import BlogFaqAccordion from "@/components/BlogFaqAccordion";
-import BlogSectionRenderer from "@/components/BlogSectionRenderer";
+import BlogPostBody from "@/components/BlogPostBody";
 import {
   BLOG_POSTS,
   getBlogPostBySlug,
@@ -56,9 +54,6 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
   }
 
   const related = relatedPostsFor(post);
-  const hasInlineFaqSection = post.sections.some((section) => section.type === "faq");
-  const showAutoFaq =
-    Boolean(post.faqs?.length) && !hasInlineFaqSection;
 
   return (
     <ContentPageShell activeNav="blog">
@@ -100,72 +95,7 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
           </div>
         </header>
 
-        <div className="landing-section">
-          <div className="landing-container blog-post-body">
-            {post.sections.map((section, index) => (
-              <BlogSectionRenderer
-                key={`${section.type}-${index}`}
-                section={section}
-                index={index}
-                pageSlug={post.slug}
-                faqs={post.faqs}
-              />
-            ))}
-            {showAutoFaq ? (
-              <>
-                <h2 className="blog-post-h2">FAQ</h2>
-                <BlogFaqAccordion faqs={post.faqs!} />
-              </>
-            ) : null}
-            <div className="blog-post-cta">
-              <StudioLink
-                href="/studio"
-                className="btn btn-primary"
-                trackCta
-                ctaLocation="article_bottom"
-                sourcePageType="guide"
-                pageSlug={post.slug}
-              >
-                Open the free 3D box maker
-              </StudioLink>
-            </div>
-          </div>
-        </div>
-
-        {related.length > 0 && (
-          <aside className="landing-section blog-related">
-            <div className="landing-container">
-              <h2 className="blog-related-heading">More guides</h2>
-              <ul className="blog-index-list blog-index-list--compact">
-                {related.map((item) => (
-                  <li key={item.slug} className="blog-index-card">
-                    <Link
-                      href={`/blog/${item.slug}`}
-                      className="blog-index-thumb-link"
-                    >
-                      <img
-                        className="blog-index-thumb"
-                        src={getBlogPostImagePath(item.slug)}
-                        alt={getBlogPostImageAlt(item)}
-                        width={1200}
-                        height={800}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </Link>
-                    <h3 className="blog-index-title">
-                      <Link href={`/blog/${item.slug}`}>{item.title}</Link>
-                    </h3>
-                    <p className="blog-index-desc">{item.description}</p>
-                    <Link href={`/blog/${item.slug}`} className="blog-index-link">
-                      Read article →
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        )}
+        <BlogPostBody post={post} related={related} />
 
         <section className="landing-section">
           <div className="landing-container">
