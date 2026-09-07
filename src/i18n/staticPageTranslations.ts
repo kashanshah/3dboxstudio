@@ -3,7 +3,7 @@ import { locales, type Locale } from "@/i18n/config";
 export const staticPaths = ["/", "/studio", "/faq", "/contact", "/privacy", "/terms", "/blog"] as const;
 export type StaticPath = (typeof staticPaths)[number];
 
-const fullyTranslatedStaticPaths = new Set<StaticPath>(["/", "/studio", "/blog"]);
+const fullyTranslatedStaticPaths = new Set<StaticPath>(["/", "/studio"]);
 
 export function isStaticPageTranslated(locale: Locale, path: StaticPath): boolean {
   return locale === "en" || fullyTranslatedStaticPaths.has(path);

@@ -12,7 +12,7 @@ import {
   type BlogCategoryId,
   type BlogPost,
 } from "@/content/blogPosts";
-import { getLocalizedBlogIndexPost, hasBlogTranslation } from "@/content/blogLocales";
+import { getLocalizedBlogPost, hasBlogTranslation } from "@/content/blogLocales";
 import type { Locale } from "@/i18n/config";
 
 function formatDate(iso: string, locale: string): string {
@@ -53,7 +53,7 @@ export default function BlogExplorer() {
 
   const sortedPosts = useMemo(
     () =>
-      BLOG_POSTS.map((post) => getLocalizedBlogIndexPost(post.slug, locale) ?? post).sort((a, b) =>
+      BLOG_POSTS.map((post) => getLocalizedBlogPost(post.slug, locale) ?? post).sort((a, b) =>
         b.published.localeCompare(a.published)
       ),
     [locale],

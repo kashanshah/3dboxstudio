@@ -15,7 +15,7 @@ import { FAQ_PAGE_DESCRIPTION, FAQ_PAGE_TITLE } from "@/content/faq";
 import { CONTACT_PAGE_DESCRIPTION, CONTACT_PAGE_TITLE } from "@/content/contact";
 import { PRIVACY_PAGE_DESCRIPTION, PRIVACY_PAGE_TITLE } from "@/content/privacy";
 import { TERMS_PAGE_DESCRIPTION, TERMS_PAGE_TITLE } from "@/content/terms";
-import { getLocalizedBlogIndexPost, hasBlogTranslation } from "@/content/blogLocales";
+import { hasBlogTranslation } from "@/content/blogLocales";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
@@ -265,38 +265,15 @@ export function createTermsMetadata(locale: string = "en"): Metadata {
   };
 }
 
-const BLOG_INDEX_LOCALIZED_COPY: Record<Locale, { title: string; description: string }> = {
-  en: {
-    title: BLOG_INDEX_TITLE,
-    description: BLOG_INDEX_DESCRIPTION,
-  },
-  fr: {
-    title: "Blog design de boîtes 3D — Mockups d’emballage gratuits, guides cartons et mailers | 3D Box Studio",
-    description:
-      "Guides pratiques sur les concepteurs de boîtes 3D gratuits, les générateurs de mockups d’emballage, les aperçus de cartons pliants, les mockups de boîtes mailer et les outils de création de boîtes dans le navigateur pour l’e-commerce, la beauté, le café, l’électronique, la bijouterie, l’impression, les freelances et les équipes packaging.",
-  },
-  es: {
-    title: "Blog de diseño de cajas 3D — Mockups de packaging gratis, guías de cartones y mailers | 3D Box Studio",
-    description:
-      "Guías prácticas sobre creadores de cajas 3D gratuitos, generadores de mockups de packaging, vistas previas de cartones plegables, mockups de cajas mailer y herramientas de cajas en navegador para e-commerce, belleza, café, electrónica, joyería, imprentas, freelancers y equipos de packaging.",
-  },
-  zh: {
-    title: "3D 盒型设计博客 — 免费包装样机、纸盒与 Mailer 指南 | 3D Box Studio",
-    description:
-      "实用指南，涵盖免费的 3D 盒型设计工具、包装样机生成器、折叠纸盒预览、Mailer 包装盒样机，以及面向电商、美妆、咖啡、电子、珠宝、印刷、自由设计师和包装团队的浏览器式盒型工具。",
-  },
-};
-
 export function createBlogIndexMetadata(locale: string = "en"): Metadata {
-  const { canonicalLocale, canonicalPath, alternates } = resolveStaticPagePath("/blog", locale);
-  const copy = BLOG_INDEX_LOCALIZED_COPY[canonicalLocale];
+  const { canonicalPath, alternates } = resolveStaticPagePath("/blog", locale);
   return {
-    title: absoluteTitle(copy.title),
-    description: copy.description,
+    title: absoluteTitle(BLOG_INDEX_TITLE),
+    description: BLOG_INDEX_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(copy.title, copy.description, canonicalPath),
-    twitter: buildTwitter(copy.title, copy.description),
+    openGraph: buildOpenGraph(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION, canonicalPath),
+    twitter: buildTwitter(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION),
   };
 }
 
@@ -378,30 +355,23 @@ export function BlogIndexJsonLd({ locale = "en" }: { locale?: string }) {
   if (!(locales as readonly string[]).includes(locale) || !isStaticPageTranslated(locale as Locale, "/blog")) {
     return null;
   }
-  const normalizedLocale = locale as Locale;
-  const copy = BLOG_INDEX_LOCALIZED_COPY[normalizedLocale];
   const origin = getSiteOrigin();
   const data = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: copy.title,
-    alternateName: copy.title,
-    description: copy.description,
-    url: `${origin}${localizePath("/blog", normalizedLocale)}`,
-    blogPost: BLOG_POSTS.map((post) => {
-      const localizedPost = getLocalizedBlogIndexPost(post.slug, normalizedLocale) ?? post;
-      const articleLocale =
-        normalizedLocale !== "en" && hasBlogTranslation(normalizedLocale, post.slug) ? normalizedLocale : "en";
-      return {
+    name: "3D Box Studio Packaging Blog",
+    alternateName: "Free 3D Box Design & Mockup Guides",
+    description: BLOG_INDEX_DESCRIPTION,
+    url: `${origin}/blog`,
+    blogPost: BLOG_POSTS.map((post) => ({
       "@type": "BlogPosting",
-      headline: localizedPost.title,
-      description: localizedPost.description,
+      headline: post.title,
+      description: post.description,
       datePublished: post.published,
       dateModified: post.updated ?? post.published,
-      url: `${origin}${localizePath(`/blog/${post.slug}`, articleLocale)}`,
+      url: `${origin}/blog/${post.slug}`,
       image: getBlogPostOgImageUrl(origin, post.slug),
-      };
-    }),
+    })),
   };
   return (
     <script
