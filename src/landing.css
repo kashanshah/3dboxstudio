@@ -2397,16 +2397,21 @@
   color: var(--l-text);
 }
 
-.blog-post-faq-item + .blog-post-faq-item {
-  margin-top: 0.35rem;
+.blog-post-faq {
+  margin: 0 0 1.5rem;
 }
 
-.blog-post-faq-item .blog-post-h3 {
-  margin-top: 1.35rem;
+.blog-post-faq.landing-faq {
+  max-width: none;
 }
 
-.blog-post-faq-item:first-child .blog-post-h3 {
-  margin-top: 1rem;
+.blog-post-faq summary h3.blog-post-faq-question {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
 }
 
 .blog-post-p,

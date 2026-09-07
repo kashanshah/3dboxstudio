@@ -35,7 +35,9 @@ export type BlogPost = {
   imageAlt?: string;
   /** Optional related article slugs for topic-cluster linking. */
   relatedSlugs?: string[];
-  /** Optional FAQ pairs for on-page FAQs and FAQPage JSON-LD. */
+  /** Optional FAQ pairs for on-page accordion + FAQPage JSON-LD.
+   *  Place with `{ type: "faq" }` in sections, or omit the marker to auto-append
+   *  an FAQ accordion before the bottom CTA. */
   faqs?: BlogFaq[];
   sections: BlogSection[];
 };

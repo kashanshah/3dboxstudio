@@ -48,4 +48,14 @@ describe("blog pillar cleanup", () => {
     expect(isStudioHref("/blog/free-3d-box-maker-online")).toBe(false);
     expect(isStudioHref("/faq")).toBe(false);
   });
+
+  it("can opt into FAQs with only a faqs array (no duplicate section content)", () => {
+    expect(post!.faqs).toBeDefined();
+    expect(post!.sections.filter((s) => s.type === "faq")).toHaveLength(1);
+    // Accordion is renderer-driven; content stays Q/A pairs only.
+    for (const faq of post!.faqs!) {
+      expect(faq.question.length).toBeGreaterThan(0);
+      expect(faq.answer.length).toBeGreaterThan(0);
+    }
+  });
 });

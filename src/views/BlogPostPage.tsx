@@ -1,6 +1,7 @@
 import Link from "next/link";
 import StudioLink from "@/components/StudioLink";
 import ContentPageShell from "@/components/ContentPageShell";
+import BlogFaqAccordion from "@/components/BlogFaqAccordion";
 import BlogSectionRenderer from "@/components/BlogSectionRenderer";
 import {
   BLOG_POSTS,
@@ -55,6 +56,9 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
   }
 
   const related = relatedPostsFor(post);
+  const hasInlineFaqSection = post.sections.some((section) => section.type === "faq");
+  const showAutoFaq =
+    Boolean(post.faqs?.length) && !hasInlineFaqSection;
 
   return (
     <ContentPageShell activeNav="blog">
@@ -107,6 +111,12 @@ export default function BlogPostPage({ slug }: BlogPostPageProps) {
                 faqs={post.faqs}
               />
             ))}
+            {showAutoFaq ? (
+              <>
+                <h2 className="blog-post-h2">FAQ</h2>
+                <BlogFaqAccordion faqs={post.faqs!} />
+              </>
+            ) : null}
             <div className="blog-post-cta">
               <StudioLink
                 href="/studio"
