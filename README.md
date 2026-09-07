@@ -37,6 +37,8 @@ Create a `.env` file (see `.env.example`) and set:
 - **`NEXT_PUBLIC_SITE_ORIGIN`** — Full origin of your deployment, **no trailing slash**, e.g. `https://www.3dboxstudio.com`. Used for canonical URLs, Open Graph, JSON-LD, and the sitemap.
 - **`DATABASE_URL`** — Neon Postgres pooled connection string (server-only). Run `db/schema.sql` once against your database.
 - **`AWS_*`** — S3 credentials and bucket for share image uploads (server-only). Shared face images are stored under `AWS_S3_SHARE_PREFIX` (default `shares/`).
+- **`RESEND_API_KEY`** and **`EMAIL_FROM`** — Resend delivery credentials for transactional and admin notification emails.
+- **`ADMIN_EMAIL`** — Optional fallback inbox for admin notifications; the primary address can be configured in `/admin/settings`.
 
 Share links are created from **File → Save** or **Save As** in the studio. Designs upload to S3; config is stored in Neon Postgres. Viewing a share at `/studio/{id}` is public; restricting share creation to registered users can be added later in `src/server/shareAuth.ts`.
 

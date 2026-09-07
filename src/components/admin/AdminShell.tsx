@@ -11,6 +11,8 @@ const NAV = [
   { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/designs", label: "Designs" },
+  { href: "/admin/contacts", label: "Contacts" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export default function AdminShell({ children }: AdminShellProps) {

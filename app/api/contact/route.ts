@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
-import { getSiteOrigin } from "@/lib/siteOrigin";
 import { CONTACT_TOPICS, type ContactTopic } from "@/content/contact";
 import { enforceRateLimit } from "@/server/rateLimit";
 import { isValidEmail } from "@/server/auth/validation";
+import { getClientIp } from "@/server/rateLimit";
+import { createContactSubmission } from "@/server/contactSubmissions";
+import { sendAdminContactSubmissionEmail } from "@/server/email/mailer";
 import { turnstileConfigError, verifyTurnstileToken } from "@/server/turnstile";
-import {
-  teknoboardsApiKey,
-  teknoboardsConfigError,
-  teknoboardsFormId,
-} from "@/server/teknoboards";
 
 export const runtime = "nodejs";
 
-const TEKNOBOARDS_SUBMIT_URL = "https://board.teknoffice.com/api/forms/submit";
 const VALID_TOPICS = new Set<string>(CONTACT_TOPICS.map((t) => t.value));
 
 type ContactBody = {
@@ -21,6 +17,8 @@ type ContactBody = {
   topic?: unknown;
   subject?: unknown;
   message?: unknown;
+  locale?: unknown;
+  pagePath?: unknown;
   turnstileToken?: unknown;
 };
 
@@ -41,19 +39,6 @@ export async function POST(req: Request) {
   const captchaError = turnstileConfigError();
   if (captchaError) {
     return NextResponse.json({ ok: false, error: captchaError }, { status: 503 });
-  }
-
-  const apiKey = teknoboardsApiKey();
-  const formId = teknoboardsFormId();
-  const configError = teknoboardsConfigError();
-  if (!apiKey || !formId || configError) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("POST /api/contact: missing TeknoBoards config", {
-        hasApiKey: Boolean(apiKey),
-        hasFormId: Boolean(formId),
-      });
-    }
-    return NextResponse.json({ ok: false, error: configError }, { status: 503 });
   }
 
   try {
@@ -87,56 +72,47 @@ export async function POST(req: Request) {
     if (!captcha.ok) {
       return NextResponse.json({ ok: false, error: captcha.error }, { status: 403 });
     }
-
-    const origin = getSiteOrigin();
-    const successUrl = `${origin}/contact?sent=1`;
-    const failureUrl = `${origin}/contact?error=1`;
-
-    const upstream = await fetch(TEKNOBOARDS_SUBMIT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Api-Key": apiKey,
+    const locale = cleanText(body?.locale, 16);
+    const pagePath = cleanText(body?.pagePath, 200);
+    const submission = await createContactSubmission({
+      kind: "contact_message",
+      source: "website_contact_form",
+      email,
+      name,
+      topic,
+      subject,
+      message,
+      locale,
+      pagePath,
+      referrer: req.headers.get("referer")?.trim() || null,
+      ipAddress: getClientIp(req),
+      userAgent: req.headers.get("user-agent")?.trim() || null,
+      payload: {
+        topicLabel: CONTACT_TOPICS.find((item) => item.value === topic)?.label ?? topic,
       },
-      body: JSON.stringify({
-        formId,
-        origin,
-        success_url: successUrl,
-        failure_url: failureUrl,
-        payload: {
-          name,
-          email,
-          topic,
-          subject,
-          message,
-        },
-      }),
     });
 
-    const data = (await upstream.json().catch(() => ({}))) as {
-      ok?: boolean;
-      error?: string;
-      message?: string;
-      id?: string;
-      redirectUrl?: string;
-    };
-
-    if (!upstream.ok || data.ok === false) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: data.error ?? "Could not send your message. Please try again.",
-          redirectUrl: data.redirectUrl ?? null,
-        },
-        { status: upstream.status >= 400 ? upstream.status : 502 },
-      );
+    try {
+      await sendAdminContactSubmissionEmail({
+        id: submission.id,
+        name,
+        email,
+        topic: CONTACT_TOPICS.find((item) => item.value === topic)?.label ?? topic,
+        subject,
+        message,
+        locale,
+        pagePath,
+        referrer: req.headers.get("referer")?.trim() || null,
+        submittedAt: submission.createdAt,
+      });
+    } catch (notifyError) {
+      console.error("POST /api/contact notification failed:", notifyError);
     }
 
     return NextResponse.json({
       ok: true,
-      id: data.id ?? null,
-      message: data.message ?? "Submission received",
-      redirectUrl: data.redirectUrl ?? null,
+      id: submission.id,
+      message: "Submission received",
     });
   } catch (e) {
     console.error("POST /api/contact failed:", e);

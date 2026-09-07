@@ -82,3 +82,36 @@ CREATE TABLE IF NOT EXISTS shared_designs (
 
 CREATE INDEX IF NOT EXISTS idx_shared_designs_expires_at ON shared_designs (expires_at);
 CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id);
+
+CREATE TABLE IF NOT EXISTS contact_submissions (
+  id TEXT PRIMARY KEY,
+  kind TEXT NOT NULL,
+  source TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'new',
+  email TEXT NOT NULL,
+  name TEXT,
+  topic TEXT,
+  subject TEXT,
+  message TEXT,
+  locale TEXT,
+  page_path TEXT,
+  referrer TEXT,
+  ip_address TEXT,
+  user_agent TEXT,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (kind IN ('contact_message', 'newsletter_subscription')),
+  CHECK (status IN ('new', 'reviewed', 'archived'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_created_at ON contact_submissions (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_kind ON contact_submissions (kind);
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON contact_submissions (status);
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_email ON contact_submissions (email);
+
+CREATE TABLE IF NOT EXISTS admin_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

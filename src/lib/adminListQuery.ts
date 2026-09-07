@@ -27,8 +27,18 @@ export type DesignSort = (typeof DESIGN_SORTS)[number];
 export const DESIGN_FILTERS = ["all", "owned", "anonymous", "expired"] as const;
 export type DesignFilter = (typeof DESIGN_FILTERS)[number];
 
+export const SUBMISSION_SORTS = ["created", "email", "topic", "status"] as const;
+export type SubmissionSort = (typeof SUBMISSION_SORTS)[number];
+
+export const SUBMISSION_KIND_FILTERS = ["all", "contact_message", "newsletter_subscription"] as const;
+export type SubmissionKindFilter = (typeof SUBMISSION_KIND_FILTERS)[number];
+
+export const SUBMISSION_STATUS_FILTERS = ["all", "new", "reviewed", "archived"] as const;
+export type SubmissionStatusFilter = (typeof SUBMISSION_STATUS_FILTERS)[number];
+
 export const DEFAULT_USER_SORT: UserSort = "created";
 export const DEFAULT_DESIGN_SORT: DesignSort = "created";
+export const DEFAULT_SUBMISSION_SORT: SubmissionSort = "created";
 export const DEFAULT_SORT_DIR: SortDir = "desc";
 
 const USER_SORT_DEFAULT_DIR: Record<UserSort, SortDir> = {
@@ -53,6 +63,13 @@ const DESIGN_SORT_DEFAULT_DIR: Record<DesignSort, SortDir> = {
   created: "desc",
 };
 
+const SUBMISSION_SORT_DEFAULT_DIR: Record<SubmissionSort, SortDir> = {
+  created: "desc",
+  email: "asc",
+  topic: "asc",
+  status: "asc",
+};
+
 export type AdminUsersQuery = {
   page: number;
   search?: string;
@@ -68,6 +85,15 @@ export type AdminDesignsQuery = {
   sort: DesignSort;
   dir: SortDir;
   filter: DesignFilter;
+};
+
+export type AdminSubmissionsQuery = {
+  page: number;
+  search?: string;
+  sort: SubmissionSort;
+  dir: SortDir;
+  kind: SubmissionKindFilter;
+  status: SubmissionStatusFilter;
 };
 
 function parseOneOf<T extends string>(
@@ -124,6 +150,25 @@ export function parseAdminDesignsQuery(params: {
   };
 }
 
+export function parseAdminSubmissionsQuery(params: {
+  page?: string;
+  search?: string;
+  sort?: string;
+  dir?: string;
+  kind?: string;
+  status?: string;
+}): AdminSubmissionsQuery {
+  const page = Number(params.page ?? "1");
+  return {
+    page: Number.isFinite(page) && page > 1 ? Math.floor(page) : 1,
+    search: optionalSearch(params.search),
+    sort: parseOneOf(params.sort, SUBMISSION_SORTS, DEFAULT_SUBMISSION_SORT),
+    dir: parseSortDir(params.dir),
+    kind: parseOneOf(params.kind, SUBMISSION_KIND_FILTERS, "all"),
+    status: parseOneOf(params.status, SUBMISSION_STATUS_FILTERS, "all"),
+  };
+}
+
 export function nextUserSortDir(current: AdminUsersQuery, column: UserSort): SortDir {
   if (current.sort === column) return current.dir === "asc" ? "desc" : "asc";
   return USER_SORT_DEFAULT_DIR[column];
@@ -132,6 +177,14 @@ export function nextUserSortDir(current: AdminUsersQuery, column: UserSort): Sor
 export function nextDesignSortDir(current: AdminDesignsQuery, column: DesignSort): SortDir {
   if (current.sort === column) return current.dir === "asc" ? "desc" : "asc";
   return DESIGN_SORT_DEFAULT_DIR[column];
+}
+
+export function nextSubmissionSortDir(
+  current: AdminSubmissionsQuery,
+  column: SubmissionSort
+): SortDir {
+  if (current.sort === column) return current.dir === "asc" ? "desc" : "asc";
+  return SUBMISSION_SORT_DEFAULT_DIR[column];
 }
 
 function appendIfSet(params: URLSearchParams, key: string, value: string | undefined, skip?: string) {
@@ -174,12 +227,27 @@ export function designsListHref(query: Partial<AdminDesignsQuery>): string {
   return qs ? `/admin/designs?${qs}` : "/admin/designs";
 }
 
+export function submissionsListHref(query: Partial<AdminSubmissionsQuery>): string {
+  const params = new URLSearchParams();
+  appendIfSet(params, "search", query.search);
+  appendSort(params, query.sort, query.dir, DEFAULT_SUBMISSION_SORT);
+  appendIfSet(params, "kind", query.kind, "all");
+  appendIfSet(params, "status", query.status, "all");
+  if (query.page && query.page > 1) params.set("page", String(query.page));
+  const qs = params.toString();
+  return qs ? `/admin/contacts?${qs}` : "/admin/contacts";
+}
+
 export function usersQueryIsFiltered(query: AdminUsersQuery): boolean {
   return Boolean(query.search) || query.verified !== "all" || query.method !== "all";
 }
 
 export function designsQueryIsFiltered(query: AdminDesignsQuery): boolean {
   return Boolean(query.search) || query.filter !== "all";
+}
+
+export function submissionsQueryIsFiltered(query: AdminSubmissionsQuery): boolean {
+  return Boolean(query.search) || query.kind !== "all" || query.status !== "all";
 }
 
 export function resultRange(page: number, pageSize: number, total: number): { from: number; to: number } {

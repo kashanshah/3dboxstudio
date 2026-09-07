@@ -206,12 +206,46 @@
   color: var(--muted);
 }
 
+.admin-success {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(52, 199, 89, 0.12);
+  border: 1px solid rgba(52, 199, 89, 0.35);
+  color: #8df0a3;
+  font-size: 0.85rem;
+}
+
 .admin-panel {
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
   background: var(--panel);
   overflow: hidden;
   margin-bottom: 1.25rem;
+}
+
+.admin-settings-form,
+.admin-template-viewer {
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.admin-settings-field {
+  display: grid;
+  gap: 0.45rem;
+  max-width: 480px;
+}
+
+.admin-settings-field span {
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.admin-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1rem;
 }
 
 .admin-panel-header {
@@ -462,6 +496,67 @@
 .admin-mono {
   font-family: var(--mono);
   font-size: 0.78rem;
+}
+
+.admin-message-preview {
+  max-width: 34ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-template-grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.admin-template-card {
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-template-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem 0.75rem;
+}
+
+.admin-template-card-head h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.admin-template-card-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-template-card-head code {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.admin-template-meta {
+  padding: 0 1rem 0.9rem;
+  font-size: 0.83rem;
+}
+
+.admin-template-meta strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.admin-template-preview {
+  background: #f8fafc;
+  display: block;
+  width: 100%;
+  min-height: 720px;
+  border: 0;
 }
 
 .admin-activity-bars {

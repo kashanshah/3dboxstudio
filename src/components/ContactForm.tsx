@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { CONTACT_TOPICS } from "@/content/contact";
 import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/TurnstileWidget";
@@ -13,7 +14,6 @@ type SubmitResponse = {
   ok?: boolean;
   error?: string;
   message?: string;
-  redirectUrl?: string | null;
 };
 
 type ContactField = "name" | "email" | "topic" | "subject" | "message";
@@ -58,6 +58,7 @@ function firstInvalidField(errors: FieldErrors): ContactField | null {
 }
 
 export default function ContactForm({ initialStatus = "idle" }: ContactFormProps) {
+  const locale = useLocale();
   const [status, setStatus] = useState<"idle" | "success" | "error">(initialStatus);
   const [error, setError] = useState<string | null>(
     initialStatus === "error" ? "Something went wrong. Please try again." : null,
@@ -107,6 +108,8 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
       topic: String(data.get("topic") ?? ""),
       subject: readField(data, "subject"),
       message: readField(data, "message"),
+      locale,
+      pagePath: window.location.pathname,
       turnstileToken,
     };
 
@@ -117,11 +120,6 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
         body: JSON.stringify(payload),
       });
       const body = (await res.json().catch(() => ({}))) as SubmitResponse;
-
-      if (body.redirectUrl) {
-        window.location.href = body.redirectUrl;
-        return;
-      }
 
       if (!res.ok || body.ok === false) {
         setStatus("error");

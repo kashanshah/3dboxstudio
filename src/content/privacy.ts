@@ -41,7 +41,7 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
   { type: "h2", text: "Contact form" },
   {
     type: "p",
-    text: "If you submit our contact form, we collect the information you provide (such as your name, email address, topic, subject, and message). Submissions are processed through TeknoBoards (teknoffice.com) on our behalf and delivered to us so we can respond. We use Cloudflare Turnstile to help prevent automated spam before a message is sent.",
+    text: "If you submit our contact form, we collect the information you provide (such as your name, email address, topic, subject, and message). Submissions are stored in our internal systems so we can review and respond. We use Cloudflare Turnstile to help prevent automated spam before a message is sent.",
   },
   { type: "h2", text: "Usage analytics" },
   {
@@ -103,7 +103,6 @@ export const PRIVACY_SECTIONS: PrivacySection[] = [
       "Resend — transactional email delivery.",
       "Google — OAuth sign-in and, when enabled, Google Analytics.",
       "Cloudflare — Turnstile bot protection on the contact form.",
-      "TeknoBoards — contact form processing.",
     ],
   },
   {
