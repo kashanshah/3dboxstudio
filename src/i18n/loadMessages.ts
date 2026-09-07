@@ -1,7 +1,10 @@
 import type { Locale } from "./config";
 import en from "../../messages/en.json";
+import esGenerated from "../../messages/es.generated.json";
 import frGenerated from "../../messages/fr.generated.json";
 import frManual from "../../messages/fr.manual.json";
+import zhGenerated from "../../messages/zh.generated.json";
+import zhManual from "../../messages/zh.manual.json";
 
 export type MessageTree = Record<string, unknown>;
 
@@ -39,6 +42,14 @@ export async function loadMessages(locale: Locale): Promise<MessageTree> {
 
   if (locale === "fr") {
     return mergeMessages(en as MessageTree, frGenerated as MessageTree, frManual as MessageTree);
+  }
+
+  if (locale === "es") {
+    return mergeMessages(en as MessageTree, esGenerated as MessageTree);
+  }
+
+  if (locale === "zh") {
+    return mergeMessages(en as MessageTree, zhGenerated as MessageTree, zhManual as MessageTree);
   }
 
   return en as MessageTree;

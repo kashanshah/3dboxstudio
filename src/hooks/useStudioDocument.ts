@@ -208,7 +208,7 @@ export function useStudioDocument({
       return false;
     }
     return true;
-  }, [authLoading, authUser, onRequireSignIn, showStatus]);
+  }, [authLoading, authUser, onRequireSignIn, showStatus, t]);
 
   const syncUrlToShare = useCallback((id: string | null) => {
     if (id) {
@@ -319,7 +319,7 @@ export function useStudioDocument({
       showStatus(t("couldNotCopyPreviewLink"), 5000);
       return false;
     }
-  }, [getPreviewLink, showStatus]);
+  }, [getPreviewLink, showStatus, t]);
 
   const copyEditorLink = useCallback(
     async (shareId?: string | null) => {
@@ -334,7 +334,7 @@ export function useStudioDocument({
         return false;
       }
     },
-    [getEditorLink, showStatus]
+    [getEditorLink, showStatus, t]
   );
 
   const loadShareById = useCallback(
@@ -433,7 +433,7 @@ export function useStudioDocument({
       setCloudBusy(false);
     }
     return saved;
-  }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess, markProjectSaved]);
+  }, [activeShareName, buildPersistState, capturePreviewImage, showStatus, rememberRecent, openSaveAsModal, viewOnly, ensureCloudAccess, markProjectSaved, t]);
 
   const autoSaveCloud = useCallback(async () => {
     if (viewOnly) return;
@@ -507,6 +507,7 @@ export function useStudioDocument({
     syncUrlToShare,
     viewOnly,
     markProjectSaved,
+    t,
   ]);
 
   const saveCloudAs = useCallback(async () => {
@@ -588,7 +589,7 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess, markProjectSaved]);
+  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess, markProjectSaved, t]);
 
   const renameCloudShare = useCallback(async () => {
     if (viewOnly || !activeShareId) return;
@@ -624,7 +625,7 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [activeShareId, renameInput, showStatus, refreshRecentDesigns, ensureCloudAccess, viewOnly]);
+  }, [activeShareId, renameInput, showStatus, refreshRecentDesigns, ensureCloudAccess, viewOnly, t]);
 
   const leavePreviewToEditor = useCallback((shareId: string) => {
     window.location.assign(studioSharePath(shareId));
@@ -648,7 +649,7 @@ export function useStudioDocument({
         setCloudBusy(false);
       }
     },
-    [leavePreviewToEditor, loadShareById, markClean, showStatus, viewOnly]
+    [leavePreviewToEditor, loadShareById, markClean, showStatus, viewOnly, t]
   );
 
   const openFromInput = useCallback(async () => {
@@ -673,7 +674,7 @@ export function useStudioDocument({
     } finally {
       setCloudBusy(false);
     }
-  }, [leavePreviewToEditor, loadShareById, openInput, showStatus, viewOnly]);
+  }, [leavePreviewToEditor, loadShareById, openInput, showStatus, viewOnly, t]);
 
   const openRecentDesign = useCallback(
     async (shareId: string) => {
@@ -692,7 +693,7 @@ export function useStudioDocument({
         setCloudBusy(false);
       }
     },
-    [leavePreviewToEditor, loadShareById, showStatus, viewOnly]
+    [leavePreviewToEditor, loadShareById, showStatus, viewOnly, t]
   );
 
   const removeRecentDesignEntry = useCallback(
@@ -707,7 +708,7 @@ export function useStudioDocument({
     clearRecentDesigns();
     refreshRecentDesigns();
     showStatus(t("recentListCleared"));
-  }, [refreshRecentDesigns, showStatus]);
+  }, [refreshRecentDesigns, showStatus, t]);
 
   const exportJson = useCallback(async () => {
     const ctx = analyticsCtx();
@@ -729,7 +730,7 @@ export function useStudioDocument({
       trackStudioError("export_failed", "export");
       showStatus(t("couldNotExportJson"), 5000);
     }
-  }, [buildPersistState, showStatus, analyticsCtx]);
+  }, [buildPersistState, showStatus, analyticsCtx, t]);
 
   const importJsonFile = useCallback(
     async (file: File) => {
@@ -757,7 +758,7 @@ export function useStudioDocument({
       showStatus(t("importedDesignFile"));
       onDesignSessionStart?.();
     },
-    [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]
+    [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart, t]
   );
 
   const newDocument = useCallback(() => {
@@ -772,7 +773,7 @@ export function useStudioDocument({
     setModal(null);
     showStatus(t("newDesignStarted"));
     onDesignSessionStart?.();
-  }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart]);
+  }, [applyPersistedState, showStatus, syncUrlToShare, viewOnly, onDesignSessionStart, t]);
 
   const fulfillLeaveIntent = useCallback(
     (intent: StudioLeaveIntent) => {

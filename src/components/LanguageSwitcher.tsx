@@ -9,6 +9,7 @@ const localeFlags: Record<Locale, string> = {
   en: "🇺🇸",
   fr: "🇫🇷",
   es: "🇪🇸",
+  zh: "🇨🇳",
 };
 
 function IconChevronDown() {

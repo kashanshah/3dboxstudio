@@ -1,7 +1,14 @@
 import { createBlogIndexMetadata, BlogIndexJsonLd } from "@/lib/seo/metadata";
 import BlogIndexPage from "@/views/BlogIndexPage";
 
-export const metadata = createBlogIndexMetadata();
+type PageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: PageProps) {
+  const { locale } = await params;
+  return createBlogIndexMetadata(locale);
+}
 
 export default function BlogRoute() {
   return (

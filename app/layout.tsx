@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -26,16 +27,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${dmSans.variable} ${jetbrainsMono.variable} ${outfit.variable}`}
-      suppressHydrationWarning
     >
       <body>{children}</body>
     </html>

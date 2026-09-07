@@ -8,7 +8,6 @@ import GoogleAnalytics from "@/components/GoogleAnalytics";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import BuyMeACoffeeWidget from "@/components/BuyMeACoffeeWidget";
 import AttributionCapture from "@/components/AttributionCapture";
-import HtmlLang from "@/components/HtmlLang";
 import { routing } from "@/i18n/routing";
 import { createLandingMetadata } from "@/lib/seo/metadata";
 
@@ -21,9 +20,13 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const languageAlternates = Object.fromEntries(
+    routing.locales.map((item) => [item, item === "en" ? "/" : `/${item}`])
+  );
   return {
-    ...createLandingMetadata(),
+    ...createLandingMetadata(locale),
     title: {
       default: "Free 3D Box Designer & Packaging Mockup Generator | 3D Box Studio",
       template: "%s | 3D Box Studio",
@@ -41,10 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "3d box studio",
     ],
     alternates: {
-      languages: {
-        en: "/",
-        fr: "/fr",
-      },
+      languages: languageAlternates,
     },
   };
 }
@@ -60,7 +60,6 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <HtmlLang locale={locale} />
       {children}
       <GoogleAnalytics />
       <Suspense fallback={null}>
