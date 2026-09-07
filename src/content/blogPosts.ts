@@ -1003,7 +1003,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         type: "p",
-        text: "In the studio, enter Width, Height, and Length (depth). Switch units between millimeters, centimeters, and inches—the viewport works in centimeters under the hood, so proportions stay consistent when you change units.",
+        text: "In the Studio, enter Width, Height, and Length (depth). You can switch between millimeters, centimeters, and inches while keeping the box proportions consistent.",
       },
       {
         type: "p",

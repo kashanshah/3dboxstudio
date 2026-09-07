@@ -4,8 +4,6 @@ import StudioLink from "@/components/StudioLink";
 import type { BlogFaq, BlogSection } from "@/content/blogPosts";
 import { isStudioHref } from "@/lib/blogLinks";
 
-export { isStudioHref } from "@/lib/blogLinks";
-
 /** Parse light markdown-style links: [label](/path) — only same-site absolute paths. */
 export function renderInlineContent(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
