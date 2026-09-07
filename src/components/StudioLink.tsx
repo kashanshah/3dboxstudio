@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/routing";
 import type { ComponentProps, ReactNode } from "react";
 import {
   buildCtaContextFromPath,
@@ -11,6 +10,7 @@ import {
   type CtaLocation,
   type SourcePageType,
 } from "@/lib/analytics";
+import { stripLocalePrefix } from "@/i18n/pathname";
 import { preloadStudioChunk } from "@/lib/preloadStudio";
 
 type StudioLinkProps = Omit<ComponentProps<typeof Link>, "href"> & {
@@ -41,7 +41,7 @@ export default function StudioLink({
 
   const handleCtaTrack = () => {
     if (!trackCta) return;
-    const path = (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+    const path = stripLocalePrefix(pathname);
     trackStudioCtaClicked({
       sourcePageType: sourcePageType ?? pathnameToSourcePageType(path),
       pagePath: path,

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
 import BlogFaqAccordion from "@/components/BlogFaqAccordion";
 import { renderInlineContent } from "@/components/BlogInlineContent";

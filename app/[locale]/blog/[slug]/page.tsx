@@ -1,13 +1,16 @@
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import {
   BlogPostJsonLd,
   createBlogPostMetadata,
 } from "@/lib/seo/metadata";
-import { BLOG_POSTS, getBlogPostBySlug } from "@/content/blogPosts";
+import { BLOG_POSTS } from "@/content/blogPosts";
+import { getLocalizedBlogPost } from "@/content/blogLocales";
+import type { Locale } from "@/i18n/config";
 import BlogPostPage from "@/views/BlogPostPage";
 
 type PageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 };
 
 export async function generateStaticParams() {
@@ -16,14 +19,16 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const locale = (await getLocale()) as Locale;
+  const post = getLocalizedBlogPost(slug, locale);
   if (!post) return {};
-  return createBlogPostMetadata(post);
+  return createBlogPostMetadata(post, locale);
 }
 
 export default async function BlogPostRoute({ params }: PageProps) {
   const { slug } = await params;
-  const post = getBlogPostBySlug(slug);
+  const locale = (await getLocale()) as Locale;
+  const post = getLocalizedBlogPost(slug, locale);
   if (!post) notFound();
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { trapFocus } from "@/lib/focusTrap";
 
 type StudioDialogProps = {
@@ -22,6 +23,7 @@ export default function StudioDialog({
   width = 440,
   description,
 }: StudioDialogProps) {
+  const t = useTranslations("studio.dialog");
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -59,7 +61,7 @@ export default function StudioDialog({
             <button
               type="button"
               className="studio-dialog-dot studio-dialog-dot--close"
-              aria-label="Close"
+              aria-label={t("close")}
               onClick={onClose}
             />
             <span className="studio-dialog-dot studio-dialog-dot--min" />

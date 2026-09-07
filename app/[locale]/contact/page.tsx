@@ -5,7 +5,14 @@ type PageProps = {
   searchParams: Promise<{ sent?: string; error?: string }>;
 };
 
-export const metadata = createContactMetadata();
+type MetadataProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: MetadataProps) {
+  const { locale } = await params;
+  return createContactMetadata(locale);
+}
 
 export default async function ContactRoute({ searchParams }: PageProps) {
   const params = await searchParams;

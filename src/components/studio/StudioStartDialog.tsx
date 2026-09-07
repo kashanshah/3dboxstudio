@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import type { AuthUser } from "@/lib/authTypes";
 import StudioDialog from "./StudioDialog";
 import StudioProjectsPanel from "./StudioProjectsPanel";
@@ -28,6 +29,7 @@ export default function StudioStartDialog({
   onSignIn,
   onStatus,
 }: StudioStartDialogProps) {
+  const t = useTranslations("studio.startDialog");
   const handleCreateNew = () => {
     if (!user) {
       onRequireSignUp();
@@ -54,44 +56,44 @@ export default function StudioStartDialog({
 
   return (
     <StudioDialog
-      title="3D Box Studio"
+      title={t("title")}
       open={open}
       onClose={onClose}
       width={560}
       footer={
         <>
           <Link href="/" className="btn btn-ghost">
-            Go to website
+            {t("goToWebsite")}
           </Link>
           <button type="button" className="btn btn-primary" onClick={handleCreateNew}>
-            Create new design
+            {t("createNew")}
           </button>
         </>
       }
     >
       <p className="studio-dialog-lead">
-        Pick up where you left off, or start a fresh box design.
+        {t("lead")}
       </p>
 
       <div className="studio-start-projects">
-        <h3 className="studio-open-section-title">Your saved designs</h3>
+        <h3 className="studio-open-section-title">{t("savedDesigns")}</h3>
         <StudioProjectsPanel
           open={open}
           user={user}
           onSignIn={onSignIn}
           onOpenProject={handleOpenProject}
           onStatus={onStatus}
-          emptyMessage="You haven't saved any designs yet. Create a new design — artwork uploads auto-save to the cloud."
+          emptyMessage={t("empty")}
           listClassName="studio-projects-list studio-projects-list--start"
         />
       </div>
 
       <p className="studio-dialog-hint">
-        Prefer working offline?{" "}
+        {t("offlineBefore")}{" "}
         <button type="button" className="studio-auth-switch" onClick={handleImport}>
-          Import a JSON file
+          {t("importJson")}
         </button>{" "}
-        from a previous export.
+        {t("offlineAfter")}
       </p>
     </StudioDialog>
   );

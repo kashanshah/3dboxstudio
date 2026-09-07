@@ -56,8 +56,10 @@ export function fileSizeBucket(bytes: number): FileSizeBucket {
   return "over_4mb";
 }
 
+import { stripLocalePrefix } from "@/i18n/pathname";
+
 export function pathnameToPageType(pathname: string): PageType {
-  const path = (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   if (path === "/") return "homepage";
   if (path === "/studio" || path.startsWith("/studio/")) return "studio";
   if (path === "/blog") return "blog";
@@ -69,7 +71,7 @@ export function pathnameToPageType(pathname: string): PageType {
 }
 
 export function pathnameToSourcePageType(pathname: string): SourcePageType {
-  const path = (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   if (path === "/") return "homepage";
   if (path === "/blog") return "blog";
   if (path.startsWith("/blog/")) return "guide";
@@ -96,7 +98,7 @@ export function pathnameToEntryPoint(pathname: string): StudioEntryPoint {
 }
 
 export function slugFromPath(pathname: string): string | null {
-  const path = (pathname.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   if (path.startsWith("/blog/")) {
     const slug = path.slice("/blog/".length).split("/")[0]?.trim();
     return slug || null;
