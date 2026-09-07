@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
+import StarterKit from "@tiptap/starter-kit";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { useEffect, useMemo } from "react";
 
 type AdminRichTextEditorProps = {
   id: string;
@@ -11,20 +15,18 @@ type AdminRichTextEditorProps = {
 };
 
 type ToolbarAction =
-  | { label: string; command: "bold" | "italic" | "insertUnorderedList" | "insertOrderedList" | "removeFormat" }
-  | { label: string; command: "formatBlock"; value: string }
+  | { label: string; command: "paragraph" | "heading2" | "heading3" | "bold" | "italic" | "bulletList" | "orderedList" }
   | { label: string; command: "createLink" };
 
 const TOOLBAR: ToolbarAction[] = [
-  { label: "P", command: "formatBlock", value: "p" },
-  { label: "H2", command: "formatBlock", value: "h2" },
-  { label: "H3", command: "formatBlock", value: "h3" },
+  { label: "P", command: "paragraph" },
+  { label: "H2", command: "heading2" },
+  { label: "H3", command: "heading3" },
   { label: "Bold", command: "bold" },
   { label: "Italic", command: "italic" },
-  { label: "Bullets", command: "insertUnorderedList" },
-  { label: "Numbers", command: "insertOrderedList" },
+  { label: "Bullets", command: "bulletList" },
+  { label: "Numbers", command: "orderedList" },
   { label: "Link", command: "createLink" },
-  { label: "Clear", command: "removeFormat" },
 ];
 
 export default function AdminRichTextEditor({
@@ -34,35 +36,107 @@ export default function AdminRichTextEditor({
   onChange,
   placeholder = "Write your reply...",
 }: AdminRichTextEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
   const labelId = useMemo(() => `${id}-label`, [id]);
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        defaultProtocol: "https",
+        HTMLAttributes: {
+          rel: "noopener noreferrer",
+          target: "_blank",
+        },
+      }),
+      Placeholder.configure({
+        placeholder,
+      }),
+    ],
+    immediatelyRender: false,
+    content: value,
+    editorProps: {
+      attributes: {
+        id,
+        class: "admin-rich-editor-input",
+        "aria-labelledby": labelId,
+        "aria-multiline": "true",
+        role: "textbox",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
 
   useEffect(() => {
-    if (!editorRef.current) return;
-    if (editorRef.current.innerHTML === value) return;
-    editorRef.current.innerHTML = value;
-  }, [value]);
-
-  function syncFromEditor() {
-    onChange(editorRef.current?.innerHTML ?? "");
-  }
+    if (!editor) return;
+    const current = editor.getHTML();
+    if (current === value) return;
+    editor.commands.setContent(value, { emitUpdate: false });
+  }, [editor, value]);
 
   function applyAction(action: ToolbarAction) {
-    editorRef.current?.focus();
+    if (!editor) return;
     if (action.command === "createLink") {
-      const href = window.prompt("Enter link URL", "https://");
-      if (!href) return;
-      document.execCommand("createLink", false, href.trim());
-      syncFromEditor();
+      const previousHref = editor.getAttributes("link").href as string | undefined;
+      const href = window.prompt("Enter link URL", previousHref ?? "https://");
+      if (href === null) return;
+      const trimmed = href.trim();
+      if (!trimmed) {
+        editor.chain().focus().extendMarkRange("link").unsetLink().run();
+        return;
+      }
+      editor.chain().focus().extendMarkRange("link").setLink({ href: trimmed }).run();
       return;
     }
-    if (action.command === "formatBlock") {
-      document.execCommand("formatBlock", false, action.value);
-      syncFromEditor();
-      return;
+
+    const chain = editor.chain().focus();
+    switch (action.command) {
+      case "paragraph":
+        chain.setParagraph().run();
+        break;
+      case "heading2":
+        chain.toggleHeading({ level: 2 }).run();
+        break;
+      case "heading3":
+        chain.toggleHeading({ level: 3 }).run();
+        break;
+      case "bold":
+        chain.toggleBold().run();
+        break;
+      case "italic":
+        chain.toggleItalic().run();
+        break;
+      case "bulletList":
+        chain.toggleBulletList().run();
+        break;
+      case "orderedList":
+        chain.toggleOrderedList().run();
+        break;
     }
-    document.execCommand(action.command, false);
-    syncFromEditor();
+  }
+
+  function isActive(action: ToolbarAction): boolean {
+    if (!editor || action.command === "createLink") return false;
+    switch (action.command) {
+      case "paragraph":
+        return editor.isActive("paragraph");
+      case "heading2":
+        return editor.isActive("heading", { level: 2 });
+      case "heading3":
+        return editor.isActive("heading", { level: 3 });
+      case "bold":
+        return editor.isActive("bold");
+      case "italic":
+        return editor.isActive("italic");
+      case "bulletList":
+        return editor.isActive("bulletList");
+      case "orderedList":
+        return editor.isActive("orderedList");
+    }
   }
 
   return (
@@ -72,8 +146,7 @@ export default function AdminRichTextEditor({
           <button
             key={action.label}
             type="button"
-            className="admin-rich-editor-tool"
-            onMouseDown={(event) => event.preventDefault()}
+            className={`admin-rich-editor-tool${isActive(action) ? " is-active" : ""}`}
             onClick={() => applyAction(action)}
           >
             {action.label}
@@ -84,18 +157,7 @@ export default function AdminRichTextEditor({
         <span id={labelId} className="admin-rich-editor-label">
           {label}
         </span>
-        <div
-          id={id}
-          ref={editorRef}
-          className="admin-rich-editor-input"
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder={placeholder}
-          role="textbox"
-          aria-labelledby={labelId}
-          aria-multiline="true"
-          onInput={syncFromEditor}
-        />
+        <EditorContent editor={editor} />
       </label>
     </div>
   );

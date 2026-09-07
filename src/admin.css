@@ -825,6 +825,12 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.admin-rich-editor-tool.is-active {
+  border-color: rgba(61, 158, 255, 0.45);
+  background: rgba(61, 158, 255, 0.16);
+  color: #dbeafe;
+}
+
 .admin-rich-editor-field {
   display: grid;
   gap: 0.45rem;
@@ -846,15 +852,23 @@
   outline: none;
 }
 
+.admin-rich-editor-input a {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
 .admin-rich-editor-input:focus {
   border-color: rgba(61, 158, 255, 0.5);
   box-shadow: 0 0 0 1px rgba(61, 158, 255, 0.2);
 }
 
-.admin-rich-editor-input:empty::before {
+.admin-rich-editor-input .is-empty::before,
+.admin-rich-editor-input p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
+  float: left;
   color: var(--muted);
   pointer-events: none;
+  height: 0;
 }
 
 .admin-rich-editor-input p,
