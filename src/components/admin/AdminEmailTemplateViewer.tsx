@@ -26,6 +26,7 @@ export default function AdminEmailTemplateViewer() {
           items?: EmailTemplatePreview[];
           error?: string;
         };
+
         if (!res.ok) throw new Error(body.error ?? "Could not load email templates.");
         if (!cancelled) {
           setTemplates(body.items ?? []);
@@ -59,32 +60,36 @@ export default function AdminEmailTemplateViewer() {
           the mailer sends.
         </p>
 
-        {loading ? <p className="admin-muted">Loading email templates…</p> : null}
+        {loading ? <p className="admin-muted">Loading email templates...</p> : null}
         {error ? <p className="admin-error">{error}</p> : null}
 
         <div className="admin-template-grid">
           {templates.map((template) => (
             <section key={template.id} className="admin-template-card">
-              <div className="admin-template-card-head">
-                <div>
-                  <h3>{template.label}</h3>
-                  <p>{template.description}</p>
+              <div className="admin-template-card-info">
+                <div className="admin-template-card-head">
+                  <div>
+                    <h3>{template.label}</h3>
+                    <p>{template.description}</p>
+                  </div>
+                  <code>{template.sourcePath}</code>
                 </div>
-                <code>{template.sourcePath}</code>
+
+                <div className="admin-template-meta">
+                  <div>
+                    <strong>Subject</strong>
+                    <div>{template.subject}</div>
+                  </div>
+                </div>
               </div>
 
-              <div className="admin-template-meta">
-                <div>
-                  <strong>Subject</strong>
-                  <div>{template.subject}</div>
-                </div>
+              <div className="admin-template-preview-wrap">
+                <iframe
+                  className="admin-template-preview"
+                  title={`${template.label} preview`}
+                  srcDoc={template.html}
+                />
               </div>
-
-              <iframe
-                className="admin-template-preview"
-                title={`${template.label} preview`}
-                srcDoc={template.html}
-              />
             </section>
           ))}
         </div>

@@ -511,17 +511,28 @@
 }
 
 .admin-template-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  align-items: stretch;
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
 }
 
+.admin-template-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-right: 1px solid var(--panel-border);
+}
+
 .admin-template-card-head {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1rem 0.75rem;
+  gap: 0.75rem;
 }
 
 .admin-template-card-head h3 {
@@ -542,7 +553,6 @@
 }
 
 .admin-template-meta {
-  padding: 0 1rem 0.9rem;
   font-size: 0.83rem;
 }
 
@@ -551,12 +561,27 @@
   margin-bottom: 0.25rem;
 }
 
-.admin-template-preview {
+.admin-template-preview-wrap {
+  min-width: 0;
   background: #f8fafc;
+}
+
+.admin-template-preview {
   display: block;
   width: 100%;
   min-height: 720px;
   border: 0;
+}
+
+@media (max-width: 980px) {
+  .admin-template-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-template-card-info {
+    border-right: 0;
+    border-bottom: 1px solid var(--panel-border);
+  }
 }
 
 .admin-activity-bars {
