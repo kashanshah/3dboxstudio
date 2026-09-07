@@ -3,6 +3,7 @@ import { getAdminSettings } from "@/server/admin/settings";
 import {
   renderAdminContactSubmissionTemplate,
   renderAdminRegistrationTemplate,
+  renderContactReplyTemplate,
   renderEmailChangeTemplate,
   renderPasswordResetTemplate,
   renderVerificationTemplate,
@@ -15,12 +16,14 @@ type SendEmailInput = {
   subject: string;
   html: string;
   text?: string;
+  from?: string;
+  replyTo?: string;
 };
 
 /** Sends an email via the Resend REST API. Throws if RESEND_API_KEY is missing or the call fails. */
-export async function sendEmail({ to, subject, html, text }: SendEmailInput): Promise<void> {
+export async function sendEmail({ to, subject, html, text, from, replyTo }: SendEmailInput): Promise<void> {
   const apiKey = requireEnv("RESEND_API_KEY");
-  const from = optionalEnv("EMAIL_FROM", "3D Box Studio <onboarding@resend.dev>");
+  const defaultFrom = optionalEnv("EMAIL_FROM", "3D Box Studio <onboarding@resend.dev>");
 
   const res = await fetch(RESEND_ENDPOINT, {
     method: "POST",
@@ -28,7 +31,14 @@ export async function sendEmail({ to, subject, html, text }: SendEmailInput): Pr
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html, text }),
+    body: JSON.stringify({
+      from: from ?? defaultFrom,
+      to,
+      subject,
+      html,
+      text,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
 
   if (!res.ok) {
@@ -94,6 +104,30 @@ export async function sendAdminContactSubmissionEmail(submission: {
   const rendered = renderAdminContactSubmissionTemplate(submission);
   await sendEmail({
     to,
+    ...rendered,
+  });
+}
+
+export async function sendContactSubmissionReplyEmail(input: {
+  to: string;
+  from: string;
+  recipientName: string | null;
+  replySubject: string;
+  replyHtml: string;
+  replyText: string;
+  submission: {
+    id: string;
+    topic: string | null;
+    subject: string | null;
+    message: string | null;
+    submittedAt: string;
+  };
+}): Promise<void> {
+  const rendered = renderContactReplyTemplate(input);
+  await sendEmail({
+    to: input.to,
+    from: input.from,
+    replyTo: input.from,
     ...rendered,
   });
 }

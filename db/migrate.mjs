@@ -240,6 +240,31 @@ await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON contact_s
 await sql`CREATE INDEX IF NOT EXISTS idx_contact_submissions_email ON contact_submissions (email)`;
 console.log("OK: contact_submissions table is ready.");
 
+await sql`
+  CREATE TABLE IF NOT EXISTS contact_submission_replies (
+    id TEXT PRIMARY KEY,
+    submission_id TEXT NOT NULL REFERENCES contact_submissions(id) ON DELETE CASCADE,
+    to_email TEXT NOT NULL,
+    from_email TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    body_html TEXT NOT NULL,
+    body_text TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS submission_id TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS to_email TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS from_email TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS subject TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS body_html TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS body_text TEXT`;
+await sql`ALTER TABLE contact_submission_replies ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`;
+await sql`
+  CREATE INDEX IF NOT EXISTS idx_contact_submission_replies_submission_id
+  ON contact_submission_replies (submission_id, created_at DESC)
+`;
+console.log("OK: contact_submission_replies table is ready.");
+
 // --- Admin settings ------------------------------------------------------
 
 await sql`

@@ -110,6 +110,20 @@ CREATE INDEX IF NOT EXISTS idx_contact_submissions_kind ON contact_submissions (
 CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON contact_submissions (status);
 CREATE INDEX IF NOT EXISTS idx_contact_submissions_email ON contact_submissions (email);
 
+CREATE TABLE IF NOT EXISTS contact_submission_replies (
+  id TEXT PRIMARY KEY,
+  submission_id TEXT NOT NULL REFERENCES contact_submissions(id) ON DELETE CASCADE,
+  to_email TEXT NOT NULL,
+  from_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body_html TEXT NOT NULL,
+  body_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_submission_replies_submission_id
+  ON contact_submission_replies (submission_id, created_at DESC);
+
 CREATE TABLE IF NOT EXISTS admin_settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL DEFAULT '{}'::jsonb,

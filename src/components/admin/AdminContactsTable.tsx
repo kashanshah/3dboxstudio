@@ -10,6 +10,7 @@ import {
   type SubmissionSort,
 } from "@/lib/adminListQuery";
 import AdminListToolbar from "./AdminListToolbar";
+import AdminContactReplyComposer from "./AdminContactReplyComposer";
 import AdminSortHeader from "./AdminSortHeader";
 
 type AdminContactsTableProps = {
@@ -106,12 +107,13 @@ export default function AdminContactsTable({
                 <th>Message</th>
                 <AdminSortHeader label="Status" href={sortHref("status")} active={query.sort === "status"} dir={query.dir} />
                 <AdminSortHeader label="Created" href={sortHref("created")} active={query.sort === "created"} dir={query.dir} />
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {submissions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="admin-empty">
+                  <td colSpan={8} className="admin-empty">
                     No submissions found.
                   </td>
                 </tr>
@@ -161,6 +163,9 @@ export default function AdminContactsTable({
                       </span>
                     </td>
                     <td>{formatAdminDateTime(item.createdAt)}</td>
+                    <td>
+                      {item.kind === "contact_message" ? <AdminContactReplyComposer submission={item} /> : "—"}
+                    </td>
                   </tr>
                 ))
               )}

@@ -1,12 +1,10 @@
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-
 type EmailTemplateId =
   | "verification"
   | "email-change"
   | "password-reset"
   | "admin-registration"
-  | "admin-contact-submission";
+  | "admin-contact-submission"
+  | "contact-reply";
 
 type RenderedEmail = {
   subject: string;
@@ -45,6 +43,20 @@ type AdminContactSubmissionProps = {
   submittedAt: string;
 };
 
+type ContactReplyProps = {
+  replySubject: string;
+  recipientName: string | null;
+  replyHtml: string;
+  replyText: string;
+  submission: {
+    id: string;
+    topic: string | null;
+    subject: string | null;
+    message: string | null;
+    submittedAt: string;
+  };
+};
+
 type PreviewEntry = {
   id: EmailTemplateId;
   label: string;
@@ -57,134 +69,77 @@ type PreviewEntry = {
 
 const SOURCE_PATH = "src/server/email/templates.tsx";
 
-const shellStyle: React.CSSProperties = {
-  margin: 0,
-  padding: "32px 16px",
-  backgroundColor: "#eef2ff",
-  color: "#0f172a",
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif',
-};
-
-const cardStyle: React.CSSProperties = {
-  maxWidth: 640,
-  margin: "0 auto",
-  backgroundColor: "#ffffff",
-  borderRadius: 20,
-  overflow: "hidden",
-  border: "1px solid #dbe4ff",
-  boxShadow: "0 20px 50px rgba(37, 99, 235, 0.10)",
-};
-
-const headerStyle: React.CSSProperties = {
-  padding: "28px 32px",
-  background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #60a5fa 100%)",
-  color: "#ffffff",
-};
-
-const contentStyle: React.CSSProperties = {
-  padding: "28px 32px 20px",
-  fontSize: 15,
-  lineHeight: 1.65,
-};
-
-const buttonStyle: React.CSSProperties = {
-  display: "inline-block",
-  padding: "12px 18px",
-  borderRadius: 12,
-  backgroundColor: "#2563eb",
-  color: "#ffffff",
-  fontWeight: 700,
-  textDecoration: "none",
-};
-
-const infoTableStyle: React.CSSProperties = {
-  width: "100%",
-  borderCollapse: "collapse",
-  fontSize: 14,
-  marginTop: 8,
-};
-
-const labelCellStyle: React.CSSProperties = {
-  width: 128,
-  color: "#64748b",
-  padding: "8px 0",
-  verticalAlign: "top",
-};
-
-const valueCellStyle: React.CSSProperties = {
-  padding: "8px 0",
-  verticalAlign: "top",
-};
-
-function EmailShell({
-  eyebrow,
-  title,
-  children,
-}: {
-  eyebrow: string;
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <html>
-      <body style={shellStyle}>
-        <div style={cardStyle}>
-          <div style={headerStyle}>
-            <div style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.88 }}>
-              {eyebrow}
-            </div>
-            <h1 style={{ margin: "10px 0 0", fontSize: 28, lineHeight: 1.2 }}>{title}</h1>
-          </div>
-          <div style={contentStyle}>{children}</div>
-          <div
-            style={{
-              padding: "0 32px 28px",
-              color: "#64748b",
-              fontSize: 12,
-              lineHeight: 1.6,
-            }}
-          >
-            3D Box Studio
-          </div>
-        </div>
-      </body>
-    </html>
-  );
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function renderDocument(node: React.ReactElement): string {
-  return `<!DOCTYPE html>${renderToStaticMarkup(node)}`;
+function nl2br(value: string): string {
+  return escapeHtml(value).replace(/\n/g, "<br />");
 }
 
 function greeting(name: string | null): string {
   return name ? `Hi ${name},` : "Hi,";
 }
 
+function renderShell(eyebrow: string, title: string, body: string): string {
+  return `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:32px 16px;background-color:#eef2ff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;">
+    <div style="max-width:640px;margin:0 auto;background-color:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #dbe4ff;box-shadow:0 20px 50px rgba(37,99,235,0.10);">
+      <div style="padding:28px 32px;background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 55%,#60a5fa 100%);color:#ffffff;">
+        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
+        <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">${escapeHtml(title)}</h1>
+      </div>
+      <div style="padding:28px 32px 20px;font-size:15px;line-height:1.65;">
+        ${body}
+      </div>
+      <div style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</div>
+    </div>
+  </body>
+</html>`;
+}
+
+function renderButton(url: string, label: string): string {
+  const safeUrl = escapeHtml(url);
+  return `<a href="${safeUrl}" style="display:inline-block;padding:12px 18px;border-radius:12px;background-color:#2563eb;color:#ffffff;font-weight:700;text-decoration:none;">${escapeHtml(label)}</a>`;
+}
+
+function renderLink(url: string, label?: string): string {
+  const safeUrl = escapeHtml(url);
+  const safeLabel = escapeHtml(label ?? url);
+  return `<a href="${safeUrl}" style="color:#2563eb;">${safeLabel}</a>`;
+}
+
+function renderInfoRow(label: string, value: string): string {
+  return `<tr><td style="width:128px;color:#64748b;padding:8px 0;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:8px 0;vertical-align:top;">${value}</td></tr>`;
+}
+
+function renderInfoTable(rows: string[]): string {
+  return `<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;"><tbody>${rows.join("")}</tbody></table>`;
+}
+
+function renderMono(value: string): string {
+  return `<span style="font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;">${escapeHtml(value)}</span>`;
+}
+
 export function renderVerificationTemplate({ name, verifyUrl }: VerificationProps): RenderedEmail {
   const subject = "Verify your email · 3D Box Studio";
   const text = `${greeting(name)}\n\nThanks for signing up for 3D Box Studio. Verify your email:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
-  const html = renderDocument(
-    <EmailShell eyebrow="3D Box Studio" title="Verify your email">
-      <p style={{ margin: "0 0 14px" }}>{greeting(name)}</p>
-      <p style={{ margin: "0 0 16px" }}>
-        Thanks for signing up for <strong>3D Box Studio</strong>. Confirm your email address to start saving,
-        sharing, and reopening designs.
-      </p>
-      <p style={{ margin: "0 0 22px" }}>
-        <a href={verifyUrl} style={buttonStyle}>
-          Verify email
-        </a>
-      </p>
-      <p style={{ margin: "0 0 8px", color: "#64748b", fontSize: 13 }}>Or paste this link into your browser:</p>
-      <p style={{ margin: "0 0 16px", fontSize: 13, wordBreak: "break-all" }}>
-        <a href={verifyUrl} style={{ color: "#2563eb" }}>
-          {verifyUrl}
-        </a>
-      </p>
-      <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
-        This link expires in 48 hours. If you did not create an account, you can ignore this email.
-      </p>
-    </EmailShell>
+  const html = renderShell(
+    "3D Box Studio",
+    "Verify your email",
+    `
+      <p style="margin:0 0 14px;">${escapeHtml(greeting(name))}</p>
+      <p style="margin:0 0 16px;">Thanks for signing up for <strong>3D Box Studio</strong>. Confirm your email address to start saving, sharing, and reopening designs.</p>
+      <p style="margin:0 0 22px;">${renderButton(verifyUrl, "Verify email")}</p>
+      <p style="margin:0 0 8px;color:#64748b;font-size:13px;">Or paste this link into your browser:</p>
+      <p style="margin:0 0 16px;font-size:13px;word-break:break-all;">${renderLink(verifyUrl)}</p>
+      <p style="margin:0;color:#64748b;font-size:13px;">This link expires in 48 hours. If you did not create an account, you can ignore this email.</p>
+    `,
   );
   return { subject, html, text };
 }
@@ -192,28 +147,17 @@ export function renderVerificationTemplate({ name, verifyUrl }: VerificationProp
 export function renderEmailChangeTemplate({ name, verifyUrl }: VerificationProps): RenderedEmail {
   const subject = "Confirm your new email · 3D Box Studio";
   const text = `${greeting(name)}\n\nConfirm your new email for 3D Box Studio:\n${verifyUrl}\n\nThis link expires in 48 hours.`;
-  const html = renderDocument(
-    <EmailShell eyebrow="Account Security" title="Confirm your new email">
-      <p style={{ margin: "0 0 14px" }}>{greeting(name)}</p>
-      <p style={{ margin: "0 0 16px" }}>
-        You requested to change the email on your <strong>3D Box Studio</strong> account. Confirm this address to
-        finish the update and restore cloud-save access.
-      </p>
-      <p style={{ margin: "0 0 22px" }}>
-        <a href={verifyUrl} style={buttonStyle}>
-          Confirm new email
-        </a>
-      </p>
-      <p style={{ margin: "0 0 8px", color: "#64748b", fontSize: 13 }}>Or paste this link into your browser:</p>
-      <p style={{ margin: "0 0 16px", fontSize: 13, wordBreak: "break-all" }}>
-        <a href={verifyUrl} style={{ color: "#2563eb" }}>
-          {verifyUrl}
-        </a>
-      </p>
-      <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
-        If you did not request this change, sign in and update your password right away.
-      </p>
-    </EmailShell>
+  const html = renderShell(
+    "Account Security",
+    "Confirm your new email",
+    `
+      <p style="margin:0 0 14px;">${escapeHtml(greeting(name))}</p>
+      <p style="margin:0 0 16px;">You requested to change the email on your <strong>3D Box Studio</strong> account. Confirm this address to finish the update and restore cloud-save access.</p>
+      <p style="margin:0 0 22px;">${renderButton(verifyUrl, "Confirm new email")}</p>
+      <p style="margin:0 0 8px;color:#64748b;font-size:13px;">Or paste this link into your browser:</p>
+      <p style="margin:0 0 16px;font-size:13px;word-break:break-all;">${renderLink(verifyUrl)}</p>
+      <p style="margin:0;color:#64748b;font-size:13px;">If you did not request this change, sign in and update your password right away.</p>
+    `,
   );
   return { subject, html, text };
 }
@@ -221,28 +165,17 @@ export function renderEmailChangeTemplate({ name, verifyUrl }: VerificationProps
 export function renderPasswordResetTemplate({ name, resetUrl }: PasswordResetProps): RenderedEmail {
   const subject = "Reset your password · 3D Box Studio";
   const text = `${greeting(name)}\n\nReset your 3D Box Studio password:\n${resetUrl}\n\nThis link expires in 1 hour.`;
-  const html = renderDocument(
-    <EmailShell eyebrow="Account Security" title="Reset your password">
-      <p style={{ margin: "0 0 14px" }}>{greeting(name)}</p>
-      <p style={{ margin: "0 0 16px" }}>
-        We received a request to reset the password for your <strong>3D Box Studio</strong> account. Use the button
-        below to choose a new password.
-      </p>
-      <p style={{ margin: "0 0 22px" }}>
-        <a href={resetUrl} style={buttonStyle}>
-          Reset password
-        </a>
-      </p>
-      <p style={{ margin: "0 0 8px", color: "#64748b", fontSize: 13 }}>Or paste this link into your browser:</p>
-      <p style={{ margin: "0 0 16px", fontSize: 13, wordBreak: "break-all" }}>
-        <a href={resetUrl} style={{ color: "#2563eb" }}>
-          {resetUrl}
-        </a>
-      </p>
-      <p style={{ margin: 0, color: "#64748b", fontSize: 13 }}>
-        This link expires in 1 hour. If you did not request a password reset, you can ignore this email.
-      </p>
-    </EmailShell>
+  const html = renderShell(
+    "Account Security",
+    "Reset your password",
+    `
+      <p style="margin:0 0 14px;">${escapeHtml(greeting(name))}</p>
+      <p style="margin:0 0 16px;">We received a request to reset the password for your <strong>3D Box Studio</strong> account. Use the button below to choose a new password.</p>
+      <p style="margin:0 0 22px;">${renderButton(resetUrl, "Reset password")}</p>
+      <p style="margin:0 0 8px;color:#64748b;font-size:13px;">Or paste this link into your browser:</p>
+      <p style="margin:0 0 16px;font-size:13px;word-break:break-all;">${renderLink(resetUrl)}</p>
+      <p style="margin:0;color:#64748b;font-size:13px;">This link expires in 1 hour. If you did not request a password reset, you can ignore this email.</p>
+    `,
   );
   return { subject, html, text };
 }
@@ -258,40 +191,19 @@ export function renderAdminRegistrationTemplate({
   const text = `New registration on 3D Box Studio\n\nName: ${name ?? "—"}\nEmail: ${email}\nUser ID: ${id}\nCreated: ${createdAt}${
     attributionSummary ? `\nTraffic: ${attributionSummary}` : ""
   }`;
-  const html = renderDocument(
-    <EmailShell eyebrow="Admin Notification" title="New registration">
-      <p style={{ margin: "0 0 16px" }}>A new account was created on <strong>3D Box Studio</strong>.</p>
-      <table style={infoTableStyle}>
-        <tbody>
-          <tr>
-            <td style={labelCellStyle}>Name</td>
-            <td style={valueCellStyle}>{name ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Email</td>
-            <td style={valueCellStyle}>
-              <a href={`mailto:${email}`} style={{ color: "#2563eb" }}>
-                {email}
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>User ID</td>
-            <td style={{ ...valueCellStyle, fontFamily: 'ui-monospace, "SFMono-Regular", Menlo, monospace' }}>{id}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Created</td>
-            <td style={valueCellStyle}>{createdAt}</td>
-          </tr>
-          {attributionSummary ? (
-            <tr>
-              <td style={labelCellStyle}>Traffic</td>
-              <td style={valueCellStyle}>{attributionSummary}</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-    </EmailShell>
+  const html = renderShell(
+    "Admin Notification",
+    "New registration",
+    `
+      <p style="margin:0 0 16px;">A new account was created on <strong>3D Box Studio</strong>.</p>
+      ${renderInfoTable([
+        renderInfoRow("Name", escapeHtml(name ?? "—")),
+        renderInfoRow("Email", renderLink(`mailto:${email}`, email)),
+        renderInfoRow("User ID", renderMono(id)),
+        renderInfoRow("Created", escapeHtml(createdAt)),
+        ...(attributionSummary ? [renderInfoRow("Traffic", escapeHtml(attributionSummary))] : []),
+      ])}
+    `,
   );
   return { subject, html, text };
 }
@@ -311,70 +223,64 @@ export function renderAdminContactSubmissionTemplate({
   const emailSubject = subject?.trim() || topic?.trim() || "New contact message";
   const subjectLine = `New contact message · ${emailSubject}`;
   const text = `New contact message on 3D Box Studio\n\nName: ${name ?? "—"}\nEmail: ${email}\nTopic: ${topic ?? "—"}\nSubject: ${subject ?? "—"}\nLocale: ${locale ?? "—"}\nPage: ${pagePath ?? "—"}\nReferrer: ${referrer ?? "—"}\nSubmitted: ${submittedAt}\nSubmission ID: ${id}\n\n${message ?? ""}`;
-  const html = renderDocument(
-    <EmailShell eyebrow="Admin Notification" title="New contact message">
-      <p style={{ margin: "0 0 16px" }}>
-        A visitor sent a new message through the <strong>3D Box Studio</strong> contact form.
-      </p>
-      <table style={infoTableStyle}>
-        <tbody>
-          <tr>
-            <td style={labelCellStyle}>Name</td>
-            <td style={valueCellStyle}>{name ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Email</td>
-            <td style={valueCellStyle}>
-              <a href={`mailto:${email}`} style={{ color: "#2563eb" }}>
-                {email}
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Topic</td>
-            <td style={valueCellStyle}>{topic ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Subject</td>
-            <td style={valueCellStyle}>{subject ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Locale</td>
-            <td style={valueCellStyle}>{locale ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Page</td>
-            <td style={valueCellStyle}>{pagePath ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Referrer</td>
-            <td style={valueCellStyle}>{referrer ?? "—"}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Submitted</td>
-            <td style={valueCellStyle}>{submittedAt}</td>
-          </tr>
-          <tr>
-            <td style={labelCellStyle}>Submission ID</td>
-            <td style={{ ...valueCellStyle, fontFamily: 'ui-monospace, "SFMono-Regular", Menlo, monospace' }}>{id}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div
-        style={{
-          marginTop: 20,
-          padding: 18,
-          borderRadius: 14,
-          backgroundColor: "#f8fafc",
-          border: "1px solid #e2e8f0",
-          whiteSpace: "pre-wrap",
-        }}
-      >
-        {message ?? "—"}
-      </div>
-    </EmailShell>
+  const html = renderShell(
+    "Admin Notification",
+    "New contact message",
+    `
+      <p style="margin:0 0 16px;">A visitor sent a new message through the <strong>3D Box Studio</strong> contact form.</p>
+      ${renderInfoTable([
+        renderInfoRow("Name", escapeHtml(name ?? "—")),
+        renderInfoRow("Email", renderLink(`mailto:${email}`, email)),
+        renderInfoRow("Topic", escapeHtml(topic ?? "—")),
+        renderInfoRow("Subject", escapeHtml(subject ?? "—")),
+        renderInfoRow("Locale", escapeHtml(locale ?? "—")),
+        renderInfoRow("Page", escapeHtml(pagePath ?? "—")),
+        renderInfoRow("Referrer", escapeHtml(referrer ?? "—")),
+        renderInfoRow("Submitted", escapeHtml(submittedAt)),
+        renderInfoRow("Submission ID", renderMono(id)),
+      ])}
+      <div style="margin-top:20px;padding:18px;border-radius:14px;background-color:#f8fafc;border:1px solid #e2e8f0;white-space:pre-wrap;">${nl2br(message ?? "—")}</div>
+    `,
   );
   return { subject: subjectLine, html, text };
+}
+
+export function renderContactReplyTemplate({
+  replySubject,
+  recipientName,
+  replyHtml,
+  replyText,
+  submission,
+}: ContactReplyProps): RenderedEmail {
+  const originalSubject = submission.subject?.trim() || submission.topic?.trim() || "Your message";
+  const subject = replySubject.trim();
+  const text =
+    `${greeting(recipientName)}\n\n${replyText}\n\n` +
+    `Original message reference\n` +
+    `Subject: ${originalSubject}\n` +
+    `Submitted: ${submission.submittedAt}\n` +
+    `Message ID: ${submission.id}\n` +
+    `${submission.message ? `\n${submission.message}` : ""}`;
+  const html = renderShell(
+    "3D Box Studio",
+    subject,
+    `
+      <p style="margin:0 0 14px;">${escapeHtml(greeting(recipientName))}</p>
+      <div style="margin:0 0 20px;">${replyHtml}</div>
+      <div style="margin-top:24px;padding:18px;border-radius:14px;background-color:#f8fafc;border:1px solid #e2e8f0;">
+        <p style="margin:0 0 12px;font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;">Message reference</p>
+        ${renderInfoTable([
+          renderInfoRow("Subject", escapeHtml(originalSubject)),
+          renderInfoRow("Submitted", escapeHtml(submission.submittedAt)),
+          renderInfoRow("Message ID", renderMono(submission.id)),
+        ])}
+        <div style="margin-top:14px;padding:14px;border-radius:12px;background-color:#ffffff;border:1px solid #e2e8f0;white-space:pre-wrap;">${nl2br(
+          submission.message ?? "—",
+        )}</div>
+      </div>
+    `,
+  );
+  return { subject, html, text };
 }
 
 export function getEmailTemplatePreviews(): PreviewEntry[] {
@@ -439,6 +345,28 @@ export function getEmailTemplatePreviews(): PreviewEntry[] {
         pagePath: "/contact",
         referrer: "https://www.google.com/",
         submittedAt: "2026-09-07 17:24 America/Toronto",
+      }),
+    },
+    {
+      id: "contact-reply",
+      label: "Contact Reply",
+      description: "Reply sent from the admin contacts workflow back to the original submitter.",
+      sourcePath: SOURCE_PATH,
+      ...renderContactReplyTemplate({
+        replySubject: "Re: Commercial use and client projects",
+        recipientName: "Jamie",
+        replyText:
+          "Thanks for reaching out.\n\nYes, branded previews can be shared externally with clients and stakeholders. If you need anything else, just reply to this email.",
+        replyHtml:
+          "<p>Thanks for reaching out.</p><p>Yes, branded previews can be shared externally with clients and stakeholders.</p><p>If you need anything else, just reply to this email.</p>",
+        submission: {
+          id: "sub_2k4n5m8p1q",
+          topic: "Pricing",
+          subject: "Commercial use and client projects",
+          message:
+            "Hi,\n\nWe’re evaluating 3D Box Studio for client-facing packaging previews. Can you share commercial-use expectations and whether branded previews can be shared externally?\n\nThanks.",
+          submittedAt: "2026-09-07 17:24 America/Toronto",
+        },
       }),
     },
   ];
