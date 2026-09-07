@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { AuthUser } from "@/lib/authTypes";
 import { DEFAULT_UNTITLED_SHARE_NAME, shareNameError } from "@/lib/shareName";
 import StudioDialog from "./StudioDialog";
@@ -36,9 +37,10 @@ export default function StudioProjectsPanel({
   onSignIn,
   onOpenProject,
   onStatus,
-  emptyMessage = "You haven't saved any projects yet. Design a box, then use File → Save As to store it here.",
+  emptyMessage,
   listClassName = "studio-projects-list",
 }: StudioProjectsPanelProps) {
+  const t = useTranslations("studio.projects");
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +61,7 @@ export default function StudioProjectsPanel({
         setError(
           typeof data === "object" && data !== null && typeof (data as { error?: unknown }).error === "string"
             ? (data as { error: string }).error
-            : "Could not load your projects."
+            : t("errors.load")
         );
         setProjects([]);
         return;
@@ -67,11 +69,11 @@ export default function StudioProjectsPanel({
       const list = (data as { projects?: ProjectSummary[] }).projects ?? [];
       setProjects(list);
     } catch {
-      setError("Network error. Please try again.");
+      setError(t("errors.network"));
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [t, user]);
 
   useEffect(() => {
     if (open && user) void load();
@@ -112,19 +114,19 @@ export default function StudioProjectsPanel({
         body: JSON.stringify({ name: renameInput.trim() }),
       });
       if (!res.ok) {
-        onStatus("Could not rename project.");
+        onStatus(t("errors.rename"));
         return;
       }
       const nextName = renameInput.trim() || null;
       setProjects((prev) =>
         prev.map((p) => (p.id === renameProject.id ? { ...p, name: nextName } : p))
       );
-      onStatus("Project renamed.");
+      onStatus(t("status.renamed"));
       closeRenameDialog();
     } finally {
       setBusyId(null);
     }
-  }, [closeRenameDialog, onStatus, renameInput, renameProject]);
+  }, [closeRenameDialog, onStatus, renameInput, renameProject, t]);
 
   const submitDelete = useCallback(async () => {
     if (!deleteProject) return;
@@ -132,32 +134,32 @@ export default function StudioProjectsPanel({
     try {
       const res = await fetch(`/api/shares/${encodeURIComponent(deleteProject.id)}`, { method: "DELETE" });
       if (!res.ok) {
-        onStatus("Could not delete project.");
+        onStatus(t("errors.delete"));
         return;
       }
       setProjects((prev) => prev.filter((p) => p.id !== deleteProject.id));
-      onStatus("Project deleted.");
+      onStatus(t("status.deleted"));
       setDeleteProject(null);
     } finally {
       setBusyId(null);
     }
-  }, [deleteProject, onStatus]);
+  }, [deleteProject, onStatus, t]);
 
   if (!user) {
     return (
       <div className="studio-open-projects-guest">
         <p className="studio-dialog-hint">
-          Sign in to browse projects saved to your account.
+          {t("signInHint")}
         </p>
         <button type="button" className="btn" onClick={onSignIn}>
-          Sign in
+          {t("signIn")}
         </button>
       </div>
     );
   }
 
   if (loading) {
-    return <p className="studio-dialog-hint">Loading your projects…</p>;
+    return <p className="studio-dialog-hint">{t("loading")}</p>;
   }
 
   if (error) {
@@ -171,7 +173,7 @@ export default function StudioProjectsPanel({
   if (projects.length === 0) {
     return (
       <p className="studio-dialog-hint">
-        {emptyMessage}
+        {emptyMessage ?? t("empty")}
       </p>
     );
   }
@@ -191,7 +193,7 @@ export default function StudioProjectsPanel({
             </div>
             <div className="studio-projects-main">
               <span className="studio-projects-name">{project.name ?? DEFAULT_UNTITLED_SHARE_NAME}</span>
-              <span className="studio-projects-meta">Updated {formatUpdated(project.updatedAt)}</span>
+              <span className="studio-projects-meta">{t("updated", { date: formatUpdated(project.updatedAt) })}</span>
             </div>
             <div className="studio-projects-actions">
               <button
@@ -200,7 +202,7 @@ export default function StudioProjectsPanel({
                 disabled={busyId === project.id}
                 onClick={() => onOpenProject(project.id)}
               >
-                Open
+                {t("open")}
               </button>
               <button
                 type="button"
@@ -208,7 +210,7 @@ export default function StudioProjectsPanel({
                 disabled={busyId === project.id}
                 onClick={() => openRenameDialog(project)}
               >
-                Rename
+                {t("rename")}
               </button>
               <button
                 type="button"
@@ -216,7 +218,7 @@ export default function StudioProjectsPanel({
                 disabled={busyId === project.id}
                 onClick={() => setDeleteProject(project)}
               >
-                Delete
+                {t("delete")}
               </button>
             </div>
           </li>
@@ -224,13 +226,13 @@ export default function StudioProjectsPanel({
       </ul>
 
       <StudioDialog
-        title="Rename project"
+        title={t("renameProjectTitle")}
         open={renameProject !== null}
         onClose={closeRenameDialog}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={closeRenameDialog}>
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -238,20 +240,20 @@ export default function StudioProjectsPanel({
               disabled={busyId !== null}
               onClick={() => void submitRename()}
             >
-              {busyId ? "Saving…" : "Rename"}
+              {busyId ? t("saving") : t("rename")}
             </button>
           </>
         }
       >
-        <p className="studio-dialog-lead">Change the display name for this saved project.</p>
+        <p className="studio-dialog-lead">{t("renameLead")}</p>
         <label className="studio-dialog-label" htmlFor="studio-project-rename-input">
-          Project name
+          {t("projectName")}
         </label>
         <input
           id="studio-project-rename-input"
           className="studio-dialog-input"
           type="text"
-          placeholder="Leave blank to remove the name"
+          placeholder={t("renamePlaceholder")}
           value={renameInput}
           maxLength={120}
           onChange={(e) => {
@@ -271,13 +273,13 @@ export default function StudioProjectsPanel({
       </StudioDialog>
 
       <StudioDialog
-        title="Delete project"
+        title={t("deleteProjectTitle")}
         open={deleteProject !== null}
         onClose={() => setDeleteProject(null)}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => setDeleteProject(null)}>
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -285,16 +287,18 @@ export default function StudioProjectsPanel({
               disabled={busyId !== null}
               onClick={() => void submitDelete()}
             >
-              {busyId ? "Deleting…" : "Delete project"}
+              {busyId ? t("deleting") : t("deleteProject")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Delete{" "}
-          <strong>{deleteProject?.name ? `“${deleteProject.name}”` : "this project"}</strong>? This cannot be undone.
+          {t.rich("deleteLead", {
+            strong: (chunks) => <strong>{chunks}</strong>,
+            project: deleteProject?.name ? `“${deleteProject.name}”` : t("thisProject"),
+          })}
         </p>
-        <p className="studio-dialog-hint">Share links for this project will stop working after deletion.</p>
+        <p className="studio-dialog-hint">{t("deleteHint")}</p>
       </StudioDialog>
     </>
   );

@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "node db/migrate.mjs"
+    "db:migrate": "node db/migrate.mjs",
+    "i18n:translate": "node scripts/i18n-translate.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1079.0",

@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Canvas, type RootState, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
-  Environment,
   GizmoHelper,
   GizmoViewport,
   Grid,
@@ -13,12 +12,29 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 import { OrbitControls as OrbitControlsImpl } from "three/examples/jsm/controls/OrbitControls.js";
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { PackagingBox } from "./PackagingBox";
 import { ViewportRecordingBridge } from "./ViewportRecordingBridge";
 import { usePerformanceMode } from "../hooks/usePerformanceMode";
 import type { StudioTheme } from "@/lib/studioTheme";
 import type { FaceId, MaterialPreset, OpeningStyle, SplitTopHingeSide } from "../types";
 import type { SideImageCrop } from "../lib/faceImageCrop";
+
+type EnvPresetName = "studio" | "city" | "warehouse" | "sunset" | "dawn";
+
+/**
+ * Drei's `preset` loads these same Poly Haven 1k HDRs from raw.githack.com, which is often
+ * blocked or flaky. jsDelivr is the same commit; if it still fails, local lights still render.
+ */
+const HDRI_CDN =
+  "https://cdn.jsdelivr.net/gh/pmndrs/drei-assets@456060a26bbeb8fdf79326f224b6d99b8bcce736/hdri/";
+const HDRI_FILES: Record<EnvPresetName, string> = {
+  city: "potsdamer_platz_1k.hdr",
+  studio: "studio_small_03_1k.hdr",
+  warehouse: "empty_warehouse_01_1k.hdr",
+  sunset: "venice_sunset_1k.hdr",
+  dawn: "kiara_1_dawn_1k.hdr",
+};
 
 const VIEWPORT_GRID_COLORS: Record<StudioTheme, { section: string; cell: string; gizmo: string }> = {
   dark: { section: "#3d4a5c", cell: "#252b36", gizmo: "#ffffff" },
@@ -127,7 +143,54 @@ function OrbitControlsZoomSync({
   return null;
 }
 
-/** Demand-mode canvases only repaint when invalidated — pump frames after async lighting updates. */
+function SafeEnvironment({ preset, intensity }: { preset: EnvPresetName; intensity: number }) {
+  const scene = useThree((state) => state.scene);
+  const invalidate = useThree((state) => state.invalidate);
+  const intensityRef = useRef(intensity);
+  intensityRef.current = intensity;
+
+  useEffect(() => {
+    let cancelled = false;
+    let loaded: THREE.DataTexture | null = null;
+    const loader = new RGBELoader();
+    loader.setDataType(THREE.HalfFloatType);
+    loader.setPath(HDRI_CDN);
+    loader.load(
+      HDRI_FILES[preset],
+      (texture) => {
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        if (cancelled) {
+          texture.dispose();
+          return;
+        }
+        loaded = texture;
+        scene.environment = texture;
+        scene.environmentIntensity = intensityRef.current;
+        invalidate();
+      },
+      undefined,
+      (err) => {
+        if (!cancelled) {
+          console.warn("HDRI environment failed to load; continuing with studio lights.", err);
+          invalidate();
+        }
+      }
+    );
+    return () => {
+      cancelled = true;
+      if (scene.environment === loaded) scene.environment = null;
+      loaded?.dispose();
+    };
+  }, [preset, scene, invalidate]);
+
+  useLayoutEffect(() => {
+    scene.environmentIntensity = intensity;
+    invalidate();
+  }, [intensity, scene, invalidate]);
+
+  return null;
+}
+
 function ViewportDemandInvalidate({ revision }: { revision: string | number | boolean }) {
   const invalidate = useThree((state) => state.invalidate);
 
@@ -163,7 +226,7 @@ export interface Viewport3DProps {
   autoRotate: boolean;
   autoRotateSpeed: number;
   autoRotateReverse: boolean;
-  envPreset: "studio" | "city" | "warehouse" | "sunset" | "dawn";
+  envPreset: EnvPresetName;
   /** 0 = min zoom (closest), 1 = max zoom (farthest). Synced with scroll / pinch. */
   zoomFraction: number;
   onZoomFractionChange: (t: number) => void;
@@ -256,10 +319,8 @@ function Scene({
       />
       <directionalLight position={[-maxDim * 1.5, maxDim * 2, -maxDim * 2]} intensity={0.35} />
 
-      <Suspense fallback={null}>
-        <Environment preset={envPreset} environmentIntensity={environmentIntensity} />
-        <ViewportDemandInvalidate revision={`environment:${envPreset}:${environmentIntensity}`} />
-      </Suspense>
+      <SafeEnvironment preset={envPreset} intensity={environmentIntensity} />
+      <ViewportDemandInvalidate revision={`environment:${envPreset}:${environmentIntensity}`} />
       <PackagingBox
         width={width}
         height={height}
@@ -352,7 +413,12 @@ export function Viewport3D(props: Viewport3DProps) {
         shadows={!performanceMode}
         frameloop={recordingActive ? "always" : "demand"}
         onCreated={handleCreated}
-        gl={{ preserveDrawingBuffer: true, powerPreference: performanceMode ? "low-power" : "high-performance" }}
+        gl={{
+          preserveDrawingBuffer: true,
+          powerPreference: performanceMode ? "low-power" : "high-performance",
+          failIfMajorPerformanceCaveat: false,
+          antialias: !performanceMode,
+        }}
       >
         <ViewportRendererProfile cleanCapture={cleanCapture} />
         <Scene {...sceneProps} theme={theme} recordingActive={recordingActive} cleanCapture={cleanCapture} performanceMode={performanceMode} />

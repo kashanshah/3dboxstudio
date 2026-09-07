@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import ContentPageShell from "@/components/ContentPageShell";
 import FaqExplorer from "@/components/FaqExplorer";
 import { FAQ_ITEMS } from "@/content/faq";

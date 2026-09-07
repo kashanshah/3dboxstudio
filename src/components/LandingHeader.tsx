@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import SiteNav, { type SiteNavActive } from "./SiteNav";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 function LogoMark() {
   return (
@@ -22,6 +24,8 @@ type LandingHeaderProps = {
 };
 
 export default function LandingHeader({ activeNav }: LandingHeaderProps) {
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const [navOpen, setNavOpen] = useState(false);
   const [navHeight, setNavHeight] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -104,23 +108,25 @@ export default function LandingHeader({ activeNav }: LandingHeaderProps) {
         <div className="landing-container landing-nav-inner">
           <Link className="landing-brand" href="/" onClick={closeNav}>
             <LogoMark />
-            <span className="landing-brand-text">3D Box Studio</span>
+            <span className="landing-brand-text">{tCommon("brand")}</span>
           </Link>
-          <button
-            type="button"
-            className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
-            aria-expanded={navOpen}
-            aria-controls="landing-primary-nav"
-            id="landing-nav-toggle"
-            onClick={() => setNavOpen((o) => !o)}
-            aria-label={navOpen ? "Close menu" : "Open menu"}
-          >
-            <span className="landing-nav-toggle-bars" aria-hidden>
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
+          <div className="landing-nav-tools">
+            <button
+              type="button"
+              className={`landing-nav-toggle${navOpen ? " landing-nav-toggle--open" : ""}`}
+              aria-expanded={navOpen}
+              aria-controls="landing-primary-nav"
+              id="landing-nav-toggle"
+              onClick={() => setNavOpen((o) => !o)}
+              aria-label={navOpen ? t("menuClose") : t("menuOpen")}
+            >
+              <span className="landing-nav-toggle-bars" aria-hidden>
+                <span />
+                <span />
+                <span />
+              </span>
+            </button>
+          </div>
           <nav
             ref={navPanelRef}
             id="landing-primary-nav"
@@ -131,6 +137,7 @@ export default function LandingHeader({ activeNav }: LandingHeaderProps) {
             }}
           >
             <SiteNav activeNav={activeNav} />
+            <LanguageSwitcher />
           </nav>
         </div>
       </header>

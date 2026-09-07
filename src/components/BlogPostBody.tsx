@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
 import BlogFaqAccordion from "@/components/BlogFaqAccordion";
 import BlogSectionRenderer from "@/components/BlogSectionRenderer";
@@ -19,6 +20,7 @@ type BlogPostBodyProps = {
 };
 
 export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
+  const t = useTranslations("blog");
   const { tocItems, sectionHeadingIds, autoFaqId } = buildBlogTocPlan(post);
   const activeId = useScrollSpy(tocItems.map((item) => item.id));
   const showAutoFaq = Boolean(autoFaqId && post.faqs?.length);
@@ -48,7 +50,7 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
                 {showAutoFaq ? (
                   <>
                     <h2 id={autoFaqId!} className="blog-post-h2">
-                      FAQ
+                      {t("faqHeading")}
                     </h2>
                     <BlogFaqAccordion faqs={post.faqs!} />
                   </>
@@ -62,7 +64,7 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
                     sourcePageType="guide"
                     pageSlug={post.slug}
                   >
-                    Open the free 3D box maker
+                    {t("openStudioCta")}
                   </StudioLink>
                 </div>
               </div>
@@ -78,7 +80,7 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
       {related.length > 0 && (
         <aside className="landing-section blog-related">
           <div className="landing-container">
-            <h2 className="blog-related-heading">More guides</h2>
+            <h2 className="blog-related-heading">{t("moreGuides")}</h2>
             <ul className="blog-index-list blog-index-list--compact">
               {related.map((item) => (
                 <li key={item.slug} className="blog-index-card">
@@ -101,7 +103,7 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
                   </h3>
                   <p className="blog-index-desc">{item.description}</p>
                   <Link href={`/blog/${item.slug}`} className="blog-index-link">
-                    Read article →
+                    {t("readArticle")}
                   </Link>
                 </li>
               ))}

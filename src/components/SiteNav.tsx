@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/routing";
 import StudioLink from "./StudioLink";
 
 export type SiteNavActive = "blog" | "faq" | "contact";
@@ -37,24 +37,25 @@ function IconArrowRight() {
 
 export default function SiteNav({ activeNav }: SiteNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   return (
     <>
-      <Link href="/">Home</Link>
-      <Link href={sectionHref(pathname, "#features")}>Features</Link>
-      <Link href={sectionHref(pathname, "#gallery")}>Screenshots</Link>
-      <Link href={sectionHref(pathname, "#showcase")}>Showcase</Link>
+      <Link href="/">{t("home")}</Link>
+      <Link href={sectionHref(pathname, "#features")}>{t("features")}</Link>
+      <Link href={sectionHref(pathname, "#gallery")}>{t("screenshots")}</Link>
+      <Link href={sectionHref(pathname, "#showcase")}>{t("showcase")}</Link>
       <Link href="/faq" aria-current={activeNav === "faq" ? "page" : undefined}>
-        FAQ
+        {t("faq")}
       </Link>
       <Link href="/blog" aria-current={activeNav === "blog" ? "page" : undefined}>
-        Blog
+        {t("blog")}
       </Link>
       <Link href="/contact" aria-current={activeNav === "contact" ? "page" : undefined}>
-        Contact
+        {t("contact")}
       </Link>
       <StudioLink href="/studio" className="btn btn-primary landing-nav-cta" trackCta ctaLocation="header">
-        Open studio
+        {t("openStudio")}
         <IconArrowRight />
       </StudioLink>
     </>

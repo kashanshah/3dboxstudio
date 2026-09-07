@@ -1,0 +1,341 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "features": "Fonctionnalités",
+    "screenshots": "Captures d’écran",
+    "showcase": "Vitrine",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "contact": "Contact",
+    "openStudio": "Ouvrir le studio",
+    "menuOpen": "Ouvrir le menu",
+    "menuClose": "Fermer le menu"
+  },
+  "footer": {
+    "description": "Concepteur de boîtes 3D et simulateur d’emballage gratuits dans le navigateur. Définissez dimensions, matériaux, ouvertures et illustrations par face — puis exportez des mockups PNG ou partagez des liens de prévisualisation avec clients et équipes.",
+    "openStudio": "Ouvrir le studio 3D gratuit",
+    "product": "Produit",
+    "productAria": "Produit",
+    "studio": "3D Box Studio",
+    "features": "Fonctionnalités",
+    "screenshots": "Captures d’écran",
+    "showcase": "Vitrine",
+    "howItWorks": "Comment ça marche",
+    "packagingGuides": "Guides d’emballage",
+    "guidesTools": "Guides et outils",
+    "guidesAria": "Guides d’emballage",
+    "allArticles": "Tous les articles emballage",
+    "helpSupport": "Aide et support",
+    "helpAria": "Aide et support",
+    "faqCount": "FAQ ({count} réponses)",
+    "contactSupport": "Contacter le support",
+    "industryMockups": "Mockups par secteur",
+    "industryAria": "Guides d’emballage par secteur",
+    "popularTopics": "Sujets d’emballage populaires",
+    "topicsLead": "Liens rapides pour les équipes qui cherchent un créateur de boîtes 3D gratuit, un simulateur de carton ou un générateur de mockups d’emballage en ligne.",
+    "legalLine": "© {year} 3D Box Studio · {domain} · Concepteur de boîtes 3D et simulateur d’emballage gratuits dans votre navigateur.",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "buyMeACoffee": "Offrez-moi un café",
+    "canonical": "Canonique :"
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "common": {
+    "brand": "3D Box Studio"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "Cette page n’existe pas ou a été déplacée.",
+    "home": "Retour à l’accueil",
+    "studio": "Ouvrir le studio"
+  },
+  "blog": {
+    "englishOnlyNote": "Cet article est actuellement disponible en anglais.",
+    "label": "Blog",
+    "notFoundTitle": "Article introuvable",
+    "backToBlog": "Retour au blog",
+    "readMinutes": "{minutes} min de lecture",
+    "updated": "Mis à jour",
+    "openStudioCta": "Ouvrir le créateur de boîtes 3D gratuit",
+    "moreGuides": "Plus de guides",
+    "readArticle": "Lire l’article →",
+    "faqHeading": "FAQ",
+    "onThisPage": "Sur cette page",
+    "index": {
+      "eyebrow": "Guides",
+      "title": "Guides gratuits de design de boîtes 3D et de mockups d’emballage",
+      "intro": "{count} articles pratiques sur les concepteurs de boîtes 3D gratuits, les générateurs de mockups d’emballage en ligne, les aperçus de cartons pliants et de boîtes mailer, les alternatives à Pacdora et les outils de création de boîtes dans le navigateur pour designers, vendeurs e-commerce et équipes de marque.",
+      "searchLabel": "Rechercher des articles",
+      "searchPlaceholder": "Rechercher par titre, sujet ou résumé...",
+      "clearSearch": "Effacer la recherche",
+      "filterByTopic": "Filtrer par sujet",
+      "all": "Tous",
+      "resultsAll": "{count} articles",
+      "resultsFiltered": "{count} sur {total} articles",
+      "fullArticleEnglishOnly": "L’article complet est actuellement disponible en anglais.",
+      "empty": "Aucun article ne correspond à votre recherche.",
+      "clearFilters": "Effacer les filtres",
+      "readArticle": "Lire l’article →",
+      "readMinutes": "{minutes} min de lecture",
+      "categories": {
+        "getting-started": "Bien démarrer",
+        "workflow": "Workflow et équipes",
+        "ecommerce": "E-commerce et DTC",
+        "industry": "Guides sectoriels",
+        "tools": "Outils et structure"
+      }
+    }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Gratuit pour toujours · Navigateur · WebGL · Connectez-vous pour enregistrer et partager",
+      "titleLine1": "Concepteur de boîtes d’emballage gratuit",
+      "titleLine2": "et simulateur de carton 3D",
+      "titleLine3": "3D Box Studio · dans votre navigateur",
+      "lead": "Générateur de mockups de boîtes en ligne gratuit pour cartons pliants et boîtes type mailer — matériaux PBR réalistes, éclairage HDRI, animations de couvercle et de rabats, et illustrations par face. Conçu pour les designers, vendeurs e-commerce et imprimeurs qui ont besoin d’un aperçu d’emballage 3D rapide sans CAD ni abonnements.",
+      "launchCta": "Lancer le studio 3D",
+      "exploreCta": "Découvrir les fonctionnalités",
+      "highlightsAria": "Points forts",
+      "meta1": "Concepteur d’emballage gratuit",
+      "meta2": "Compte gratuit pour commencer",
+      "meta3": "Sauvegarde cloud et partage",
+      "meta4": "Liens clients en lecture seule",
+      "meta5": "Export PNG",
+      "meta6": "Import/export JSON",
+      "badge": "WebGL en direct",
+      "previewAlt": "Boîte d’emballage 3D stylisée avec éclairage studio — représentative du simulateur interactif",
+      "proofAria": "Points forts du produit",
+      "proofPbrTitle": "Matériaux PBR",
+      "proofPbrBody": "Kraft, carton, foil et plus",
+      "proofHdriTitle": "Éclairage HDRI",
+      "proofHdriBody": "Reflets de qualité studio",
+      "proofOpenTitle": "Ouvertures",
+      "proofOpenBody": "Couvercle, dessus fendu, porte",
+      "proofShareTitle": "Liens de partage cloud",
+      "proofShareBody": "Enregistrer, modifier et envoyer des aperçus"
+    },
+    "features": {
+      "eyebrow": "Capacités",
+      "title": "Tout ce qu’il faut pour un aperçu d’emballage 3D convaincant",
+      "intro": "Que vous l’appeliez simulateur de boîte 3D, configurateur de carton ou aperçu structurel d’emballage, ces outils vous aident à valider l’échelle, la lisibilité et la présence en rayon avant de vous engager sur des plaques ou des échantillons.",
+      "viewportTitle": "Viewport 3D en temps réel",
+      "viewportBody": "Orbit, zoom (molette ou curseur), environnements HDRI, ombres et grille optionnelle — idéal pour les revues d’emballage et la validation client.",
+      "dimensionsTitle": "Dimensions et unités",
+      "dimensionsBody": "Définissez largeur, hauteur et profondeur en millimètres, centimètres ou pouces. Les unités de scène sont converties en centimètres pour une échelle 3D cohérente.",
+      "materialsTitle": "Préréglages de matériaux PBR",
+      "materialsBody": "Kraft, carton blanc, plastique brillant ou mat, ondulé et foil métallique — rugosité, clearcoat et réponse à l’environnement réglés pour les looks emballage.",
+      "openingsTitle": "Mécanismes d’ouverture",
+      "openingsBody": "Vue fermée, couvercle depuis l’arrière, rabats de dessus fendus (charnière sur le long ou le court côté), et panneau gauche type porte — ouverture animée.",
+      "artworkTitle": "Illustrations par face et rotation",
+      "artworkBody": "Importez du PNG ou JPG par face, pivotez par pas de 90°, et appliquez une image à toutes les faces pour un wrapping provisoire rapide.",
+      "envTitle": "Préréglages d’environnement",
+      "envBody": "Choisissez parmi studio, ville, entrepôt, coucher de soleil et aube. Un excellent moyen d’obtenir des retours sur votre design.",
+      "cloudTitle": "Sauvegarde cloud et liens de partage",
+      "cloudBody": "Utilisez Fichier → Enregistrer ou Enregistrer sous pour téléverser votre design. Obtenez un lien éditeur pour vous et un lien d’aperçu en lecture seule pour les clients — illustrations et réglages inclus.",
+      "previewTitle": "Aperçus clients en lecture seule",
+      "previewBody": "Partagez un lien de présentation qui ouvre le studio en mode lecture seule. Les clients peuvent orbitrer, zoomer, régler l’éclairage et exporter des PNG — sans modifier dimensions, illustrations ni écraser votre travail.",
+      "jsonTitle": "Import et export JSON",
+      "jsonBody": "Téléchargez une sauvegarde JSON v1 avec dimensions, matériaux, ouvertures et images intégrées — ou importez un fichier pour restaurer toute la scène hors ligne.",
+      "pngTitle": "Export PNG",
+      "pngBody": "Exportez un PNG haute résolution du viewport en direct pour decks, RFQ et marketing — avec des liens cloud pour une revue interactive.",
+      "recordTitle": "Enregistrer une présentation",
+      "recordBody": "Enregistrez une vidéo de 15 secondes du viewport, puis téléchargez le fichier MP4. Un excellent moyen de partager votre simulateur d’emballage 3D avec votre équipe ou vos clients."
+    },
+    "quote": {
+      "aria": "Philosophie produit",
+      "text": "L’objectif n’est pas de remplacer le CAD de découpe — c’est de donner à tout le monde dans la pièce une image partagée et crédible de la boîte avant que le temps et l’argent ne disparaissent dans la mauvaise structure."
+    },
+    "gallery": {
+      "eyebrow": "Visite produit",
+      "title": "À l’intérieur du studio d’emballage 3D",
+      "introBefore": "Voici des captures illustratives de l’interface et des flux clés. Cliquez une image pour ouvrir une lightbox plein format (même visionneuse que le portfolio — flèches pour naviguer, Échap pour fermer). Remplacez les images par de vraies captures de",
+      "introLink": "votre studio en direct",
+      "introAfter": "pour une preuve sociale et une couverture SEO image encore plus fortes.",
+      "openShot": "Ouvrir la capture {index} dans la galerie : {caption}",
+      "shot1Alt": "3D Box Studio : panneau de contrôle à côté d’un viewport 3D en direct avec un carton d’exemple",
+      "shot1Caption": "Disposition de l’éditeur : paramètres et aperçu d’emballage 3D côte à côte.",
+      "shot2Alt": "Section d’upload d’illustrations par face dans le simulateur d’emballage 3D",
+      "shot2Caption": "Uploads d’illustrations par face avec rotation et effacement rapides.",
+      "shot3Alt": "Styles d’ouverture et préréglages de matériaux dans le simulateur de carton 3D",
+      "shot3Caption": "Styles d’ouverture et préréglages de carton pour une visualisation d’emballage réaliste.",
+      "shot4Alt": "Fonction d’enregistrement dans le simulateur d’emballage de boîte 3D",
+      "shot4Caption": "Fonction d’enregistrement dans le simulateur d’emballage de boîte 3D."
+    },
+    "showcase": {
+      "eyebrow": "Portfolio",
+      "title": "Visuels et motion d’emballage",
+      "intro": "Photos et courts clips pour vendre structure, impression et mouvement d’un seul souffle — captures turntable pour PDP, looks carton et foil pour pitch decks, et prises in-app qui montrent comment les équipes travaillent vraiment dans 3D Box Studio. La grille mélange photos et vidéo ; filtrez pour un seul format.",
+      "filtersAria": "Filtres de la vitrine",
+      "showLabel": "Afficher",
+      "filterAll": "Tout",
+      "filterPhotos": "Photos",
+      "filterVideos": "Vidéos",
+      "empty": "Aucun élément ne correspond à ce filtre. Passez à Tout ou ajoutez des entrées dans public/showcase/manifest.json.",
+      "footnote": "Vous constituez votre propre bobine ? Déposez des fichiers sous public/showcase/images/ ou public/showcase/videos/, listez-les dans manifest.json, et utilisez le layout optionnel : \"standard\", \"tall\" ou \"wide\" pour des tuiles plus larges ou plus hautes.",
+      "openGallery": "Ouvrir la galerie : {alt}",
+      "openVideo": "Ouvrir la vidéo en galerie plein écran",
+      "openImage": "Ouvrir l’image en galerie plein écran",
+      "videoFallbackAlt": "Vidéo de la vitrine",
+      "imageFallbackAlt": "Image de la vitrine"
+    },
+    "steps": {
+      "eyebrow": "Flux de travail",
+      "title": "De l’idée plate à la vérification d’emballage 3D en quelques minutes",
+      "intro": "Un flux léger pour les équipes qui ont besoin d’un mockup de boîte 3D crédible sans installer de lourds logiciels CAD.",
+      "step1Title": "Définir structure et carton",
+      "step1Body": "Choisissez les dimensions extérieures, le préréglage de matériau et la façon dont le dessus ou la porte doit s’ouvrir pour votre aperçu de carton 3D.",
+      "step2Title": "Ajouter les illustrations",
+      "step2Body": "Mappez les impressions sur les faces, pivotez pour les panneaux portrait ou paysage, et itérez jusqu’à ce que le mockup de boîte 3D se lise clairement à l’écran.",
+      "step3Title": "Enregistrer et partager",
+      "step3Body": "Utilisez Fichier → Enregistrer sous pour les liens éditeur et aperçu en lecture seule, ou exportez un PNG pour decks et RFQ. Envoyez le lien d’aperçu aux clients pour validation ; gardez le lien éditeur pour vous."
+    },
+    "guides": {
+      "eyebrow": "Guides",
+      "title": "Apprendre le design et la simulation de boîtes 3D",
+      "intro": "{count} articles pratiques sur les créateurs de boîtes 3D, générateurs de mockups d’emballage gratuits, design de cartons pliants et aperçus dans le navigateur pour designers, vendeurs et équipes de marque.",
+      "readGuide": "Lire le guide →",
+      "viewAll": "Voir tous les guides d’emballage →"
+    },
+    "faq": {
+      "eyebrow": "Support",
+      "title": "Questions fréquentes",
+      "intro": "Des réponses claires sur notre concepteur de boîtes 3D gratuit, générateur de mockups en ligne, alternative à Pacdora, options d’export, et la comparaison avec les outils CAD d’emballage.",
+      "browseAll": "Parcourir les {count} questions avec recherche et filtres →"
+    },
+    "ctaBand": {
+      "title": "Prêt à faire tourner votre carton en 3D ?",
+      "body": "Ouvrez le studio et itérez sur matériaux, ouvertures et illustrations jusqu’à ce que l’histoire d’emballage prenne forme.",
+      "button": "Lancer le simulateur d’emballage 3D"
+    },
+    "sectionCta": {
+      "launch": "Lancer le studio 3D"
+    },
+    "faqs": {
+      "what-is-3d-box-designer": {
+        "question": "Qu’est-ce qu’un concepteur de boîtes 3D ou un simulateur d’emballage ?",
+        "answer": "Un concepteur de boîtes 3D vous permet de prévisualiser comment l’illustration plate et les choix structurels apparaissent sur un carton ou un mailer en trois dimensions. Un simulateur d’emballage applique un éclairage et des matériaux réalistes pour que les parties prenantes puissent revoir proportions, ouvertures et branding avant l’impression."
+      },
+      "free-3d-box-maker": {
+        "question": "3D Box Studio est-il un créateur de boîtes 3D gratuit ?",
+        "answer": "Oui. 3D Box Studio est un créateur et outil de design de boîtes 3D gratuit qui fonctionne entièrement dans le navigateur. Il n’y a pas de paywall pour les dimensions, matériaux, ouvertures, illustrations par face, éclairage HDRI, export PNG ou import/export JSON. Créez un compte gratuit pour ouvrir le studio et commencer. La vérification e-mail est optionnelle pour l’instant — vous pouvez enregistrer, partager et exporter juste après l’inscription."
+      },
+      "3d-box-simulation-use": {
+        "question": "À quoi sert la simulation de boîte 3D ?",
+        "answer": "La simulation de boîte 3D aide les designers d’emballage, équipes de marque et imprimeurs à valider l’échelle, le placement graphique et le comportement d’ouverture avant de s’engager sur des plaques ou des échantillons physiques. Idéal pour présentations clients, mockups e-commerce et revues internes — pas pour les découpes de production."
+      },
+      "vs-esko-artioscad": {
+        "question": "Est-ce un substitut à Esko, ArtiosCAD ou un CAD d’emballage dédié ?",
+        "answer": "Non. Ces plateformes conçoivent les découpes de production. Ce simulateur d’emballage 3D aide à communiquer le look & feel, les angles caméra et l’échelle approximative tôt. L’export est un PNG du viewport, pas une plaque d’impression."
+      },
+      "vs-mockup-templates": {
+        "question": "En quoi un créateur de boîtes 3D diffère-t-il d’un site de templates de mockup ?",
+        "answer": "Les bibliothèques de templates offrent des formes de boîte fixes avec illustration uploadée. Un créateur comme 3D Box Studio permet d’ajuster largeur, hauteur, profondeur, matériaux, ouvertures de couvercle et rabats, et graphismes par face dans un viewport interactif — mieux pour tailles de carton personnalisées et aperçus structurels."
+      },
+      "mobile-support": {
+        "question": "Le simulateur de boîte 3D fonctionne-t-il sur mobile ?",
+        "answer": "Le studio est conçu pour les navigateurs desktop avec WebGL. Les téléphones peuvent le faire tourner, mais la densité des contrôles est optimisée pour clavier et souris."
+      },
+      "data-storage": {
+        "question": "Où sont stockées mes données ?",
+        "answer": "Pendant que vous travaillez, votre design reste dans la session du navigateur. Quand vous uploadez une illustration de face, le studio enregistre automatiquement dans le cloud sous « Untitled » (renommez via Fichier → Renommer). Les images montent sur AWS S3 et la configuration est stockée dans une base Postgres. Vous pouvez aussi enregistrer manuellement avec Fichier → Enregistrer (⌘S)."
+      },
+      "cloud-share": {
+        "question": "Comment fonctionnent la sauvegarde cloud et les liens de partage ?",
+        "answer": "L’upload d’illustrations de face enregistre automatiquement votre design dans le cloud sous « Untitled ». Utilisez Fichier → Renommer pour changer le nom. Fichier → Enregistrer (⌘S) met à jour un projet existant ; Fichier → Enregistrer sous crée une copie avec un nouveau lien. Fichier → Ouvrir permet de coller un lien ou un ID pour recharger un design. Après enregistrement, utilisez Fichier → Partager le lien d’aperçu ou Copier le lien d’aperçu pour envoyer aux clients une URL en lecture seule (/preview/…). Les liens éditeur utilisent /studio/… et ne sont pas exposés en mode aperçu."
+      }
+    }
+  },
+  "studio": {
+    "dialog": {
+      "close": "Fermer"
+    },
+    "authGate": {
+      "eyebrow": "3D Box Studio",
+      "title": "Créez un compte gratuit pour commencer à concevoir",
+      "lead": "Inscrivez-vous pour accéder à l'outil de conception de boîtes 3D : définissez les dimensions, les matériaux, les ouvertures et les illustrations de chaque face. Enregistrez vos créations dans le cloud, partagez des liens de prévisualisation et exportez des maquettes au format PNG.",
+      "createAccount": "Créer un compte gratuit",
+      "signInEmail": "Se connecter avec un e-mail",
+      "hint": "Les liens de partage de projet et les aperçus en lecture seule restent accessibles sans compte. Les adresses e-mail temporaires (YOPmail, Mailinator, etc.) ne sont pas acceptées.",
+      "backHome": "← Retour à la page d'accueil"
+    },
+    "startDialog": {
+      "title": "3D Box Studio",
+      "goToWebsite": "Aller sur le site web",
+      "createNew": "Créer un nouveau design",
+      "lead": "Reprenez là où vous en étiez, ou commencez un nouveau design de boîte.",
+      "savedDesigns": "Vos créations enregistrées",
+      "empty": "Vous n'avez enregistré aucun dessin. Créez-en un nouveau : les illustrations téléchargées sont automatiquement enregistrées dans le cloud.",
+      "offlineBefore": "Vous préférez travailler hors ligne ?",
+      "importJson": "Importer un fichier JSON",
+      "offlineAfter": "d'une exportation précédente."
+    },
+    "projects": {
+      "errors": {
+        "load": "Impossible de charger vos projets.",
+        "network": "Erreur réseau. Veuillez réessayer.",
+        "rename": "Impossible de renommer le projet.",
+        "delete": "Impossible de supprimer le projet."
+      },
+      "status": {
+        "renamed": "Projet renommé.",
+        "deleted": "Projet supprimé."
+      },
+      "signInHint": "Connectez-vous pour consulter les projets enregistrés sur votre compte.",
+      "signIn": "Se connecter",
+      "loading": "Chargement de vos projets…",
+      "empty": "Vous n'avez encore enregistré aucun projet. Créez une boîte, puis utilisez Fichier → Enregistrer sous pour l'enregistrer ici.",
+      "updated": "Mise à jour {date}",
+      "open": "Ouvrir",
+      "rename": "Rebaptiser",
+      "delete": "Supprimer",
+      "renameProjectTitle": "Renommer le projet",
+      "cancel": "Annuler",
+      "saving": "Économie…",
+      "renameLead": "Modifiez le nom d'affichage de ce projet enregistré.",
+      "projectName": "Nom du projet",
+      "renamePlaceholder": "Laisser vide pour supprimer le nom",
+      "deleteProjectTitle": "Supprimer le projet",
+      "deleting": "Suppression…",
+      "deleteProject": "Supprimer le projet",
+      "thisProject": "ce projet",
+      "deleteLead": "Supprimer <strong>{project}</strong> ? Cette action est irréversible.",
+      "deleteHint": "Les liens de partage de ce projet cesseront de fonctionner après leur suppression."
+    },
+    "status": {
+      "checkingAccount": "Vérification de votre compte…",
+      "previewLinkCopied": "Lien de prévisualisation en lecture seule copié.",
+      "couldNotCopyPreviewLink": "Impossible de copier le lien de prévisualisation.",
+      "editorLinkCopied": "Lien de l'éditeur copié.",
+      "couldNotCopyEditorLink": "Impossible de copier le lien de l'éditeur.",
+      "savingToCloud": "Sauvegarde du design dans le cloud…",
+      "namedSavedToCloud": "« {name} » enregistré dans le cloud.",
+      "designSavedToCloud": "Conception enregistrée dans le cloud.",
+      "couldNotSaveDesign": "Impossible d'enregistrer le design.",
+      "autoSaveFailed": "L'enregistrement automatique a échoué.",
+      "namedSavedAndLinkCopied": "« {name} » enregistré et lien copié.",
+      "newShareLinkCreatedAndCopied": "Nouveau lien de partage créé et copié.",
+      "newShareLinkCreated": "Nouveau lien de partage créé.",
+      "couldNotCreateShareLink": "Impossible de créer le lien de partage.",
+      "renamedTo": "Renommé « {nom} ».",
+      "designNameCleared": "Nom du design validé.",
+      "couldNotRenameDesign": "Impossible de renommer le motif.",
+      "projectOpened": "Projet ouvert.",
+      "couldNotOpenProject": "Impossible d'ouvrir le projet.",
+      "enterValidShareLink": "Saisissez un lien de partage ou un identifiant valide.",
+      "designOpenedFromCloud": "Conception ouverte depuis le cloud.",
+      "couldNotOpenDesign": "Impossible d'ouvrir le fichier de conception.",
+      "designOpenedFromRecent": "Conception ouverte à partir de récemment.",
+      "recentListCleared": "Liste récente effacée.",
+      "jsonDownloaded": "Fichier JSON téléchargé (images intégrées incluses).",
+      "couldNotExportJson": "Impossible d'exporter le JSON.",
+      "couldNotReadFile": "Impossible de lire ce fichier.",
+      "invalidJson": "JSON invalide : un export de conception v1 était attendu de ce studio.",
+      "importedDesignFile": "Fichier de conception importé.",
+      "newDesignStarted": "Nouveau projet lancé."
+    }
+  }
+}

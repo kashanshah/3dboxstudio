@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
 import { isStudioHref } from "@/lib/blogLinks";
 

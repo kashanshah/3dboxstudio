@@ -1,9 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { Link, usePathname } from "@/i18n/routing";
 import { useEffect, type ReactNode } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import StudioLink from "./StudioLink";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { BUYMEACOFFEE_URL, SITE_DOMAIN, SITE_ORIGIN_PUBLIC } from "../siteMeta";
 import { FAQ_ITEMS } from "../content/faq";
 import {
@@ -78,6 +79,8 @@ type SiteFooterProps = {
 export default function SiteFooter({ showTopicSection = false }: SiteFooterProps) {
   const pathname = usePathname();
   const year = new Date().getFullYear();
+  const t = useTranslations("footer");
+  const tCommon = useTranslations("common");
   useFooterAccordionMode();
 
   return (
@@ -87,45 +90,41 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
           <div className="site-footer-brand-col">
             <Link href="/" className="site-footer-brand">
               <LogoMark />
-              <span>3D Box Studio</span>
+              <span>{tCommon("brand")}</span>
             </Link>
-            <p className="site-footer-desc">
-              Free browser-based 3D box designer and packaging simulator. Set custom dimensions,
-              materials, openings, and per-face artwork—then export PNG mockups or share preview
-              links with clients and teammates.
-            </p>
+            <p className="site-footer-desc">{t("description")}</p>
             <StudioLink href="/studio" className="btn btn-primary site-footer-cta" trackCta ctaLocation="footer">
-              Open free 3D studio
+              {t("openStudio")}
             </StudioLink>
           </div>
 
-          <FooterAccordionSection title="Product" ariaLabel="Product">
+          <FooterAccordionSection title={t("product")} ariaLabel={t("productAria")}>
             <ul className="site-footer-links">
               <li>
-                <StudioLink href="/studio">3D box studio</StudioLink>
+                <StudioLink href="/studio">{t("studio")}</StudioLink>
               </li>
               <li>
-                <Link href={sectionHref(pathname, "#features")}>Features</Link>
+                <Link href={sectionHref(pathname, "#features")}>{t("features")}</Link>
               </li>
               <li>
-                <Link href={sectionHref(pathname, "#gallery")}>Screenshots</Link>
+                <Link href={sectionHref(pathname, "#gallery")}>{t("screenshots")}</Link>
               </li>
               <li>
-                <Link href={sectionHref(pathname, "#showcase")}>Showcase</Link>
+                <Link href={sectionHref(pathname, "#showcase")}>{t("showcase")}</Link>
               </li>
               <li>
-                <Link href={sectionHref(pathname, "#steps")}>How it works</Link>
+                <Link href={sectionHref(pathname, "#steps")}>{t("howItWorks")}</Link>
               </li>
               <li>
-                <Link href={sectionHref(pathname, "#guides")}>Packaging guides</Link>
+                <Link href={sectionHref(pathname, "#guides")}>{t("packagingGuides")}</Link>
               </li>
             </ul>
           </FooterAccordionSection>
 
-          <FooterAccordionSection title="Guides & tools" ariaLabel="Packaging guides">
+          <FooterAccordionSection title={t("guidesTools")} ariaLabel={t("guidesAria")}>
             <ul className="site-footer-links">
               <li>
-                <Link href="/blog">All packaging articles</Link>
+                <Link href="/blog">{t("allArticles")}</Link>
               </li>
               {FOOTER_GUIDE_LINKS.map((item) => (
                 <li key={item.slug}>
@@ -135,10 +134,10 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
             </ul>
           </FooterAccordionSection>
 
-          <FooterAccordionSection title="Help & support" ariaLabel="Help and support">
+          <FooterAccordionSection title={t("helpSupport")} ariaLabel={t("helpAria")}>
             <ul className="site-footer-links">
               <li>
-                <Link href="/faq">FAQ ({FAQ_ITEMS.length} answers)</Link>
+                <Link href="/faq">{t("faqCount", { count: FAQ_ITEMS.length })}</Link>
               </li>
               {FOOTER_FAQ_LINKS.map((item) => (
                 <li key={item.id}>
@@ -146,12 +145,12 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
                 </li>
               ))}
               <li>
-                <Link href="/contact">Contact support</Link>
+                <Link href="/contact">{t("contactSupport")}</Link>
               </li>
             </ul>
           </FooterAccordionSection>
 
-          <FooterAccordionSection title="Industry mockups" ariaLabel="Industry packaging guides">
+          <FooterAccordionSection title={t("industryMockups")} ariaLabel={t("industryAria")}>
             <ul className="site-footer-links">
               {FOOTER_INDUSTRY_LINKS.map((item) => (
                 <li key={item.slug}>
@@ -165,13 +164,10 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
         {showTopicSection && (
           <details className="site-footer-topics site-footer-topics-accordion" open>
             <summary className="site-footer-topics-summary">
-              <span className="site-footer-topics-title">Popular packaging topics</span>
+              <span className="site-footer-topics-title">{t("popularTopics")}</span>
             </summary>
             <div className="site-footer-topics-panel">
-              <p className="site-footer-topics-lead">
-                Quick links for teams searching for a free 3D box design maker, carton simulator, or
-                online packaging mockup generator.
-              </p>
+              <p className="site-footer-topics-lead">{t("topicsLead")}</p>
               <ul className="site-footer-topic-pills">
                 {FOOTER_TOPIC_LINKS.map((topic) => (
                   <li key={topic.label}>
@@ -187,26 +183,29 @@ export default function SiteFooter({ showTopicSection = false }: SiteFooterProps
 
         <div className="site-footer-bottom">
           <p className="site-footer-legal">
-            © {year} 3D Box Studio · {SITE_DOMAIN} · Free 3D box designer &amp; packaging simulator
-            in your browser.
+            {t("legalLine", { year, domain: SITE_DOMAIN })}
           </p>
           <p className="site-footer-bottom-links">
-            <Link href="/privacy">Privacy</Link>
+            <Link href="/privacy">{t("privacy")}</Link>
             <span className="site-footer-sep" aria-hidden>
               ·
             </span>
-            <Link href="/terms">Terms</Link>
+            <Link href="/terms">{t("terms")}</Link>
             <span className="site-footer-sep" aria-hidden>
               ·
             </span>
             <a href={BUYMEACOFFEE_URL} target="_blank" rel="noopener noreferrer">
-              Buy me a coffee
+              {t("buyMeACoffee")}
             </a>
             <span className="site-footer-sep" aria-hidden>
               ·
             </span>
+            <LanguageSwitcher />
+            <span className="site-footer-sep" aria-hidden>
+              ·
+            </span>
             <span className="site-footer-canonical">
-              Canonical: <span className="landing-mono">{SITE_ORIGIN_PUBLIC}</span>
+              {t("canonical")} <span className="landing-mono">{SITE_ORIGIN_PUBLIC}</span>
             </span>
           </p>
         </div>

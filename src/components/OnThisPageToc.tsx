@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { TocItem } from "@/lib/toc";
 
 type OnThisPageTocProps = {
@@ -35,20 +36,21 @@ export default function OnThisPageToc({
   variant,
   activeId,
 }: OnThisPageTocProps) {
+  const t = useTranslations("blog");
   if (items.length === 0) return null;
 
   if (variant === "mobile") {
     return (
       <details className="on-this-page on-this-page--mobile">
-        <summary className="on-this-page-summary">On this page</summary>
+        <summary className="on-this-page-summary">{t("onThisPage")}</summary>
         <TocList items={items} activeId={activeId} />
       </details>
     );
   }
 
   return (
-    <nav className="on-this-page on-this-page--desktop" aria-label="On this page">
-      <p className="on-this-page-heading">On this page</p>
+    <nav className="on-this-page on-this-page--desktop" aria-label={t("onThisPage")}>
+      <p className="on-this-page-heading">{t("onThisPage")}</p>
       <TocList items={items} activeId={activeId} />
     </nav>
   );
