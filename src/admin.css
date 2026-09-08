@@ -510,26 +510,45 @@
 
 .admin-template-grid {
   display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 1rem;
   margin-top: 1rem;
 }
 
-.admin-template-card {
+.admin-template-list {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
-  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.admin-template-list-item {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  text-align: left;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-template-list-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-template-list-item.is-active {
+  border-color: rgba(61, 158, 255, 0.45);
+  background: rgba(61, 158, 255, 0.12);
+}
+
+.admin-template-preview-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   border: 1px solid var(--panel-border);
   border-radius: 14px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
-}
-
-.admin-template-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  padding: 1rem;
-  border-right: 1px solid var(--panel-border);
 }
 
 .admin-template-card-head {
@@ -565,6 +584,25 @@
   margin-bottom: 0.25rem;
 }
 
+.admin-template-preview-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.admin-template-preview-header h3,
+.admin-template-empty h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1rem;
+}
+
+.admin-template-preview-header p,
+.admin-template-empty p {
+  margin: 0;
+}
+
 .admin-template-preview-wrap {
   min-width: 0;
   background: #f8fafc;
@@ -577,14 +615,17 @@
   border: 0;
 }
 
-@media (max-width: 980px) {
-  .admin-template-card {
-    grid-template-columns: 1fr;
-  }
+.admin-template-empty {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  padding: 2rem;
+  text-align: center;
+}
 
-  .admin-template-card-info {
-    border-right: 0;
-    border-bottom: 1px solid var(--panel-border);
+@media (max-width: 980px) {
+  .admin-template-grid {
+    grid-template-columns: 1fr;
   }
 }
 

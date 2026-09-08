@@ -15,6 +15,8 @@ export default function AdminEmailTemplateViewer() {
   const [templates, setTemplates] = useState<EmailTemplatePreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedTemplate = selectedId ? templates.find((template) => template.id === selectedId) ?? null : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -56,43 +58,72 @@ export default function AdminEmailTemplateViewer() {
 
       <div className="admin-template-viewer">
         <p className="admin-muted">
-          Edit templates in <code>src/server/email/templates.tsx</code>. The previews below render the same HTML that
-          the mailer sends.
+          Edit templates in <code>src/server/email/templates.tsx</code>. Click a template to preview the same HTML the
+          mailer sends.
         </p>
 
         {loading ? <p className="admin-muted">Loading email templates...</p> : null}
         {error ? <p className="admin-error">{error}</p> : null}
 
-        <div className="admin-template-grid">
-          {templates.map((template) => (
-            <section key={template.id} className="admin-template-card">
-              <div className="admin-template-card-info">
-                <div className="admin-template-card-head">
-                  <div>
-                    <h3>{template.label}</h3>
-                    <p>{template.description}</p>
-                  </div>
-                  <code>{template.sourcePath}</code>
-                </div>
+        {templates.length > 0 ? (
+          <div className="admin-template-grid">
+            <div className="admin-template-list" role="list" aria-label="Email templates">
+              {templates.map((template) => {
+                const selected = template.id === selectedId;
+                return (
+                  <button
+                    key={template.id}
+                    type="button"
+                    className={`admin-template-list-item${selected ? " is-active" : ""}`}
+                    aria-pressed={selected}
+                    onClick={() => setSelectedId(template.id)}
+                  >
+                    <div className="admin-template-card-head">
+                      <div>
+                        <h3>{template.label}</h3>
+                        <p>{template.description}</p>
+                      </div>
+                      <code>{template.sourcePath}</code>
+                    </div>
 
-                <div className="admin-template-meta">
-                  <div>
-                    <strong>Subject</strong>
-                    <div>{template.subject}</div>
-                  </div>
-                </div>
-              </div>
+                    <div className="admin-template-meta">
+                      <div>
+                        <strong>Subject</strong>
+                        <div>{template.subject}</div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-              <div className="admin-template-preview-wrap">
-                <iframe
-                  className="admin-template-preview"
-                  title={`${template.label} preview`}
-                  srcDoc={template.html}
-                />
-              </div>
-            </section>
-          ))}
-        </div>
+            <div className="admin-template-preview-panel">
+              {selectedTemplate ? (
+                <>
+                  <div className="admin-template-preview-header">
+                    <div>
+                      <h3>{selectedTemplate.label}</h3>
+                      <p>{selectedTemplate.description}</p>
+                    </div>
+                    <code>{selectedTemplate.sourcePath}</code>
+                  </div>
+                  <div className="admin-template-preview-wrap">
+                    <iframe
+                      className="admin-template-preview"
+                      title={`${selectedTemplate.label} preview`}
+                      srcDoc={selectedTemplate.html}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="admin-template-empty">
+                  <h3>Select a template</h3>
+                  <p className="admin-muted">Choose a template from the left to render its preview here.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
