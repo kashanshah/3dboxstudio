@@ -3,8 +3,11 @@ import { consumeStudioEntryContext, storeStudioCtaContext } from "./entryContext
 import {
   fileSizeBucket,
   fileTypeFromMime,
+  pathnameToPageType,
+  pathnameToSourcePageType,
   sanitizeBoxType,
   sanitizeTemplateType,
+  slugFromPath,
   videoFormatFromMime,
 } from "./mappers";
 import {
@@ -52,6 +55,36 @@ function studioParams(ctx: StudioContextParams = {}): Record<string, string> {
   const status = ctx.userStatus ?? userStatusFromAuth(ctx.user);
   out.user_status = status;
   return out;
+}
+
+type ContactFormContext = {
+  pagePath: string;
+  locale?: string;
+  topic?: string;
+  hasTurnstile?: boolean;
+  messageLength?: number;
+};
+
+function messageLengthBucket(length: number | undefined): string | undefined {
+  if (!Number.isFinite(length) || length == null || length <= 0) return undefined;
+  if (length <= 80) return "under_80";
+  if (length <= 240) return "80_240";
+  if (length <= 1000) return "240_1000";
+  return "over_1000";
+}
+
+function contactFormParams(ctx: ContactFormContext): Record<string, string | boolean> {
+  const pagePath = ctx.pagePath || "/";
+  return {
+    page_path: pagePath,
+    page_type: pathnameToPageType(pagePath),
+    source_page_type: pathnameToSourcePageType(pagePath),
+    ...(ctx.locale ? { locale: ctx.locale } : {}),
+    ...(ctx.topic ? { contact_topic: ctx.topic } : {}),
+    ...(slugFromPath(pagePath) ? { page_slug: slugFromPath(pagePath) ?? undefined } : {}),
+    ...(ctx.hasTurnstile !== undefined ? { has_turnstile: ctx.hasTurnstile } : {}),
+    ...(messageLengthBucket(ctx.messageLength) ? { message_length_bucket: messageLengthBucket(ctx.messageLength) } : {}),
+  };
 }
 
 /** GA4 recommended sign_up with optional first-touch campaign context (not UTM override). */
@@ -209,6 +242,48 @@ export function trackPageContext(
     page_path: pagePath,
     page_type: pageType,
     ...(extras.locale ? { locale: extras.locale } : {}),
+  });
+}
+
+export function trackContactFormStarted(ctx: ContactFormContext): void {
+  trackEvent("contact_form_started", contactFormParams(ctx));
+}
+
+export function trackContactFormValidationError(
+  field: string,
+  ctx: ContactFormContext & { errorCount: number }
+): void {
+  trackEvent("contact_form_validation_error", {
+    field_name: field,
+    error_count: ctx.errorCount,
+    ...contactFormParams(ctx),
+  });
+}
+
+export function trackContactFormCaptchaMissing(ctx: ContactFormContext): void {
+  trackEvent("contact_form_captcha_missing", contactFormParams(ctx));
+}
+
+export function trackContactFormSubmitAttempt(ctx: ContactFormContext): void {
+  trackEvent("contact_form_submit_attempt", contactFormParams(ctx));
+}
+
+export function trackContactFormSubmitSuccess(ctx: ContactFormContext): void {
+  const params = contactFormParams(ctx);
+  trackEvent("generate_lead", {
+    lead_type: "contact_form",
+    ...params,
+  });
+  trackEvent("contact_form_submit_success", params);
+}
+
+export function trackContactFormSubmitError(
+  failureType: "network" | "server" | "unknown",
+  ctx: ContactFormContext
+): void {
+  trackEvent("contact_form_submit_error", {
+    failure_type: failureType,
+    ...contactFormParams(ctx),
   });
 }
 

@@ -4,6 +4,14 @@ import { useRef, useState, type FormEvent } from "react";
 import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { CONTACT_TOPICS } from "@/content/contact";
+import {
+  trackContactFormCaptchaMissing,
+  trackContactFormStarted,
+  trackContactFormSubmitAttempt,
+  trackContactFormSubmitError,
+  trackContactFormSubmitSuccess,
+  trackContactFormValidationError,
+} from "@/lib/analytics";
 import TurnstileWidget, { type TurnstileWidgetHandle } from "@/components/TurnstileWidget";
 
 type ContactFormProps = {
@@ -67,6 +75,17 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const startedRef = useRef(false);
+
+  function analyticsContext(data: FormData) {
+    return {
+      locale,
+      pagePath: typeof window === "undefined" ? "/contact" : window.location.pathname,
+      topic: String(data.get("topic") ?? "") || undefined,
+      hasTurnstile: Boolean(turnstileToken),
+      messageLength: readField(data, "message").length,
+    };
+  }
 
   function clearFieldError(field: string) {
     if (!(field in fieldErrors)) return;
@@ -90,11 +109,16 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
 
     const invalid = firstInvalidField(nextFieldErrors);
     if (invalid) {
+      trackContactFormValidationError(invalid, {
+        ...analyticsContext(data),
+        errorCount: Object.keys(nextFieldErrors).length,
+      });
       document.getElementById(FIELD_IDS[invalid])?.focus();
       return;
     }
 
     if (!turnstileToken) {
+      trackContactFormCaptchaMissing(analyticsContext(data));
       setStatus("error");
       setError("Please complete the verification and try again.");
       return;
@@ -114,6 +138,7 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
     };
 
     try {
+      trackContactFormSubmitAttempt(analyticsContext(data));
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +147,7 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
       const body = (await res.json().catch(() => ({}))) as SubmitResponse;
 
       if (!res.ok || body.ok === false) {
+        trackContactFormSubmitError("server", analyticsContext(data));
         setStatus("error");
         setError(body.error ?? "Could not send your message. Please try again.");
         setTurnstileToken(null);
@@ -129,11 +155,13 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
         return;
       }
 
+      trackContactFormSubmitSuccess(analyticsContext(data));
       setStatus("success");
       setTurnstileToken(null);
       setFieldErrors({});
       form.reset();
     } catch {
+      trackContactFormSubmitError("network", analyticsContext(data));
       setStatus("error");
       setError("Could not send your message. Please check your connection and try again.");
       setTurnstileToken(null);
@@ -186,6 +214,17 @@ export default function ContactForm({ initialStatus = "idle" }: ContactFormProps
           target instanceof HTMLSelectElement ||
           target instanceof HTMLTextAreaElement
         ) {
+          if (!startedRef.current) {
+            startedRef.current = true;
+            trackContactFormStarted({
+              locale,
+              pagePath: typeof window === "undefined" ? "/contact" : window.location.pathname,
+              topic:
+                target.form instanceof HTMLFormElement
+                  ? String(new FormData(target.form).get("topic") ?? "") || undefined
+                  : undefined,
+            });
+          }
           clearFieldError(target.name);
         }
       }}
