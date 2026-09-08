@@ -7,14 +7,24 @@ import { faceShortLabels } from "../types";
 import { useLoadedTexture } from "../hooks/useTextures";
 import { cropToTextureTransform, type SideImageCrop } from "../lib/faceImageCrop";
 
+/** Push outer face slightly past the AABB so coplanar neighbors don't z-fight. */
 const EPS = 0.02;
+/** Default board thickness; also capped vs face size so thin cartons keep a cavity. */
+const WALL_MAX = 0.18;
 
-/** Extra half-size so neighboring paper-thin walls cross at corners instead of leaving a hairline. */
+/**
+ * Extra half-size so neighboring walls cross at corners.
+ * Floor is intentionally large: paper-thin silhouettes still leak on mobile MSAA.
+ */
 function faceSeam(width: number, height: number): number {
-  return Math.min(0.25, Math.max(0.08, Math.min(width, height) * 0.008));
+  return Math.min(0.55, Math.max(0.32, Math.min(width, height) * 0.025));
 }
 
-/** Shared unprinted liner (inside the box); BackSide so it is visible from the cavity. */
+function wallThickness(width: number, height: number): number {
+  return Math.min(WALL_MAX, Math.max(0.1, Math.min(width, height) * 0.02));
+}
+
+/** Shared unprinted liner (inside face of each wall). */
 let innerLinerMaterial: THREE.MeshStandardMaterial | null = null;
 function getInnerLinerMaterial(): THREE.MeshStandardMaterial {
   if (!innerLinerMaterial) {
@@ -22,7 +32,6 @@ function getInnerLinerMaterial(): THREE.MeshStandardMaterial {
       color: 0xe8e8e6,
       roughness: 0.98,
       metalness: 0,
-      side: THREE.BackSide,
     });
   }
   return innerLinerMaterial;
@@ -86,20 +95,21 @@ function FacePlane({
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const map = useLoadedTexture(url);
-  const inset = Math.max(0.06, Math.min(args[0], args[1]) * 0.04);
-  const innerMat = getInnerLinerMaterial();
+  const linerMat = getInnerLinerMaterial();
   const faceW = args[0];
   const faceH = args[1];
   const seam = faceSeam(faceW, faceH);
+  const wall = wallThickness(faceW, faceH);
+  const printW = faceW + 2 * seam;
+  const printH = faceH + 2 * seam;
 
-  const mat = useMemo(() => {
+  const printMat = useMemo(() => {
     if (cleanCapture) {
       return new THREE.MeshStandardMaterial({
         color: preset.color,
         roughness: preset.roughness,
         metalness: preset.metalness,
         envMapIntensity: preset.envMapIntensity * 0.45,
-        side: THREE.FrontSide,
         wireframe,
       });
     }
@@ -110,7 +120,6 @@ function FacePlane({
       envMapIntensity: preset.envMapIntensity,
       clearcoat: preset.clearcoat,
       clearcoatRoughness: preset.clearcoatRoughness,
-      side: THREE.FrontSide,
       wireframe,
     });
   }, [
@@ -124,11 +133,28 @@ function FacePlane({
     wireframe,
   ]);
 
+  /** Solid board color on wall edges — no artwork map (avoids stretched print on thickness). */
+  const edgeMat = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      color: preset.color,
+      roughness: Math.min(1, preset.roughness + 0.08),
+      metalness: preset.metalness,
+      envMapIntensity: preset.envMapIntensity * 0.35,
+      wireframe,
+    });
+  }, [preset.color, preset.envMapIntensity, preset.metalness, preset.roughness, wireframe]);
+
+  // BoxGeometry material order: +X, -X, +Y, -Y, +Z (outer print), -Z (liner).
+  const materials = useMemo(
+    () => [edgeMat, edgeMat, edgeMat, edgeMat, printMat, linerMat],
+    [edgeMat, printMat, linerMat],
+  );
+
   useEffect(() => {
-    mat.map = map ?? null;
-    mat.needsUpdate = true;
+    printMat.map = map ?? null;
+    printMat.needsUpdate = true;
     invalidate();
-  }, [map, mat, invalidate]);
+  }, [map, printMat, invalidate]);
 
   useEffect(() => {
     if (!map) return;
@@ -145,18 +171,29 @@ function FacePlane({
 
   useEffect(() => {
     return () => {
-      mat.dispose();
+      printMat.dispose();
+      edgeMat.dispose();
     };
-  }, [mat]);
+  }, [printMat, edgeMat]);
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh position={[0, 0, 0]} material={mat} castShadow={!cleanCapture} receiveShadow={!cleanCapture}>
-        <planeGeometry args={[faceW + 2 * seam, faceH + 2 * seam]} />
-      </mesh>
-      {!wireframe && (
-        <mesh position={[0, 0, -inset]} material={innerMat} receiveShadow={!cleanCapture}>
-          <planeGeometry args={args} />
+      {wireframe ? (
+        <mesh material={printMat}>
+          <planeGeometry args={[printW, printH]} />
+        </mesh>
+      ) : (
+        /*
+          Outer print sits at local z=0 (same as the old plane). The wall extends inward so
+          neighboring faces share volume at corners instead of a paper-thin silhouette crack.
+        */
+        <mesh
+          position={[0, 0, -wall / 2]}
+          material={materials}
+          castShadow={!cleanCapture}
+          receiveShadow={!cleanCapture}
+        >
+          <boxGeometry args={[printW, printH, wall]} />
         </mesh>
       )}
       {!url && !wireframe && !cleanCapture && (
