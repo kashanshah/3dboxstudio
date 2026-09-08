@@ -10,10 +10,11 @@ export async function generateMetadata({ params }: PageProps) {
   return createLandingMetadata(locale);
 }
 
-export default function HomePage() {
+export default async function HomePage({ params }: PageProps) {
+  const { locale } = await params;
   return (
     <>
-      <LandingJsonLd />
+      <LandingJsonLd locale={locale} />
       <LandingPage />
     </>
   );

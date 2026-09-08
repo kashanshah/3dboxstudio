@@ -19,15 +19,26 @@ import {
   shouldEmitRouteEvents,
   type RouteTrackerState,
 } from "@/lib/analytics/routeTracking";
+import { locales } from "@/i18n/config";
+
+function localeFromPathname(pathname: string): string {
+  const path = pathname.split("?")[0] || "/";
+  for (const locale of locales) {
+    if (locale === "en") continue;
+    if (path === `/${locale}` || path.startsWith(`/${locale}/`)) return locale;
+  }
+  return "en";
+}
 
 function emitRouteEvents(pathname: string, pathKey: string): void {
   const pageType = pathnameToPageType(pathname);
   const sourcePageType = pathnameToSourcePageType(pathname);
   const pageSlug = slugFromPath(pathname);
+  const locale = localeFromPathname(pathname);
 
   storeLastPageContext(pathname, sourcePageType, pageSlug);
-  trackPageView(pathKey);
-  trackPageContext(pathname, pageType);
+  trackPageView(pathKey, { locale });
+  trackPageContext(pathname, pageType, { locale });
 }
 
 /**

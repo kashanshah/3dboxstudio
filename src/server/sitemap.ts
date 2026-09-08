@@ -1,7 +1,9 @@
 import { BLOG_POSTS } from "@/content/blogPosts";
 import { hasBlogTranslation } from "@/content/blogLocales";
 import { locales, type Locale } from "@/i18n/config";
-import { getStaticPageAlternateLocales, staticPaths } from "@/i18n/staticPageTranslations";
+import { isIndexableLocale, localizePath } from "@/i18n/localePaths";
+import { getIndexableAlternateLocales } from "@/i18n/seoPolicy";
+import { staticPaths } from "@/i18n/staticPageTranslations";
 import { getSiteOrigin } from "@/lib/siteOrigin";
 
 export type SitemapEntry = {
@@ -12,10 +14,14 @@ export type SitemapEntry = {
   alternates?: Record<string, string>;
 };
 
-function localizedPath(path: string, locale: Locale): string {
-  if (locale === "en") return path;
-  if (path === "/") return `/${locale}`;
-  return `/${locale}${path}`;
+function absoluteUrl(origin: string, path: string, locale: Locale): string {
+  const localized = localizePath(path, locale);
+  const base = origin.replace(/\/$/, "");
+  return localized === "/" ? `${base}/` : `${base}${localized}`;
+}
+
+function withXDefault(alternates: Record<string, string>, englishUrl: string): Record<string, string> {
+  return { ...alternates, "x-default": englishUrl };
 }
 
 export function buildSitemapEntries(): SitemapEntry[] {
@@ -23,13 +29,15 @@ export function buildSitemapEntries(): SitemapEntry[] {
   const lastModified = new Date().toISOString();
 
   const staticRoutes: SitemapEntry[] = staticPaths.flatMap((path) => {
-    const pageLocales = getStaticPageAlternateLocales(path);
-    const alternates = Object.fromEntries(
-      pageLocales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
+    const pageLocales = getIndexableAlternateLocales(path);
+    const englishUrl = absoluteUrl(origin, path, "en");
+    const alternates = withXDefault(
+      Object.fromEntries(pageLocales.map((locale) => [locale, absoluteUrl(origin, path, locale)])),
+      englishUrl,
     );
 
     return pageLocales.map((locale) => ({
-      url: `${origin}${localizedPath(path, locale)}`,
+      url: absoluteUrl(origin, path, locale),
       lastModified,
       changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
       priority:
@@ -53,15 +61,20 @@ export function buildSitemapEntries(): SitemapEntry[] {
   const blogRoutes: SitemapEntry[] = BLOG_POSTS.flatMap((post) => {
     const modified = new Date(post.updated ?? post.published).toISOString();
     const path = `/blog/${post.slug}`;
-    const articleLocales = locales.filter((locale) => locale === "en" || hasBlogTranslation(locale, post.slug));
-    const alternates = Object.fromEntries(
-      articleLocales.map((locale) => [locale, `${origin}${localizedPath(path, locale)}`]),
+    const articleLocales = locales.filter(
+      (locale) =>
+        isIndexableLocale(locale) && (locale === "en" || hasBlogTranslation(locale, post.slug)),
+    );
+    const englishUrl = absoluteUrl(origin, path, "en");
+    const alternates = withXDefault(
+      Object.fromEntries(articleLocales.map((locale) => [locale, absoluteUrl(origin, path, locale)])),
+      englishUrl,
     );
 
     return articleLocales.map((locale) => ({
-      url: `${origin}${localizedPath(path, locale)}`,
+      url: absoluteUrl(origin, path, locale),
       lastModified: modified,
-      changeFrequency: "monthly",
+      changeFrequency: "monthly" as const,
       priority: locale === "en" ? 0.8 : 0.7,
       alternates,
     }));

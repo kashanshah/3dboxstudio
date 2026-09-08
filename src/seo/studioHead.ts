@@ -23,7 +23,10 @@ export const STUDIO_DESCRIPTION =
 
 export const STUDIO_KEYWORDS = SITE_KEYWORDS_META;
 
-export function buildStudioJsonLd(origin: string) {
+export function buildStudioJsonLd(
+  origin: string,
+  options?: { description?: string; url?: string },
+) {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
@@ -33,8 +36,8 @@ export function buildStudioJsonLd(origin: string) {
     operatingSystem: "Any",
     browserRequirements: "Requires JavaScript. WebGL recommended.",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-    description: STUDIO_DESCRIPTION,
-    url: `${origin}/studio`,
+    description: options?.description ?? STUDIO_DESCRIPTION,
+    url: options?.url ?? `${origin}/studio`,
     featureList: [
       "Custom box dimensions (mm, cm, in)",
       "PBR packaging materials",

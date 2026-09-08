@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono, Outfit } from "next/font/google";
 import { getLocale } from "next-intl/server";
+import { localeHtmlLang } from "@/i18n/localePaths";
+import { parseLocale } from "@/i18n/seoPolicy";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -32,11 +34,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  const locale = parseLocale(await getLocale());
 
   return (
     <html
-      lang={locale}
+      lang={localeHtmlLang[locale]}
       className={`${dmSans.variable} ${jetbrainsMono.variable} ${outfit.variable}`}
     >
       <body>{children}</body>
