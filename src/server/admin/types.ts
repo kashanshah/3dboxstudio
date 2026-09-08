@@ -120,6 +120,17 @@ export type AdminSubmissionRow = {
   updatedAt: string;
 };
 
+export type AdminSubmissionReplyRow = {
+  id: string;
+  submissionId: string;
+  toEmail: string;
+  fromEmail: string;
+  subject: string;
+  bodyHtml: string;
+  bodyText: string;
+  createdAt: string;
+};
+
 export type PaginatedResult<T> = {
   items: T[];
   total: number;

@@ -2,6 +2,7 @@ import { customAlphabet } from "nanoid";
 import { normalizeEmail } from "./auth/users";
 import { getSql } from "./db";
 import type { ContactSubmissionStatus } from "./contactSubmissions";
+import type { AdminSubmissionReplyRow } from "./admin/types";
 
 const createReplyId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 18);
 
@@ -131,4 +132,42 @@ export async function createContactSubmissionReply(input: {
     bodyText: input.bodyText,
     createdAt: rows[0]?.created_at ?? new Date().toISOString(),
   };
+}
+
+export async function listContactSubmissionReplies(submissionId: string): Promise<AdminSubmissionReplyRow[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT
+      id,
+      submission_id,
+      to_email,
+      from_email,
+      subject,
+      body_html,
+      body_text,
+      created_at
+    FROM contact_submission_replies
+    WHERE submission_id = ${submissionId}
+    ORDER BY created_at DESC
+  `) as {
+    id: string;
+    submission_id: string;
+    to_email: string;
+    from_email: string;
+    subject: string;
+    body_html: string;
+    body_text: string;
+    created_at: string;
+  }[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    submissionId: row.submission_id,
+    toEmail: row.to_email,
+    fromEmail: row.from_email,
+    subject: row.subject,
+    bodyHtml: row.body_html,
+    bodyText: row.body_text,
+    createdAt: row.created_at,
+  }));
 }
