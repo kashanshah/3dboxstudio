@@ -10,6 +10,8 @@ import {
   STUDIO_TITLE,
 } from "@/seo/studioHead";
 
+export { STUDIO_KEYWORDS };
+
 export type LocalizedPageMeta = {
   title: string;
   description: string;
@@ -65,25 +67,28 @@ const studioMetaByLocale: Record<Locale, LocalizedPageMeta> = {
     title: "Creador de cajas 3D online gratis — Diseña estuches y mailers | 3D Box Studio",
     description:
       "Abre el estudio gratis de cajas 3D en el navegador. Crea una cuenta para diseñar: dimensiones, materiales, aperturas y arte por cara. Guarda y comparte, exporta mockups PNG o descargas JSON.",
-    keywords: STUDIO_KEYWORDS,
+    keywords:
+      "diseñador de cajas 3d online, creador de mockups de packaging, simulador de cajas carton, herramienta mockup embalaje, diseñador de estuches gratis",
   },
   fr: {
     title: "Créateur de boîtes 3D en ligne gratuit — Cartons & mailers | 3D Box Studio",
     description:
       "Ouvrez le studio gratuit de boîtes 3D dans votre navigateur. Créez un compte pour concevoir : dimensions, matériaux, ouvertures et artwork par face. Sauvegardez, partagez, exportez des mockups PNG ou des JSON.",
-    keywords: STUDIO_KEYWORDS,
+    keywords:
+      "créateur de boîte 3d en ligne, générateur de mockup packaging, simulateur carton pliant, outil mockup emballage, designer packaging gratuit",
   },
   de: {
     title: "Kostenloser 3D-Box-Maker online — Kartons & Mailer gestalten | 3D Box Studio",
     description:
       "Öffnen Sie den kostenlosen 3D-Box-Maker im Browser. Konto erstellen und gestalten: Maße, Materialien, Öffnungen und Artwork je Seite. Speichern, teilen, PNG-Mockups exportieren oder JSON herunterladen.",
-    keywords: STUDIO_KEYWORDS,
+    keywords:
+      "3d schachtel designer online, verpackungs mockup generator, faltschachtel designer, packaging simulator, kostenloser box mockup tool",
   },
   zh: {
     title: "免费在线 3D 纸盒制作工具 — 设计纸盒与邮寄盒 | 3D Box Studio",
     description:
       "在浏览器中打开免费 3D 纸盒工作室。注册后即可设计尺寸、材质、开合与单面贴图；保存分享，导出 PNG 效果图或 JSON 备份。",
-    keywords: STUDIO_KEYWORDS,
+    keywords: "在线3d纸盒设计, 包装效果图工具, 折叠纸盒设计器, 包装模拟器, 免费盒型设计工具",
   },
 };
 

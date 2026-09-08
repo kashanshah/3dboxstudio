@@ -8,7 +8,8 @@ import { getSiteOrigin } from "@/lib/siteOrigin";
 
 export type SitemapEntry = {
   url: string;
-  lastModified: string;
+  /** Only set when we have a real content modification date (e.g. blog posts). */
+  lastModified?: string;
   changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority: number;
   alternates?: Record<string, string>;
@@ -26,7 +27,6 @@ function withXDefault(alternates: Record<string, string>, englishUrl: string): R
 
 export function buildSitemapEntries(): SitemapEntry[] {
   const origin = getSiteOrigin();
-  const lastModified = new Date().toISOString();
 
   const staticRoutes: SitemapEntry[] = staticPaths.flatMap((path) => {
     const pageLocales = getIndexableAlternateLocales(path);
@@ -38,7 +38,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
 
     return pageLocales.map((locale) => ({
       url: absoluteUrl(origin, path, locale),
-      lastModified,
+      // No lastModified: we do not invent build-time timestamps as content dates.
       changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
       priority:
         locale === "en"
@@ -102,15 +102,20 @@ export function buildSitemapXml(entries = buildSitemapEntries()): string {
         )
         .join("");
 
-      return [
+      const parts = [
         "<url>",
         `<loc>${escapeXml(entry.url)}</loc>`,
-        `<lastmod>${escapeXml(entry.lastModified)}</lastmod>`,
+      ];
+      if (entry.lastModified) {
+        parts.push(`<lastmod>${escapeXml(entry.lastModified)}</lastmod>`);
+      }
+      parts.push(
         `<changefreq>${escapeXml(entry.changeFrequency)}</changefreq>`,
         `<priority>${entry.priority.toFixed(2)}</priority>`,
         alternateLinks,
         "</url>",
-      ].join("");
+      );
+      return parts.join("");
     })
     .join("");
 

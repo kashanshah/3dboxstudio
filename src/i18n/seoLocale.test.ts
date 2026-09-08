@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { NextRequest, NextResponse } from "next/server";
 import { createLandingMetadata, createBlogPostMetadata } from "@/lib/seo/metadata";
 import { getBlogPostBySlug } from "@/content/blogPosts";
 import { getLocalizedBlogPost } from "@/content/blogLocales";
 import { localizePath } from "@/i18n/localePaths";
+import {
+  isDefaultLocalePrefixPath,
+  upgradeEnPrefixRedirect,
+} from "@/i18n/enPrefixRedirect";
 import {
   buildBlogLanguageAlternates,
   buildLanguageAlternates,
@@ -10,8 +15,12 @@ import {
   robotsForLocale,
   robotsForStaticPage,
 } from "@/i18n/seoPolicy";
-import { buildSitemapEntries } from "@/server/sitemap";
-import { getLandingPageMeta } from "@/seo/localePageMeta";
+import { buildSitemapEntries, buildSitemapXml } from "@/server/sitemap";
+import {
+  getLandingPageMeta,
+  getStudioPageMeta,
+  STUDIO_KEYWORDS,
+} from "@/seo/localePageMeta";
 
 describe("locale path routing", () => {
   it("keeps English unprefixed", () => {
@@ -89,10 +98,32 @@ describe("language switcher targets", () => {
   });
 });
 
+describe("localized Studio SEO keywords", () => {
+  it("keeps English Studio keywords unchanged", () => {
+    expect(getStudioPageMeta("en").keywords).toBe(STUDIO_KEYWORDS);
+  });
+
+  it("uses locale-specific Studio keywords (not English reuse)", () => {
+    for (const locale of ["es", "fr", "de", "zh"] as const) {
+      const keywords = getStudioPageMeta(locale).keywords;
+      expect(keywords).toBeTruthy();
+      expect(keywords).not.toBe(STUDIO_KEYWORDS);
+      expect(keywords!.length).toBeGreaterThan(20);
+      expect(keywords!.length).toBeLessThan(220);
+    }
+  });
+
+  it("includes natural search phrases per locale", () => {
+    expect(getStudioPageMeta("es").keywords).toMatch(/diseñador|mockup|empaque/i);
+    expect(getStudioPageMeta("fr").keywords).toMatch(/concepteur|mockup|emballage/i);
+    expect(getStudioPageMeta("de").keywords).toMatch(/Designer|Mockup|Verpackung/i);
+    expect(getStudioPageMeta("zh").keywords).toMatch(/3D|纸盒|包装/);
+  });
+});
+
 describe("sitemap locale coverage", () => {
   it("includes English home, locale homes, and x-default alternates", () => {
     const entries = buildSitemapEntries();
-    const home = entries.find((e) => e.url.endsWith("/") && !e.url.match(/\/(es|fr|de|zh)\/?$/));
     // Prefer exact English homepage
     const enHome = entries.find((e) => /https?:\/\/[^/]+\/$/.test(e.url));
     expect(enHome?.alternates?.["x-default"]).toBe(enHome?.url);
@@ -111,7 +142,65 @@ describe("sitemap locale coverage", () => {
       e.url.includes("/fr/blog/how-to-create-3d-product-box-mockup-online"),
     );
     expect(frPillar).toBeTruthy();
-    void home;
+  });
+
+  it("omits lastModified on static pages; keeps it on blog posts", () => {
+    const entries = buildSitemapEntries();
+    const enHome = entries.find((e) => /https?:\/\/[^/]+\/$/.test(e.url));
+    const enStudio = entries.find((e) => e.url.endsWith("/studio"));
+    const esHome = entries.find((e) => e.url.endsWith("/es"));
+    expect(enHome?.lastModified).toBeUndefined();
+    expect(enStudio?.lastModified).toBeUndefined();
+    expect(esHome?.lastModified).toBeUndefined();
+
+    const blogEntry = entries.find((e) => e.url.includes("/blog/") && !e.url.includes("/fr/"));
+    expect(blogEntry?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
+
+    const xml = buildSitemapXml(entries);
+    expect(xml).toContain("<lastmod>");
+    // Static home URL should appear without a following lastmod in the same url block
+    const homeBlock = xml.match(
+      /<url>\s*<loc>https?:\/\/[^/]+\/<\/loc>([\s\S]*?)<\/url>/,
+    );
+    expect(homeBlock?.[1]).not.toMatch(/<lastmod>/);
+  });
+});
+
+describe("/en permanent redirects", () => {
+  it("detects default-locale prefix paths", () => {
+    expect(isDefaultLocalePrefixPath("/en")).toBe(true);
+    expect(isDefaultLocalePrefixPath("/en/")).toBe(true);
+    expect(isDefaultLocalePrefixPath("/en/studio")).toBe(true);
+    expect(isDefaultLocalePrefixPath("/en/blog/foo")).toBe(true);
+    expect(isDefaultLocalePrefixPath("/studio")).toBe(false);
+    expect(isDefaultLocalePrefixPath("/es")).toBe(false);
+    expect(isDefaultLocalePrefixPath("/energy")).toBe(false);
+  });
+
+  function permanentFromTemp(path: string, locationPath: string, search = "") {
+    const req = new NextRequest(`http://localhost${path}${search}`);
+    const temp = NextResponse.redirect(new URL(`${locationPath}${search}`, req.url), 307);
+    return { req, res: upgradeEnPrefixRedirect(req, temp) };
+  }
+
+  it("permanently redirects /en to /", () => {
+    const { res } = permanentFromTemp("/en", "/");
+    expect(res.status).toBe(308);
+    expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/");
+  });
+
+  it("permanently redirects /en/studio to /studio", () => {
+    const { res } = permanentFromTemp("/en/studio", "/studio");
+    expect(res.status).toBe(308);
+    expect(new URL(res.headers.get("location")!, "http://localhost").pathname).toBe("/studio");
+  });
+
+  it("permanently redirects /en/blog/... and preserves query string", () => {
+    const { res } = permanentFromTemp("/en/blog/test-post", "/blog/test-post", "?ref=seo");
+    expect(res.status).toBe(308);
+    const location = new URL(res.headers.get("location")!, "http://localhost");
+    expect(location.pathname).toBe("/blog/test-post");
+    expect(location.search).toBe("?ref=seo");
   });
 });
 
