@@ -7,13 +7,26 @@ import { faceShortLabels } from "../types";
 import { useLoadedTexture } from "../hooks/useTextures";
 import { cropToTextureTransform, type SideImageCrop } from "../lib/faceImageCrop";
 
-/** Inset for the inner liner, scene cm. */
-const LINER_INSET = 0.12;
-/**
- * How far each printed face extends past the true panel.
- * Neighboring faces must cross — a shared silhouette edge always rasterizes as a crack.
- */
-const SEAL = 0.22;
+const EPS = 0.02;
+
+/** Extra half-size so neighboring paper-thin walls cross at corners instead of leaving a hairline. */
+function faceSeam(width: number, height: number): number {
+  return Math.min(0.25, Math.max(0.08, Math.min(width, height) * 0.008));
+}
+
+/** Shared unprinted liner (inside the box); BackSide so it is visible from the cavity. */
+let innerLinerMaterial: THREE.MeshStandardMaterial | null = null;
+function getInnerLinerMaterial(): THREE.MeshStandardMaterial {
+  if (!innerLinerMaterial) {
+    innerLinerMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe8e8e6,
+      roughness: 0.98,
+      metalness: 0,
+      side: THREE.BackSide,
+    });
+  }
+  return innerLinerMaterial;
+}
 
 function faceRotation(deg: Partial<Record<FaceId, number>> | undefined, id: FaceId): number {
   return deg?.[id] ?? 0;
@@ -73,23 +86,21 @@ function FacePlane({
 }) {
   const invalidate = useThree((state) => state.invalidate);
   const map = useLoadedTexture(url);
+  const inset = Math.max(0.06, Math.min(args[0], args[1]) * 0.04);
+  const innerMat = getInnerLinerMaterial();
   const faceW = args[0];
   const faceH = args[1];
+  const seam = faceSeam(faceW, faceH);
 
-  const printMat = useMemo(() => {
-    const offset = {
-      polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
-    };
+  const mat = useMemo(() => {
     if (cleanCapture) {
       return new THREE.MeshStandardMaterial({
         color: preset.color,
         roughness: preset.roughness,
         metalness: preset.metalness,
         envMapIntensity: preset.envMapIntensity * 0.45,
+        side: THREE.FrontSide,
         wireframe,
-        ...offset,
       });
     }
     return new THREE.MeshPhysicalMaterial({
@@ -99,8 +110,8 @@ function FacePlane({
       envMapIntensity: preset.envMapIntensity,
       clearcoat: preset.clearcoat,
       clearcoatRoughness: preset.clearcoatRoughness,
+      side: THREE.FrontSide,
       wireframe,
-      ...offset,
     });
   }, [
     cleanCapture,
@@ -113,23 +124,11 @@ function FacePlane({
     wireframe,
   ]);
 
-  const linerMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: 0xe8e8e6,
-        roughness: 0.98,
-        metalness: 0,
-        side: THREE.BackSide,
-        wireframe,
-      }),
-    [wireframe]
-  );
-
   useEffect(() => {
-    printMat.map = map ?? null;
-    printMat.needsUpdate = true;
+    mat.map = map ?? null;
+    mat.needsUpdate = true;
     invalidate();
-  }, [map, printMat, invalidate]);
+  }, [map, mat, invalidate]);
 
   useEffect(() => {
     if (!map) return;
@@ -146,24 +145,18 @@ function FacePlane({
 
   useEffect(() => {
     return () => {
-      printMat.dispose();
-      linerMat.dispose();
+      mat.dispose();
     };
-  }, [printMat, linerMat]);
-
-  const printW = faceW + 2 * SEAL;
-  const printH = faceH + 2 * SEAL;
-  const linerW = Math.max(faceW - 2 * SEAL, 0.01);
-  const linerH = Math.max(faceH - 2 * SEAL, 0.01);
+  }, [mat]);
 
   return (
     <group position={position} rotation={rotation}>
-      <mesh position={[0, 0, 0]} material={printMat} castShadow={!cleanCapture} receiveShadow={!cleanCapture}>
-        <planeGeometry args={[printW, printH]} />
+      <mesh position={[0, 0, 0]} material={mat} castShadow={!cleanCapture} receiveShadow={!cleanCapture}>
+        <planeGeometry args={[faceW + 2 * seam, faceH + 2 * seam]} />
       </mesh>
       {!wireframe && (
-        <mesh position={[0, 0, -LINER_INSET]} material={linerMat} receiveShadow={!cleanCapture}>
-          <planeGeometry args={[linerW, linerH]} />
+        <mesh position={[0, 0, -inset]} material={innerMat} receiveShadow={!cleanCapture}>
+          <planeGeometry args={args} />
         </mesh>
       )}
       {!url && !wireframe && !cleanCapture && (
@@ -226,7 +219,7 @@ export function PackagingBox({
       faceId="top"
       preset={preset}
       args={[w, d]}
-      position={[0, 0, 0]}
+      position={[0, EPS, 0]}
       rotation={[-Math.PI / 2, 0, 0]}
       wireframe={wireframe}
       cleanCapture={cleanCapture}
@@ -246,7 +239,7 @@ export function PackagingBox({
                 faceId="topLeft"
                 preset={preset}
                 args={[w / 2, d]}
-                position={[0, 0, 0]}
+                position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
@@ -262,7 +255,7 @@ export function PackagingBox({
                 faceId="topRight"
                 preset={preset}
                 args={[w / 2, d]}
-                position={[0, 0, 0]}
+                position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
@@ -281,7 +274,7 @@ export function PackagingBox({
                 faceId="topLeft"
                 preset={preset}
                 args={[w, d / 2]}
-                position={[0, 0, 0]}
+                position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
@@ -297,7 +290,7 @@ export function PackagingBox({
                 faceId="topRight"
                 preset={preset}
                 args={[w, d / 2]}
-                position={[0, 0, 0]}
+                position={[0, EPS, 0]}
                 rotation={[-Math.PI / 2, 0, 0]}
                 wireframe={wireframe}
                 cleanCapture={cleanCapture}
@@ -348,7 +341,7 @@ export function PackagingBox({
         faceId="top"
         preset={preset}
         args={[w, d]}
-        position={[0, h / 2, 0]}
+        position={[0, h / 2 + EPS, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         wireframe={wireframe}
         cleanCapture={cleanCapture}
@@ -365,7 +358,7 @@ export function PackagingBox({
         faceId="bottom"
         preset={preset}
         args={[w, d]}
-        position={[0, -h / 2, 0]}
+        position={[0, -h / 2 - EPS, 0]}
         rotation={[Math.PI / 2, 0, 0]}
         wireframe={wireframe}
         cleanCapture={cleanCapture}
@@ -378,7 +371,7 @@ export function PackagingBox({
         faceId="front"
         preset={preset}
         args={[w, h]}
-        position={[0, 0, d / 2]}
+        position={[0, 0, d / 2 + EPS]}
         rotation={[0, 0, 0]}
         wireframe={wireframe}
         cleanCapture={cleanCapture}
@@ -391,7 +384,7 @@ export function PackagingBox({
         faceId="back"
         preset={preset}
         args={[w, h]}
-        position={[0, 0, -d / 2]}
+        position={[0, 0, -d / 2 - EPS]}
         rotation={[0, Math.PI, 0]}
         wireframe={wireframe}
         cleanCapture={cleanCapture}
@@ -407,7 +400,7 @@ export function PackagingBox({
               faceId="right"
               preset={preset}
               args={[d, h]}
-              position={[0, 0, 0]}
+              position={[EPS, 0, 0]}
               rotation={[0, Math.PI / 2, 0]}
               wireframe={wireframe}
               cleanCapture={cleanCapture}
@@ -422,7 +415,7 @@ export function PackagingBox({
           faceId="right"
           preset={preset}
           args={[d, h]}
-          position={[w / 2, 0, 0]}
+          position={[w / 2 + EPS, 0, 0]}
           rotation={[0, Math.PI / 2, 0]}
           wireframe={wireframe}
           cleanCapture={cleanCapture}
@@ -439,7 +432,7 @@ export function PackagingBox({
               faceId="left"
               preset={preset}
               args={[d, h]}
-              position={[0, 0, 0]}
+              position={[-EPS, 0, 0]}
               rotation={[0, -Math.PI / 2, 0]}
               wireframe={wireframe}
               cleanCapture={cleanCapture}
@@ -454,7 +447,7 @@ export function PackagingBox({
           faceId="left"
           preset={preset}
           args={[d, h]}
-          position={[-w / 2, 0, 0]}
+          position={[-w / 2 - EPS, 0, 0]}
           rotation={[0, -Math.PI / 2, 0]}
           wireframe={wireframe}
           cleanCapture={cleanCapture}
