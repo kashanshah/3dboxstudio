@@ -1,3 +1,5 @@
+import { getSiteOrigin } from "@/lib/siteOrigin";
+
 type EmailTemplateId =
   | "verification"
   | "email-change"
@@ -93,19 +95,53 @@ function greeting(name: string | null): string {
 }
 
 function renderShell(eyebrow: string, title: string, body: string): string {
+  const origin = getSiteOrigin();
+  const logoUrl = `${origin}/logo-mark.svg`;
   return `<!DOCTYPE html>
 <html>
   <body style="margin:0;padding:32px 16px;background-color:#eef2ff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Helvetica,Arial,sans-serif;">
-    <div style="max-width:640px;margin:0 auto;background-color:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #dbe4ff;box-shadow:0 20px 50px rgba(37,99,235,0.10);">
-      <div style="padding:28px 32px;background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 55%,#60a5fa 100%);color:#ffffff;">
-        <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
-        <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">${escapeHtml(title)}</h1>
-      </div>
-      <div style="padding:28px 32px 20px;font-size:15px;line-height:1.65;">
-        ${body}
-      </div>
-      <div style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</div>
-    </div>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+      <tr>
+        <td align="center">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="640" style="width:100%;max-width:640px;border-collapse:separate;background-color:#ffffff;border:1px solid #dbe4ff;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(37,99,235,0.10);">
+            <tr>
+              <td style="padding:0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+                  <tr>
+                    <td width="32%" height="8" bgcolor="#1d4ed8" style="font-size:0;line-height:0;">&nbsp;</td>
+                    <td width="36%" height="8" bgcolor="#2563eb" style="font-size:0;line-height:0;">&nbsp;</td>
+                    <td width="32%" height="8" bgcolor="#60a5fa" style="font-size:0;line-height:0;">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" bgcolor="#1d4ed8" style="padding:24px 32px;color:#ffffff;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+                        <tr>
+                          <td valign="top" style="padding:0 16px 0 0;">
+                            <img src="${escapeHtml(logoUrl)}" alt="3D Box Studio" width="40" height="40" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;" />
+                          </td>
+                          <td valign="top" style="padding:0;color:#ffffff;">
+                            <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
+                            <div style="margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 20px;font-size:15px;line-height:1.65;">
+                ${body}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 }
