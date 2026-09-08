@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
+import { shouldUseSolidShell } from "@/components/PackagingBox";
 
-/** Mirrors PackagingBox faceSeam — kept in sync for corner-seal regressions. */
-function faceSeam(width: number, height: number): number {
-  return Math.min(0.35, Math.max(0.2, Math.min(width, height) * 0.02));
-}
-
-describe("packaging box corner seal", () => {
-  it("uses a mobile-safe seam floor without huge unprinted flanges", () => {
-    expect(faceSeam(10, 10)).toBeGreaterThanOrEqual(0.2);
-    expect(faceSeam(10, 10)).toBeLessThanOrEqual(0.35);
-    expect(faceSeam(80, 80)).toBeLessThanOrEqual(0.35);
+describe("packaging box solid shell", () => {
+  it("uses a solid shell when opening is closed", () => {
+    expect(shouldUseSolidShell("closed", 0.35)).toBe(true);
+    expect(shouldUseSolidShell("closed", 0)).toBe(true);
   });
 
-  it("scales seam up for larger faces within the cap", () => {
-    expect(faceSeam(20, 20)).toBeGreaterThan(faceSeam(8, 8));
+  it("uses a solid shell when open amount is effectively zero", () => {
+    expect(shouldUseSolidShell("lid_from_back", 0)).toBe(true);
+    expect(shouldUseSolidShell("lid_from_back", 0.0005)).toBe(true);
+  });
+
+  it("uses hinged planes when the lid/doors are open", () => {
+    expect(shouldUseSolidShell("lid_from_back", 0.35)).toBe(false);
+    expect(shouldUseSolidShell("double_doors", 0.5)).toBe(false);
   });
 });
