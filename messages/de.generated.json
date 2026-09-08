@@ -1,0 +1,344 @@
+{
+  "nav": {
+    "home": "Startseite",
+    "features": "Funktionen",
+    "screenshots": "Screenshots",
+    "showcase": "Showcase",
+    "faq": "FAQ",
+    "blog": "Blog",
+    "contact": "Kontakt",
+    "openStudio": "Studio öffnen",
+    "menuOpen": "Menü öffnen",
+    "menuClose": "Menü schließen"
+  },
+  "footer": {
+    "description": "Kostenloser browserbasierter 3D-Box-Designer und Verpackungssimulator. Legen Sie individuelle Maße, Materialien, Öffnungen und Artwork pro Seite fest — und exportieren Sie PNG-Mockups oder teilen Sie Vorschau-Links mit Kunden und Teams.",
+    "openStudio": "Kostenloses 3D-Studio öffnen",
+    "product": "Produkt",
+    "productAria": "Produkt",
+    "studio": "3D Box Studio",
+    "features": "Funktionen",
+    "screenshots": "Screenshots",
+    "showcase": "Showcase",
+    "howItWorks": "So funktioniert’s",
+    "packagingGuides": "Verpackungs-Guides",
+    "guidesTools": "Guides & Tools",
+    "guidesAria": "Verpackungs-Guides",
+    "allArticles": "Alle Verpackungsartikel",
+    "helpSupport": "Hilfe & Support",
+    "helpAria": "Hilfe und Support",
+    "faqCount": "FAQ ({count} Antworten)",
+    "contactSupport": "Support kontaktieren",
+    "industryMockups": "Branchen-Mockups",
+    "industryAria": "Branchen-Guides für Verpackung",
+    "popularTopics": "Beliebte Verpackungsthemen",
+    "topicsLead": "Schnelllinks für Teams, die einen kostenlosen 3D-Box-Designer, Kartonsimulator oder Online-Mockup-Generator für Verpackungen suchen.",
+    "legalLine": "© {year} 3D Box Studio · {domain} · Kostenloser 3D-Box-Designer & Verpackungssimulator in Ihrem Browser.",
+    "privacy": "Datenschutz",
+    "terms": "AGB",
+    "buyMeACoffee": "Buy me a coffee",
+    "canonical": "Canonical:"
+  },
+  "language": {
+    "label": "Sprache",
+    "en": "English",
+    "fr": "Français",
+    "es": "Español",
+    "zh": "中文",
+    "de": "Deutsch"
+  },
+  "common": {
+    "brand": "3D Box Studio"
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "body": "Diese Seite existiert nicht oder wurde verschoben.",
+    "home": "Zur Startseite",
+    "studio": "Studio öffnen"
+  },
+  "blog": {
+    "englishOnlyNote": "Dieser Artikel ist derzeit nur auf Englisch verfügbar.",
+    "label": "Blog",
+    "notFoundTitle": "Artikel nicht gefunden",
+    "backToBlog": "Zurück zum Blog",
+    "readMinutes": "{minutes} Min. Lesezeit",
+    "updated": "Aktualisiert",
+    "openStudioCta": "Kostenlosen 3D-Box-Designer öffnen",
+    "moreGuides": "Weitere Guides",
+    "readArticle": "Artikel lesen →",
+    "faqHeading": "FAQ",
+    "onThisPage": "Auf dieser Seite",
+    "index": {
+      "eyebrow": "Guides",
+      "title": "Kostenlose Guides zu 3D-Box-Design & Verpackungs-Mockups",
+      "intro": "{count} praxisnahe Artikel zu kostenlosen 3D-Box-Designern, Online-Mockup-Generatoren für Verpackungen, Klappkarton- und Mailer-Vorschauen, Pacdora-Alternativen und browserbasierten Box-Tools für Designer, E-Commerce-Händler und Markenteams.",
+      "searchLabel": "Artikel suchen",
+      "searchPlaceholder": "Titel, Themen, Zusammenfassungen durchsuchen …",
+      "clearSearch": "Suche löschen",
+      "filterByTopic": "Nach Thema filtern",
+      "all": "Alle",
+      "resultsAll": "{count} Artikel",
+      "resultsFiltered": "{count} von {total} Artikeln",
+      "fullArticleEnglishOnly": "Vollständiger Artikel derzeit nur auf Englisch verfügbar.",
+      "empty": "Keine Artikel entsprechen Ihrer Suche.",
+      "clearFilters": "Filter zurücksetzen",
+      "readArticle": "Artikel lesen →",
+      "readMinutes": "{minutes} Min. Lesezeit",
+      "categories": {
+        "getting-started": "Erste Schritte",
+        "workflow": "Workflow & Teams",
+        "ecommerce": "E-Commerce & DTC",
+        "industry": "Branchen-Guides",
+        "tools": "Tools & Struktur"
+      }
+    }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "Für immer kostenlos · Browser · WebGL · Anmelden zum Speichern & Teilen",
+      "titleLine1": "Kostenloser Verpackungs-Box-Designer",
+      "titleLine2": "und 3D-Kartonsimulator",
+      "titleLine3": "3D Box Studio · in Ihrem Browser",
+      "lead": "Kostenloser Online-Mockup-Generator für Klappkartons und Mailer-Boxen — realistische PBR-Materialien, HDRI-Beleuchtung, Deckel- und Klappen-Animationen sowie Artwork pro Seite. Für Designer, E-Commerce-Händler und Druckereien, die eine schnelle 3D-Verpackungsvorschau ohne CAD oder Abos brauchen.",
+      "launchCta": "3D-Studio starten",
+      "exploreCta": "Funktionen entdecken",
+      "highlightsAria": "Highlights",
+      "meta1": "Kostenloser Verpackungs-Designer",
+      "meta2": "Kostenloses Konto zum Starten",
+      "meta3": "Cloud-Speicher & Teilen",
+      "meta4": "Nur-Lese-Kundenlinks",
+      "meta5": "PNG exportieren",
+      "meta6": "JSON Import/Export",
+      "badge": "WebGL live",
+      "previewAlt": "Stilisierte 3D-Verpackungsbox mit Studio-Beleuchtung — repräsentativ für den interaktiven Simulator",
+      "proofAria": "Produkthighlights",
+      "proofPbrTitle": "PBR-Materialien",
+      "proofPbrBody": "Kraft, Karton, Folie & mehr",
+      "proofHdriTitle": "HDRI-Beleuchtung",
+      "proofHdriBody": "Studio-Reflexionen",
+      "proofOpenTitle": "Öffnungen",
+      "proofOpenBody": "Deckel, geteilte Klappe, Tür",
+      "proofShareTitle": "Cloud-Share-Links",
+      "proofShareBody": "Speichern, bearbeiten & Vorschauen senden"
+    },
+    "features": {
+      "eyebrow": "Funktionen",
+      "title": "Alles für eine überzeugende 3D-Verpackungsvorschau",
+      "intro": "Ob Sie es 3D-Box-Simulator, Karton-Konfigurator oder strukturelle Verpackungsvorschau nennen — diese Tools helfen Ihnen, Maßstab, Lesbarkeit und Regalpräsenz zu prüfen, bevor Sie sich für Platten oder Muster entscheiden.",
+      "viewportTitle": "Echtzeit-3D-Viewport",
+      "viewportBody": "Orbit, Zoom (Scroll oder Schieberegler), HDRI-Umgebungen, Schatten und optionales Raster — ideal für Verpackungsreviews und Kundenfreigaben.",
+      "dimensionsTitle": "Maße & Einheiten",
+      "dimensionsBody": "Breite, Höhe und Tiefe in Millimetern, Zentimetern oder Zoll festlegen. Szeneneinheiten werden für konsistenten 3D-Maßstab in Zentimeter umgerechnet.",
+      "materialsTitle": "PBR-Material-Presets",
+      "materialsBody": "Kraft, weißer Karton, glänzendes oder mattes Plastik, Wellpappe und Metallfolie — Rauheit, Clearcoat und Umgebungsreaktion für Verpackungslooks abgestimmt.",
+      "openingsTitle": "Öffnungsmechanismen",
+      "openingsBody": "Geschlossene Ansicht, Deckel von hinten, geteilte Deckelklappen (Scharnier an langer oder kurzer Seite) und schwingende Tür links — animierter Öffnungsgrad.",
+      "artworkTitle": "Artwork pro Seite & Rotation",
+      "artworkBody": "PNG oder JPG pro Seite hochladen, in 90°-Schritten drehen und ein Bild auf alle Seiten anwenden, wenn Sie schnell einen Platzhalter brauchen.",
+      "envTitle": "Umgebungs-Presets",
+      "envBody": "Wählen Sie aus Studio, Stadt, Lager, Sonnenuntergang und Morgendämmerung. So erhalten Sie schnell Feedback zu Ihrem Design.",
+      "cloudTitle": "Cloud-Speicher & Share-Links",
+      "cloudBody": "Nutzen Sie Datei → Speichern oder Speichern unter, um Ihr Design hochzuladen. Sie erhalten einen Editor-Link für sich und einen separaten Nur-Lese-Vorschau-Link für Kunden — inklusive Artwork und Einstellungen.",
+      "previewTitle": "Nur-Lese-Kundenvorschauen",
+      "previewBody": "Teilen Sie einen Präsentationslink, der das Studio im Nur-Lese-Modus öffnet. Kunden können orbitieren, zoomen, die Beleuchtung anpassen und PNGs exportieren — ohne Maße, Artwork oder Ihre Arbeit zu ändern.",
+      "jsonTitle": "JSON Import & Export",
+      "jsonBody": "Laden Sie ein v1-JSON-Backup mit Maßen, Materialien, Öffnungen und eingebetteten Bildern herunter — oder importieren Sie eine Datei, um die gesamte Szene offline wiederherzustellen.",
+      "pngTitle": "PNG-Export",
+      "pngBody": "Exportieren Sie einen hochauflösenden PNG-Snapshot des Live-Viewports für Präsentationen, Anfragen und Marketing — neben Cloud-Share-Links für interaktive Reviews.",
+      "recordTitle": "Präsentation aufnehmen",
+      "recordBody": "Nehmen Sie ein 15-Sekunden-Video des Viewports auf und laden Sie die MP4-Datei herunter. Ideal, um Ihren 3D-Verpackungssimulator mit Team oder Kunden zu teilen."
+    },
+    "quote": {
+      "aria": "Produktphilosophie",
+      "text": "Ziel ist nicht, Stanz-CAD zu ersetzen — sondern allen im Raum ein gemeinsames, glaubwürdiges Bild der Box zu geben, bevor Zeit und Geld in die falsche Struktur fließen."
+    },
+    "gallery": {
+      "eyebrow": "Produkt-Tour",
+      "title": "Im 3D-Verpackungsstudio",
+      "introBefore": "Unten finden Sie illustrative Screenshots des Interface-Layouts und zentraler Workflows. Klicken Sie auf ein Bild für eine Lightbox in voller Größe (gleicher Viewer wie im Portfolio — Pfeiltasten zum Blättern, Escape zum Schließen). Ersetzen Sie die Bilder durch echte Aufnahmen aus",
+      "introLink": "Ihrem Live-Studio",
+      "introAfter": "für noch stärkeren Social Proof und SEO-Bildabdeckung.",
+      "openShot": "Screenshot {index} in Galerie öffnen: {caption}",
+      "shot1Alt": "3D Box Studio: Bedienfeld neben einem Live-3D-Viewport mit Beispielkarton",
+      "shot1Caption": "Editor-Layout: Parameter und Live-3D-Verpackungsvorschau nebeneinander.",
+      "shot2Alt": "Artwork-Upload pro Seite im 3D-Verpackungssimulator",
+      "shot2Caption": "Artwork-Uploads pro Seite mit schnellem Drehen und Löschen.",
+      "shot3Alt": "Öffnungsstile und Material-Presets im 3D-Kartonsimulator",
+      "shot3Caption": "Öffnungsstile und Karton-Presets für realistische Verpackungsvisualisierung.",
+      "shot4Alt": "Aufnahmefunktion im 3D-Verpackungssimulator",
+      "shot4Caption": "Aufnahmefunktion im 3D-Verpackungssimulator."
+    },
+    "showcase": {
+      "eyebrow": "Portfolio",
+      "title": "Verpackungsvisuals & Motion",
+      "intro": "Stills und kurze Clips, die Struktur, Druck und Bewegung in einem Atemzug verkaufen — Turntable-Aufnahmen für PDPs, Karton- und Folie-Looks für Pitch Decks und In-App-Shots, die zeigen, wie Teams in 3D Box Studio arbeiten. Das Grid mischt Fotos und Video; filtern Sie, wenn Sie nur ein Format wollen.",
+      "filtersAria": "Showcase-Filter",
+      "showLabel": "Anzeigen",
+      "filterAll": "Alle",
+      "filterPhotos": "Fotos",
+      "filterVideos": "Videos",
+      "empty": "Keine Einträge für diesen Filter. Wechseln Sie zu Alle oder fügen Sie Einträge in public/showcase/manifest.json hinzu.",
+      "footnote": "Eigene Reel kuratieren? Dateien unter public/showcase/images/ oder public/showcase/videos/ ablegen, in manifest.json eintragen und optional layout: \"standard\", \"tall\" oder \"wide\" für breitere oder höhere Kacheln im Grid nutzen.",
+      "openGallery": "Galerie öffnen: {alt}",
+      "openVideo": "Video in Vollbild-Galerie öffnen",
+      "openImage": "Bild in Vollbild-Galerie öffnen",
+      "videoFallbackAlt": "Showcase-Video",
+      "imageFallbackAlt": "Showcase-Bild"
+    },
+    "steps": {
+      "eyebrow": "Workflow",
+      "title": "Von der flachen Idee zur 3D-Verpackungsprüfung in Minuten",
+      "intro": "Ein leichtgewichtiger Workflow für Teams, die ein glaubwürdiges 3D-Box-Mockup brauchen, ohne schwere CAD-Pakete zu installieren.",
+      "step1Title": "Struktur & Karton festlegen",
+      "step1Body": "Wählen Sie Außenmaße, Material-Preset und wie Deckel oder Tür für Ihre 3D-Kartonvorschau geöffnet werden soll.",
+      "step2Title": "Artwork einfügen",
+      "step2Body": "Drucke auf Seiten mappen, für Hoch- oder Querformate drehen und iterieren, bis das 3D-Box-Mockup am Bildschirm klar lesbar ist.",
+      "step3Title": "Speichern & teilen",
+      "step3Body": "Nutzen Sie Datei → Speichern unter für Editor- und Nur-Lese-Vorschau-Links oder exportieren Sie ein PNG für Präsentationen und Anfragen. Senden Sie Kunden den Vorschau-Link zur Freigabe; behalten Sie den Editor-Link für sich."
+    },
+    "guides": {
+      "eyebrow": "Guides",
+      "title": "3D-Box-Design & Simulation lernen",
+      "intro": "{count} praxisnahe Artikel zu 3D-Box-Tools, kostenlosen Verpackungs-Mockup-Generatoren, Klappkarton-Design und browserbasierten Vorschauen für Designer, Händler und Markenteams.",
+      "readGuide": "Guide lesen →",
+      "viewAll": "Alle Verpackungs-Guides ansehen →"
+    },
+    "faq": {
+      "eyebrow": "Support",
+      "title": "Häufig gestellte Fragen",
+      "intro": "Klare Antworten zu unserem kostenlosen 3D-Box-Designer, Online-Mockup-Generator, Pacdora-Alternative, Exportoptionen und dem Vergleich mit Verpackungs-CAD-Tools.",
+      "browseAll": "Alle {count} Fragen mit Suche & Filtern durchsuchen →"
+    },
+    "ctaBand": {
+      "title": "Bereit, Ihren Karton in 3D zu drehen?",
+      "body": "Öffnen Sie das Studio und iterieren Sie Materialien, Öffnungen und Artwork, bis die Verpackungsstory sitzt.",
+      "button": "3D-Verpackungssimulator starten"
+    },
+    "sectionCta": {
+      "launch": "3D-Studio starten"
+    },
+    "faqs": {
+      "what-is-3d-box-designer": {
+        "question": "Was ist ein 3D-Box-Designer oder Verpackungssimulator?",
+        "answer": "Ein 3D-Box-Designer zeigt, wie flaches Verpackungs-Artwork und strukturelle Entscheidungen auf einem dreidimensionalen Karton oder Mailer wirken. Ein Verpackungssimulator nutzt realistische Beleuchtung und Materialien, damit Stakeholder Proportionen, Öffnungen und Branding vor dem Druck prüfen können."
+      },
+      "free-3d-box-maker": {
+        "question": "Ist 3D Box Studio ein kostenloser 3D-Box-Designer?",
+        "answer": "Ja. 3D Box Studio ist ein kostenloser 3D-Box-Designer und Design-Tool, das vollständig im Browser läuft. Es gibt keine Paywall für Maße, Materialien, Öffnungen, Artwork pro Seite, HDRI-Beleuchtung, PNG-Export oder JSON Import/Export. Erstellen Sie ein kostenloses Konto, um das Studio zu öffnen und zu designen. E-Mail-Verifizierung ist vorerst optional — Sie können direkt nach der Anmeldung speichern, teilen und exportieren."
+      },
+      "3d-box-simulation-use": {
+        "question": "Wofür wird 3D-Box-Simulation genutzt?",
+        "answer": "3D-Box-Simulation hilft Verpackungsdesignern, Markenteams und Druckereien, Maßstab, Grafikplatzierung und Öffnungsverhalten zu prüfen, bevor Platten oder physische Muster produziert werden. Ideal für Kundenpräsentationen, E-Commerce-Mockups und interne Design-Reviews — nicht für produktive Stanzlinien."
+      },
+      "vs-esko-artioscad": {
+        "question": "Ist das ein Ersatz für Esko, ArtiosCAD oder dediziertes Verpackungs-CAD?",
+        "answer": "Nein. Diese Plattformen konstruieren produktive Stanzlinien. Dieser 3D-Verpackungssimulator hilft früh, Look & Feel, Kamerawinkel und groben Maßstab zu kommunizieren. Export ist ein Viewport-PNG, keine Druckplatte."
+      },
+      "vs-mockup-templates": {
+        "question": "Worin unterscheidet sich ein 3D-Box-Designer von einer Mockup-Template-Seite?",
+        "answer": "Template-Bibliotheken bieten feste Boxformen mit hochgeladenem Artwork. Ein 3D-Box-Designer wie 3D Box Studio erlaubt Breite, Höhe, Tiefe, Materialien, Deckel- und Klappen-Öffnungen sowie Grafiken pro Seite in einem interaktiven Viewport — besser für individuelle Kartonmaße und strukturelle Vorschauen."
+      },
+      "mobile-support": {
+        "question": "Funktioniert der 3D-Box-Simulator auf dem Handy?",
+        "answer": "Das Studio ist für Desktop-Browser mit WebGL ausgelegt. Smartphones können es ausführen, aber die Bedienung ist für Tastatur und Maus optimiert."
+      },
+      "data-storage": {
+        "question": "Wo werden meine Daten gespeichert?",
+        "answer": "Während Sie arbeiten, bleibt Ihr Design in der Browser-Sitzung. Beim Hochladen von Seiten-Artwork speichert das Studio automatisch in der Cloud als „Untitled“ (jederzeit umbenennen über Datei → Umbenennen). Bilder werden auf AWS S3 hochgeladen und die Konfiguration in einer Postgres-Datenbank gespeichert. Manuell speichern können Sie mit Datei → Speichern (⌘S)."
+      },
+      "cloud-share": {
+        "question": "Wie funktionieren Cloud-Speicher und Share-Links?",
+        "answer": "Beim Hochladen von Seiten-Artwork wird Ihr Design automatisch in der Cloud als „Untitled“ gespeichert. Nutzen Sie Datei → Umbenennen, um den Namen zu ändern. Datei → Speichern (⌘S) aktualisiert ein bestehendes Projekt; Datei → Speichern unter erstellt eine Kopie mit neuem Link. Datei → Öffnen lässt Sie einen Share-Link oder eine ID einfügen, um ein gespeichertes Design zu laden. Nach dem Speichern nutzen Sie Datei → Vorschau-Link teilen oder Vorschau-Link kopieren, um Kunden eine separate Nur-Lese-URL (/preview/…) zu senden. Editor-Links nutzen /studio/… und werden im Vorschau-Modus nicht angezeigt."
+      }
+    }
+  },
+  "studio": {
+    "dialog": {
+      "close": "Schließen"
+    },
+    "authGate": {
+      "eyebrow": "3D Box Studio",
+      "title": "Kostenloses Konto erstellen und mit dem Design starten",
+      "lead": "Registrieren Sie sich, um den 3D-Box-Designer zu öffnen — Maße, Materialien, Öffnungen und Artwork pro Seite festlegen. In der Cloud speichern, Vorschau-Links teilen und PNG-Mockups exportieren.",
+      "createAccount": "Kostenloses Konto erstellen",
+      "signInEmail": "Mit E-Mail anmelden",
+      "hint": "Geteilte Projektlinks und Nur-Lese-Vorschauen bleiben ohne Konto zugänglich. Temporäre E-Mail-Adressen (YOPmail, Mailinator usw.) werden nicht akzeptiert.",
+      "backHome": "← Zur Startseite"
+    },
+    "startDialog": {
+      "title": "3D Box Studio",
+      "goToWebsite": "Zur Website",
+      "createNew": "Neues Design erstellen",
+      "lead": "Dort weitermachen, wo Sie aufgehört haben, oder ein neues Box-Design starten.",
+      "savedDesigns": "Ihre gespeicherten Designs",
+      "empty": "Sie haben noch keine Designs gespeichert. Erstellen Sie ein neues Design — Artwork-Uploads werden automatisch in der Cloud gespeichert.",
+      "offlineBefore": "Lieber offline arbeiten?",
+      "importJson": "JSON-Datei importieren",
+      "offlineAfter": "aus einem früheren Export."
+    },
+    "projects": {
+      "errors": {
+        "load": "Ihre Projekte konnten nicht geladen werden.",
+        "network": "Netzwerkfehler. Bitte erneut versuchen.",
+        "rename": "Projekt konnte nicht umbenannt werden.",
+        "delete": "Projekt konnte nicht gelöscht werden."
+      },
+      "status": {
+        "renamed": "Projekt umbenannt.",
+        "deleted": "Projekt gelöscht."
+      },
+      "signInHint": "Melden Sie sich an, um Projekte Ihres Kontos zu durchsuchen.",
+      "signIn": "Anmelden",
+      "loading": "Ihre Projekte werden geladen …",
+      "empty": "Sie haben noch keine Projekte gespeichert. Designen Sie eine Box und nutzen Sie Datei → Speichern unter, um sie hier abzulegen.",
+      "updated": "Aktualisiert {date}",
+      "open": "Öffnen",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "renameProjectTitle": "Projekt umbenennen",
+      "cancel": "Abbrechen",
+      "saving": "Speichern …",
+      "renameLead": "Anzeigenamen für dieses gespeicherte Projekt ändern.",
+      "projectName": "Projektname",
+      "renamePlaceholder": "Leer lassen, um den Namen zu entfernen",
+      "deleteProjectTitle": "Projekt löschen",
+      "deleting": "Löschen …",
+      "deleteProject": "Projekt löschen",
+      "thisProject": "dieses Projekt",
+      "deleteLead": "<strong>{project}</strong> löschen? Das kann nicht rückgängig gemacht werden.",
+      "deleteHint": "Share-Links für dieses Projekt funktionieren nach dem Löschen nicht mehr."
+    },
+    "status": {
+      "checkingAccount": "Ihr Konto wird geprüft …",
+      "previewLinkCopied": "Nur-Lese-Vorschaulink kopiert.",
+      "couldNotCopyPreviewLink": "Vorschaulink konnte nicht kopiert werden.",
+      "editorLinkCopied": "Editor-Link kopiert.",
+      "couldNotCopyEditorLink": "Editor-Link konnte nicht kopiert werden.",
+      "savingToCloud": "Design wird in der Cloud gespeichert …",
+      "namedSavedToCloud": "„{name}“ in der Cloud gespeichert.",
+      "designSavedToCloud": "Design in der Cloud gespeichert.",
+      "couldNotSaveDesign": "Design konnte nicht gespeichert werden.",
+      "autoSaveFailed": "Automatisches Speichern fehlgeschlagen.",
+      "namedSavedAndLinkCopied": "„{name}“ gespeichert und Link kopiert.",
+      "newShareLinkCreatedAndCopied": "Neuer Share-Link erstellt und kopiert.",
+      "newShareLinkCreated": "Neuer Share-Link erstellt.",
+      "couldNotCreateShareLink": "Share-Link konnte nicht erstellt werden.",
+      "renamedTo": "Umbenannt in „{name}“.",
+      "designNameCleared": "Designname entfernt.",
+      "couldNotRenameDesign": "Design konnte nicht umbenannt werden.",
+      "projectOpened": "Projekt geöffnet.",
+      "couldNotOpenProject": "Projekt konnte nicht geöffnet werden.",
+      "enterValidShareLink": "Geben Sie einen gültigen Share-Link oder eine ID ein.",
+      "designOpenedFromCloud": "Design aus der Cloud geöffnet.",
+      "couldNotOpenDesign": "Design konnte nicht geöffnet werden.",
+      "designOpenedFromRecent": "Design aus Zuletzt geöffnet geladen.",
+      "recentListCleared": "Liste Zuletzt geöffnet geleert.",
+      "jsonDownloaded": "JSON-Datei heruntergeladen (eingebettete Bilder enthalten).",
+      "couldNotExportJson": "JSON konnte nicht exportiert werden.",
+      "couldNotReadFile": "Diese Datei konnte nicht gelesen werden.",
+      "invalidJson": "Ungültiges JSON: v1-Design-Export aus diesem Studio erwartet.",
+      "importedDesignFile": "Design-Datei importiert.",
+      "newDesignStarted": "Neues Design gestartet."
+    }
+  }
+}
