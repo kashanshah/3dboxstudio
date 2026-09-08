@@ -1,3 +1,5 @@
+import { statSync } from "node:fs";
+import { resolve } from "node:path";
 import { BLOG_POSTS } from "@/content/blogPosts";
 import { hasBlogTranslation } from "@/content/blogLocales";
 import { locales, type Locale } from "@/i18n/config";
@@ -8,10 +10,8 @@ import { getSiteOrigin } from "@/lib/siteOrigin";
 
 export type SitemapEntry = {
   url: string;
-  /** Only set when we have a real content modification date (e.g. blog posts). */
+  /** Only set when we have a real content modification date. */
   lastModified?: string;
-  changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
-  priority: number;
   alternates?: Record<string, string>;
 };
 
@@ -25,6 +25,61 @@ function withXDefault(alternates: Record<string, string>, englishUrl: string): R
   return { ...alternates, "x-default": englishUrl };
 }
 
+const STATIC_ROUTE_LASTMOD_SOURCES: Partial<Record<string, string[]>> = {
+  "/": [
+    "src/views/LandingPage.tsx",
+    "src/seo/localePageMeta.ts",
+    "src/lib/seo/metadata.tsx",
+    "messages/en.json",
+    "messages/fr.generated.json",
+    "messages/es.generated.json",
+    "messages/zh.generated.json",
+    "messages/zh.manual.json",
+  ],
+  "/studio": [
+    "src/views/StudioPage.tsx",
+    "src/BoxDesigner.tsx",
+    "src/seo/localePageMeta.ts",
+    "src/lib/seo/metadata.tsx",
+    "messages/en.json",
+    "messages/fr.generated.json",
+    "messages/es.generated.json",
+    "messages/zh.generated.json",
+    "messages/zh.manual.json",
+  ],
+  "/faq": [
+    "src/views/FaqPage.tsx",
+    "src/content/faq.ts",
+    "src/lib/seo/metadata.tsx",
+  ],
+  "/blog": [
+    "src/views/BlogIndexPage.tsx",
+    "src/components/BlogExplorer.tsx",
+    "src/content/blogPosts.ts",
+    "src/lib/seo/metadata.tsx",
+  ],
+};
+
+function readLatestModified(paths: readonly string[]): string | undefined {
+  let latest = 0;
+  for (const relativePath of paths) {
+    try {
+      const mtimeMs = statSync(resolve(process.cwd(), relativePath)).mtimeMs;
+      if (Number.isFinite(mtimeMs) && mtimeMs > latest) {
+        latest = mtimeMs;
+      }
+    } catch {
+      /* ignore missing files */
+    }
+  }
+  return latest > 0 ? new Date(latest).toISOString() : undefined;
+}
+
+function staticRouteLastModified(path: string): string | undefined {
+  const sources = STATIC_ROUTE_LASTMOD_SOURCES[path];
+  return sources?.length ? readLatestModified(sources) : undefined;
+}
+
 export function buildSitemapEntries(): SitemapEntry[] {
   const origin = getSiteOrigin();
   const sitemapStaticPaths = staticPaths.filter((path) => path !== "/privacy" && path !== "/terms");
@@ -32,6 +87,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
   const staticRoutes: SitemapEntry[] = sitemapStaticPaths.flatMap((path) => {
     const pageLocales = getIndexableAlternateLocales(path);
     const englishUrl = absoluteUrl(origin, path, "en");
+    const lastModified = staticRouteLastModified(path);
     const alternates = withXDefault(
       Object.fromEntries(pageLocales.map((locale) => [locale, absoluteUrl(origin, path, locale)])),
       englishUrl,
@@ -39,22 +95,7 @@ export function buildSitemapEntries(): SitemapEntry[] {
 
     return pageLocales.map((locale) => ({
       url: absoluteUrl(origin, path, locale),
-      // No lastModified: we do not invent build-time timestamps as content dates.
-      changeFrequency: path === "/" || path === "/blog" || path === "/studio" ? "weekly" : "monthly",
-      priority:
-        locale === "en"
-          ? path === "/"
-            ? 1
-            : path === "/studio"
-              ? 0.95
-              : path === "/blog"
-                ? 0.9
-                : 0.75
-          : path === "/"
-            ? 0.9
-            : path === "/studio"
-              ? 0.85
-              : 0.7,
+      ...(lastModified ? { lastModified } : {}),
       alternates,
     }));
   });
@@ -75,8 +116,6 @@ export function buildSitemapEntries(): SitemapEntry[] {
     return articleLocales.map((locale) => ({
       url: absoluteUrl(origin, path, locale),
       lastModified: modified,
-      changeFrequency: "monthly" as const,
-      priority: locale === "en" ? 0.8 : 0.7,
       alternates,
     }));
   });
@@ -110,12 +149,7 @@ export function buildSitemapXml(entries = buildSitemapEntries()): string {
       if (entry.lastModified) {
         parts.push(`<lastmod>${escapeXml(entry.lastModified)}</lastmod>`);
       }
-      parts.push(
-        `<changefreq>${escapeXml(entry.changeFrequency)}</changefreq>`,
-        `<priority>${entry.priority.toFixed(2)}</priority>`,
-        alternateLinks,
-        "</url>",
-      );
+      parts.push(alternateLinks, "</url>");
       return parts.join("");
     })
     .join("");

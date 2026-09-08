@@ -114,17 +114,18 @@ function renderShell(eyebrow: string, title: string, body: string): string {
                   </tr>
                   <tr>
                     <td colspan="3" bgcolor="#1d4ed8" style="padding:24px 32px;color:#ffffff;">
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
                         <tr>
-                          <td valign="top" style="padding:0 16px 0 0;">
-                            <img src="${escapeHtml(logoUrl)}" alt="3D Box Studio" width="40" height="40" style="display:block;width:40px;height:40px;border:0;outline:none;text-decoration:none;" />
+                          <td width="40" style="width:40px;padding:0 12px 0 0;font-size:0;line-height:0;">
+                            <img src="${escapeHtml(logoUrl)}" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border:0;outline:none;text-decoration:none;" />
                           </td>
-                          <td valign="top" style="padding:0;color:#ffffff;">
-                            <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
-                            <div style="margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</div>
+                          <td style="padding:0;color:#ffffff;font-size:22px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;">
+                            3D Box Studio
                           </td>
                         </tr>
                       </table>
+                      <div style="margin-top:18px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
+                      <div style="margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</div>
                     </td>
                   </tr>
                 </table>

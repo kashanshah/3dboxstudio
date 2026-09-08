@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import { hasBlogTranslation } from "@/content/blogLocales";
 import { locales, type Locale } from "@/i18n/config";
 import {
+  absoluteLocalizedUrl,
   indexableLocales,
   isIndexableLocale,
   localizePath,
   type IndexableLocale,
 } from "@/i18n/localePaths";
+import { getSiteOrigin } from "@/lib/siteOrigin";
 import {
   getStaticPageAlternateLocales,
   isStaticPageTranslated,
@@ -34,11 +36,12 @@ export function buildLanguageAlternates(
   path: string,
   supportedLocales: readonly Locale[],
 ): NonNullable<Metadata["alternates"]>["languages"] {
+  const origin = getSiteOrigin();
   const languages: Record<string, string> = {};
   for (const locale of supportedLocales) {
-    languages[locale] = localizePath(path, locale);
+    languages[locale] = absoluteLocalizedUrl(origin, path, locale);
   }
-  languages["x-default"] = localizePath(path, "en");
+  languages["x-default"] = absoluteLocalizedUrl(origin, path, "en");
   return languages;
 }
 

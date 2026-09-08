@@ -176,8 +176,6 @@
                 <tr>
                   <th>URL</th>
                   <th>Last Modified</th>
-                  <th>Change</th>
-                  <th>Priority</th>
                   <th>Alternates</th>
                 </tr>
               </thead>
@@ -194,8 +192,6 @@
                       <xsl:value-of select="substring(sitemap:lastmod, 1, 19)"/>
                       <div class="muted">UTC timestamp</div>
                     </td>
-                    <td><xsl:value-of select="sitemap:changefreq"/></td>
-                    <td><xsl:value-of select="sitemap:priority"/></td>
                     <td>
                       <div class="badge-list">
                         <xsl:for-each select="xhtml:link">

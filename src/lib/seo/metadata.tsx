@@ -55,6 +55,13 @@ function resolveOgImageVersion(): string {
   return process.env.NEXT_PUBLIC_OG_IMAGE_VERSION?.trim() || "1";
 }
 
+function absoluteCanonicalUrl(pathOrUrl: string): string {
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return pathOrUrl;
+  }
+  return absoluteLocalizedUrl(getSiteOrigin(), pathOrUrl, "en");
+}
+
 function resolveStaticPagePath(path: StaticPath, locale: string) {
   const normalizedLocale = parseLocale(locale);
   const canonicalLocale = getStaticPageCanonicalLocale(normalizedLocale, path);
@@ -62,6 +69,7 @@ function resolveStaticPagePath(path: StaticPath, locale: string) {
   return {
     canonicalLocale,
     canonicalPath: localizePath(path, canonicalLocale),
+    canonicalUrl: absoluteLocalizedUrl(getSiteOrigin(), path, canonicalLocale),
     alternates,
   };
 }
@@ -151,14 +159,14 @@ function sharePageDescription(meta: ShareSeoMeta): string {
 export function createLandingMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
   const meta = getLandingPageMeta(normalized);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/", normalized);
   return {
     title: absoluteTitle(meta.title),
     description: meta.description,
     keywords: meta.keywords.split(", ").map((k) => k.trim()).filter(Boolean),
     metadataBase: new URL(getSiteOrigin()),
     robots: robotsForStaticPage(normalized, "/"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(meta.title, meta.description, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(meta.title, meta.description),
   };
@@ -167,13 +175,13 @@ export function createLandingMetadata(locale: string = "en"): Metadata {
 export function createStudioMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
   const meta = getStudioPageMeta(normalized);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/studio", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/studio", normalized);
   return {
     title: absoluteTitle(meta.title),
     description: meta.description,
     keywords: meta.keywords.split(", ").map((k) => k.trim()).filter(Boolean),
     robots: robotsForStaticPage(normalized, "/studio"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(meta.title, meta.description, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(meta.title, meta.description),
   };
@@ -196,7 +204,7 @@ export function createShareMetadata(meta: ShareSeoMeta): Metadata {
     title: absoluteTitle(title),
     description,
     keywords: SITE_KEYWORDS_META.split(", "),
-    alternates: { canonical: meta.canonicalPath },
+    alternates: { canonical: absoluteCanonicalUrl(meta.canonicalPath) },
     openGraph: buildOpenGraph(title, description, meta.canonicalPath, "website", ogImage),
     twitter: buildTwitter(title, description, meta.ogImageUrl),
   };
@@ -204,13 +212,13 @@ export function createShareMetadata(meta: ShareSeoMeta): Metadata {
 
 export function createFaqMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/faq", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/faq", normalized);
   return {
     title: absoluteTitle(FAQ_PAGE_TITLE),
     description: FAQ_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     robots: robotsForStaticPage(normalized, "/faq"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION),
   };
@@ -218,13 +226,13 @@ export function createFaqMetadata(locale: string = "en"): Metadata {
 
 export function createContactMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/contact", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/contact", normalized);
   return {
     title: absoluteTitle(CONTACT_PAGE_TITLE),
     description: CONTACT_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     robots: robotsForStaticPage(normalized, "/contact"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION),
   };
@@ -232,13 +240,13 @@ export function createContactMetadata(locale: string = "en"): Metadata {
 
 export function createPrivacyMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/privacy", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/privacy", normalized);
   return {
     title: absoluteTitle(PRIVACY_PAGE_TITLE),
     description: PRIVACY_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     robots: robotsForStaticPage(normalized, "/privacy"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION),
   };
@@ -246,13 +254,13 @@ export function createPrivacyMetadata(locale: string = "en"): Metadata {
 
 export function createTermsMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/terms", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/terms", normalized);
   return {
     title: absoluteTitle(TERMS_PAGE_TITLE),
     description: TERMS_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     robots: robotsForStaticPage(normalized, "/terms"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION),
   };
@@ -260,13 +268,13 @@ export function createTermsMetadata(locale: string = "en"): Metadata {
 
 export function createBlogIndexMetadata(locale: string = "en"): Metadata {
   const normalized = parseLocale(locale);
-  const { canonicalPath, alternates } = resolveStaticPagePath("/blog", normalized);
+  const { canonicalPath, canonicalUrl, alternates } = resolveStaticPagePath("/blog", normalized);
   return {
     title: absoluteTitle(BLOG_INDEX_TITLE),
     description: BLOG_INDEX_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
     robots: robotsForStaticPage(normalized, "/blog"),
-    alternates: { canonical: canonicalPath, languages: alternates },
+    alternates: { canonical: canonicalUrl, languages: alternates },
     openGraph: buildOpenGraph(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION),
   };
@@ -286,6 +294,7 @@ export function createBlogPostMetadata(
   const path = `/blog/${post.slug}`;
   const localizedPath = localizePath(path, localizedLocale);
   const origin = getSiteOrigin();
+  const canonicalUrl = absoluteLocalizedUrl(origin, path, localizedLocale);
   const imageUrl = getBlogPostOgImageUrl(origin, post.slug);
   const imageAlt = getBlogPostImageAlt(post);
   const ogImage = {
@@ -304,7 +313,7 @@ export function createBlogPostMetadata(
     keywords,
     robots: robotsForBlogPost(normalized, post.slug),
     alternates: {
-      canonical: localizedPath,
+      canonical: canonicalUrl,
       languages: buildBlogLanguageAlternates(post.slug),
     },
     openGraph: buildOpenGraph(
