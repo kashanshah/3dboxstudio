@@ -1,13 +1,38 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import type { AdminNotificationPreferences } from "@/server/admin/settings";
 
 type AdminSettingsPanelProps = {
   initialNotificationEmail: string;
+  initialNotificationPreferences: AdminNotificationPreferences;
 };
 
-export default function AdminSettingsPanel({ initialNotificationEmail }: AdminSettingsPanelProps) {
+const PREFERENCE_FIELDS: {
+  key: keyof AdminNotificationPreferences;
+  label: string;
+  description: string;
+}[] = [
+  { key: "signup", label: "New sign ups", description: "Alert me when a new account is created." },
+  { key: "export", label: "Exports", description: "Reserve export alert preferences for future export notifications." },
+  {
+    key: "contactMessage",
+    label: "Contact form submissions",
+    description: "Alert me when a new contact message is submitted.",
+  },
+  {
+    key: "newsletterSubmission",
+    label: "Newsletter submissions",
+    description: "Alert me when newsletter intake/subscription records are created.",
+  },
+];
+
+export default function AdminSettingsPanel({
+  initialNotificationEmail,
+  initialNotificationPreferences,
+}: AdminSettingsPanelProps) {
   const [notificationEmail, setNotificationEmail] = useState(initialNotificationEmail);
+  const [notificationPreferences, setNotificationPreferences] = useState(initialNotificationPreferences);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -22,9 +47,13 @@ export default function AdminSettingsPanel({ initialNotificationEmail }: AdminSe
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notificationEmail }),
+        body: JSON.stringify({ notificationEmail, notificationPreferences }),
       });
-      const body = (await res.json().catch(() => ({}))) as { error?: string; notificationEmail?: string };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        notificationEmail?: string;
+        notificationPreferences?: AdminNotificationPreferences;
+      };
 
       if (!res.ok) {
         setError(body.error ?? "Could not save settings.");
@@ -32,6 +61,7 @@ export default function AdminSettingsPanel({ initialNotificationEmail }: AdminSe
       }
 
       setNotificationEmail(body.notificationEmail ?? notificationEmail);
+      setNotificationPreferences(body.notificationPreferences ?? notificationPreferences);
       setSuccess("Settings saved.");
     } catch {
       setError("Could not save settings.");
@@ -62,6 +92,30 @@ export default function AdminSettingsPanel({ initialNotificationEmail }: AdminSe
             required
           />
         </label>
+
+        <fieldset className="admin-settings-group">
+          <legend>Notification alerts</legend>
+          <div className="admin-settings-toggles">
+            {PREFERENCE_FIELDS.map((field) => (
+              <label key={field.key} className="admin-settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={notificationPreferences[field.key]}
+                  onChange={(event) =>
+                    setNotificationPreferences((current) => ({
+                      ...current,
+                      [field.key]: event.target.checked,
+                    }))
+                  }
+                />
+                <span>
+                  <strong>{field.label}</strong>
+                  <small>{field.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
         <div className="admin-settings-actions">
           <button className="admin-btn" type="submit" disabled={saving}>

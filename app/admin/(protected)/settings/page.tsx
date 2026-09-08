@@ -18,7 +18,10 @@ export default async function AdminSettingsPage() {
         description="Configure admin notification delivery and preview the live email templates."
         itemName="setting"
       />
-      <AdminSettingsPanel initialNotificationEmail={settings.notificationEmail} />
+      <AdminSettingsPanel
+        initialNotificationEmail={settings.notificationEmail}
+        initialNotificationPreferences={settings.notificationPreferences}
+      />
       <AdminEmailTemplateViewer />
     </>
   );

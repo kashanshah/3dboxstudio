@@ -1,5 +1,5 @@
 import { requireEnv, optionalEnv } from "../env";
-import { getAdminSettings } from "@/server/admin/settings";
+import { getAdminSettings, isAdminNotificationEnabled } from "@/server/admin/settings";
 import {
   renderAdminContactSubmissionTemplate,
   renderAdminRegistrationTemplate,
@@ -72,6 +72,12 @@ export async function adminAlertEmail(): Promise<string> {
   return settings?.notificationEmail || optionalEnv("ADMIN_EMAIL", "kashanshah@hotmail.com");
 }
 
+async function shouldSendAdminNotification(kind: "signup" | "export" | "contactMessage" | "newsletterSubmission") {
+  const settings = await getAdminSettings().catch(() => null);
+  if (!settings) return true;
+  return isAdminNotificationEnabled(settings, kind);
+}
+
 /** Notifies the admin that a new user just registered. */
 export async function sendAdminNewRegistrationEmail(user: {
   id: string;
@@ -80,6 +86,7 @@ export async function sendAdminNewRegistrationEmail(user: {
   createdAt: string;
   attributionSummary?: string;
 }): Promise<void> {
+  if (!(await shouldSendAdminNotification("signup"))) return;
   const to = await adminAlertEmail();
   const rendered = renderAdminRegistrationTemplate(user);
   await sendEmail({
@@ -99,7 +106,9 @@ export async function sendAdminContactSubmissionEmail(submission: {
   pagePath: string | null;
   referrer: string | null;
   submittedAt: string;
+  kind?: "contactMessage" | "newsletterSubmission";
 }): Promise<void> {
+  if (!(await shouldSendAdminNotification(submission.kind ?? "contactMessage"))) return;
   const to = await adminAlertEmail();
   const rendered = renderAdminContactSubmissionTemplate(submission);
   await sendEmail({
