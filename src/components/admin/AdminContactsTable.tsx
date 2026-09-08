@@ -11,6 +11,7 @@ import {
 } from "@/lib/adminListQuery";
 import AdminListToolbar from "./AdminListToolbar";
 import AdminContactReplyComposer from "./AdminContactReplyComposer";
+import AdminDeleteSubmissionButton from "./AdminDeleteSubmissionButton";
 import AdminSubmissionDetailsButton from "./AdminSubmissionDetailsButton";
 import AdminSortHeader from "./AdminSortHeader";
 
@@ -168,6 +169,7 @@ export default function AdminContactsTable({
                       <div className="admin-row-actions">
                         <AdminSubmissionDetailsButton submission={item} />
                         {item.kind === "contact_message" ? <AdminContactReplyComposer submission={item} /> : null}
+                        <AdminDeleteSubmissionButton submission={item} />
                       </div>
                     </td>
                   </tr>

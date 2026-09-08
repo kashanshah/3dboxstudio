@@ -69,3 +69,13 @@ export async function createContactSubmission(input: CreateContactSubmissionInpu
   `) as { created_at: string }[];
   return { id, createdAt: rows[0]?.created_at ?? new Date().toISOString() };
 }
+
+export async function deleteContactSubmission(id: string): Promise<boolean> {
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM contact_submissions
+    WHERE id = ${id}
+    RETURNING id
+  `) as { id: string }[];
+  return rows.length > 0;
+}
