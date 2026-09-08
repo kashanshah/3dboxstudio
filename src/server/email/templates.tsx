@@ -103,41 +103,51 @@ function renderShell(eyebrow: string, title: string, body: string): string {
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
       <tr>
         <td align="center">
-          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="640" style="width:100%;max-width:640px;border-collapse:separate;background-color:#ffffff;border:1px solid #dbe4ff;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(37,99,235,0.10);">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="640" style="width:100%;max-width:640px;border-collapse:collapse;">
             <tr>
-              <td style="padding:0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+              <td align="center" style="padding:0 0 16px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
                   <tr>
-                    <td width="32%" height="8" bgcolor="#1d4ed8" style="font-size:0;line-height:0;">&nbsp;</td>
-                    <td width="36%" height="8" bgcolor="#2563eb" style="font-size:0;line-height:0;">&nbsp;</td>
-                    <td width="32%" height="8" bgcolor="#60a5fa" style="font-size:0;line-height:0;">&nbsp;</td>
-                  </tr>
-                  <tr>
-                    <td colspan="3" bgcolor="#1d4ed8" style="padding:24px 32px;color:#ffffff;">
-                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
-                        <tr>
-                          <td width="40" style="width:40px;padding:0 12px 0 0;font-size:0;line-height:0;">
-                            <img src="${escapeHtml(logoUrl)}" alt="" width="28" height="28" style="display:block;width:28px;height:28px;border:0;outline:none;text-decoration:none;" />
-                          </td>
-                          <td style="padding:0;color:#ffffff;font-size:22px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;">
-                            3D Box Studio
-                          </td>
-                        </tr>
-                      </table>
-                      <div style="margin-top:18px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
-                      <div style="margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</div>
+                    <td width="64" style="width:64px;padding:0 8px 0 0;font-size:0;line-height:0;">
+                      <img src="${escapeHtml(logoUrl)}" alt="" width="64" height="64" style="display:block;width:64px;height:64px;border:0;outline:none;text-decoration:none;" />
+                    </td>
+                    <td style="padding:0;color:#0f172a;font-size:24px;line-height:1.1;font-weight:800;letter-spacing:-0.03em;">
+                      3D Box Studio
                     </td>
                   </tr>
                 </table>
               </td>
             </tr>
             <tr>
-              <td style="padding:28px 32px 20px;font-size:15px;line-height:1.65;">
-                ${body}
+              <td>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="width:100%;border-collapse:separate;background-color:#ffffff;border:1px solid #dbe4ff;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(37,99,235,0.10);">
+                  <tr>
+                    <td style="padding:0;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse:collapse;">
+                        <tr>
+                          <td width="32%" height="8" bgcolor="#1d4ed8" style="font-size:0;line-height:0;">&nbsp;</td>
+                          <td width="36%" height="8" bgcolor="#2563eb" style="font-size:0;line-height:0;">&nbsp;</td>
+                          <td width="32%" height="8" bgcolor="#60a5fa" style="font-size:0;line-height:0;">&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" bgcolor="#1d4ed8" style="padding:24px 32px;color:#ffffff;">
+                            <div style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.88;">${escapeHtml(eyebrow)}</div>
+                            <div style="margin-top:8px;font-size:28px;line-height:1.2;font-weight:700;">${escapeHtml(title)}</div>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:28px 32px 20px;font-size:15px;line-height:1.65;">
+                      ${body}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</td>
+                  </tr>
+                </table>
               </td>
-            </tr>
-            <tr>
-              <td style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</td>
             </tr>
           </table>
         </td>
