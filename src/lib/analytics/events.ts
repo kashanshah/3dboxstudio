@@ -1,8 +1,9 @@
-import { trackEvent } from "./core";
+import { getAnalyticsPathname, trackEvent } from "./core";
 import { consumeStudioEntryContext, storeStudioCtaContext } from "./entryContext";
 import {
   fileSizeBucket,
   fileTypeFromMime,
+  pathnameToLocale,
   pathnameToPageType,
   pathnameToSourcePageType,
   sanitizeBoxType,
@@ -48,12 +49,17 @@ type StudioContextParams = {
   userStatus?: UserStatus;
 };
 
+function currentAnalyticsLocale(): string {
+  return pathnameToLocale(getAnalyticsPathname());
+}
+
 function studioParams(ctx: StudioContextParams = {}): Record<string, string> {
   const out: Record<string, string> = {};
   if (ctx.templateType) out.template_type = sanitizeTemplateType(String(ctx.templateType));
   if (ctx.boxType) out.box_type = sanitizeBoxType(String(ctx.boxType));
   const status = ctx.userStatus ?? userStatusFromAuth(ctx.user);
   out.user_status = status;
+  out.locale = currentAnalyticsLocale();
   return out;
 }
 
@@ -91,6 +97,7 @@ function contactFormParams(ctx: ContactFormContext): Record<string, string | boo
 export function trackSignup(params: SignupAnalyticsParams): void {
   trackEvent("sign_up", {
     method: params.method,
+    locale: currentAnalyticsLocale(),
     ...(params.utmSource ? { campaign_source: params.utmSource } : {}),
     ...(params.utmMedium ? { campaign_medium: params.utmMedium } : {}),
     ...(params.utmCampaign ? { campaign_name: params.utmCampaign } : {}),

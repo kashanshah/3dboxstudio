@@ -38,6 +38,7 @@ export {
   storeLastPageContext,
   buildCtaContextFromPath,
   resetDesignSession,
+  pathnameToLocale,
   pathnameToPageType,
   pathnameToSourcePageType,
   slugFromPath,

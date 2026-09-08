@@ -1,6 +1,3 @@
-/**
- * @vitest-environment jsdom
- */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetGtagForTesting } from "@/lib/analytics/gtag";
 
@@ -8,6 +5,13 @@ type GtagWindow = Window & {
   dataLayer?: IArguments[];
   gtag?: (...args: unknown[]) => void;
 };
+
+function createBrowserWindow(pathname: string): GtagWindow {
+  return {
+    location: { pathname, href: `https://www.3dboxstudio.com${pathname}` },
+    dataLayer: [],
+  } as unknown as GtagWindow;
+}
 
 function asGtagWindow(win: Window = window): GtagWindow {
   return win as GtagWindow;
@@ -26,15 +30,16 @@ describe("gtag browser integration", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("NEXT_PUBLIC_GA_MEASUREMENT_ID", "G-TEST123");
     vi.stubEnv("NEXT_PUBLIC_ANALYTICS_DEBUG", "false");
+    vi.stubGlobal("window", createBrowserWindow("/studio"));
     resetGtagForTesting();
     delete asGtagWindow().dataLayer;
     delete asGtagWindow().gtag;
-    window.history.replaceState({}, "", "/studio");
   });
 
   afterEach(() => {
     resetGtagForTesting();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
   it("uses the Google-compatible arguments queue and orders init before events", async () => {
@@ -70,14 +75,14 @@ describe("gtag browser integration", () => {
   });
 
   it("does not enqueue events on admin routes", async () => {
-    window.history.replaceState({}, "", "/admin/users");
+    vi.stubGlobal("window", createBrowserWindow("/admin/users"));
     const { trackEvent } = await import("@/lib/analytics/core");
     const { trackPageView } = await import("@/lib/analytics/pageview");
 
     trackPageView("/admin/users");
     trackEvent("export_completed", { export_format: "png" });
 
-    expect(asGtagWindow().dataLayer).toBeUndefined();
+    expect(asGtagWindow().dataLayer ?? []).toHaveLength(0);
     expect(asGtagWindow().gtag).toBeUndefined();
   });
 
@@ -99,12 +104,12 @@ describe("gtag browser integration", () => {
     expect(exportCalls[0]).toEqual([
       "event",
       "export_clicked",
-      expect.objectContaining({ export_format: "png", user_status: "guest" }),
+      expect.objectContaining({ export_format: "png", user_status: "guest", locale: "en" }),
     ]);
     expect(exportCalls[1]).toEqual([
       "event",
       "export_completed",
-      expect.objectContaining({ export_format: "png", user_status: "guest" }),
+      expect.objectContaining({ export_format: "png", user_status: "guest", locale: "en" }),
     ]);
   });
 });

@@ -39,6 +39,7 @@ export {
   buildCtaContextFromPath,
 } from "./entryContext";
 export {
+  pathnameToLocale,
   pathnameToPageType,
   pathnameToSourcePageType,
   slugFromPath,

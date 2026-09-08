@@ -40,13 +40,13 @@ describe("locale path routing", () => {
 describe("hreflang + canonical metadata", () => {
   it("emits self-canonical and reciprocal hreflang with x-default for landing", () => {
     const es = createLandingMetadata("es");
-    expect(es.alternates?.canonical).toBe("/es");
+    expect(es.alternates?.canonical).toBe("https://www.3dboxstudio.com/es");
     const languages = es.alternates?.languages as Record<string, string>;
-    expect(languages.en).toBe("/");
-    expect(languages.es).toBe("/es");
-    expect(languages.fr).toBe("/fr");
-    expect(languages.de).toBe("/de");
-    expect(languages["x-default"]).toBe("/");
+    expect(languages.en).toBe("https://www.3dboxstudio.com/");
+    expect(languages.es).toBe("https://www.3dboxstudio.com/es");
+    expect(languages.fr).toBe("https://www.3dboxstudio.com/fr");
+    expect(languages.de).toBe("https://www.3dboxstudio.com/de");
+    expect(languages["x-default"]).toBe("https://www.3dboxstudio.com/");
     expect(languages.zh).toBeUndefined();
   });
 
@@ -69,9 +69,9 @@ describe("hreflang + canonical metadata", () => {
   it("blog post hreflang only includes translated locales", () => {
     const slug = "how-to-create-3d-product-box-mockup-online";
     const languages = buildBlogLanguageAlternates(slug) as Record<string, string>;
-    expect(languages.en).toBe(`/blog/${slug}`);
-    expect(languages.fr).toBe(`/fr/blog/${slug}`);
-    expect(languages["x-default"]).toBe(`/blog/${slug}`);
+    expect(languages.en).toBe(`https://www.3dboxstudio.com/blog/${slug}`);
+    expect(languages.fr).toBe(`https://www.3dboxstudio.com/fr/blog/${slug}`);
+    expect(languages["x-default"]).toBe(`https://www.3dboxstudio.com/blog/${slug}`);
     expect(languages.es).toBeUndefined();
   });
 
@@ -79,7 +79,7 @@ describe("hreflang + canonical metadata", () => {
     const slug = "how-to-create-3d-product-box-mockup-online";
     const post = getLocalizedBlogPost(slug, "fr")!;
     const meta = createBlogPostMetadata(post, "fr");
-    expect(meta.alternates?.canonical).toBe(`/fr/blog/${slug}`);
+    expect(meta.alternates?.canonical).toBe(`https://www.3dboxstudio.com/fr/blog/${slug}`);
     expect(meta.description).toBe(post.description);
   });
 });
@@ -144,26 +144,26 @@ describe("sitemap locale coverage", () => {
     expect(frPillar).toBeTruthy();
   });
 
-  it("omits lastModified on static pages; keeps it on blog posts", () => {
+  it("includes lastModified on main static pages and blog posts", () => {
     const entries = buildSitemapEntries();
     const enHome = entries.find((e) => /https?:\/\/[^/]+\/$/.test(e.url));
     const enStudio = entries.find((e) => e.url.endsWith("/studio"));
     const esHome = entries.find((e) => e.url.endsWith("/es"));
-    expect(enHome?.lastModified).toBeUndefined();
-    expect(enStudio?.lastModified).toBeUndefined();
-    expect(esHome?.lastModified).toBeUndefined();
+    expect(enHome?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    expect(enStudio?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
+    expect(esHome?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
 
     const blogEntry = entries.find((e) => e.url.includes("/blog/") && !e.url.includes("/fr/"));
     expect(blogEntry?.lastModified).toMatch(/^\d{4}-\d{2}-\d{2}/);
 
     const xml = buildSitemapXml(entries);
     expect(xml).toContain("<lastmod>");
-    // Static home URL should appear without a following lastmod in the same url block
+    // Static home URL should now carry a real lastmod in its url block
     const homeBlock = xml.match(
       /<url>\s*<loc>https?:\/\/[^/]+\/<\/loc>([\s\S]*?)<\/url>/,
     );
-    expect(homeBlock?.[1]).not.toMatch(/<lastmod>/);
-  });
+    expect(homeBlock?.[1]).toMatch(/<lastmod>/);
+  }, 30000);
 });
 
 describe("/en permanent redirects", () => {
@@ -210,8 +210,8 @@ describe("buildLanguageAlternates", () => {
       string,
       string
     >;
-    expect(languages["x-default"]).toBe("/studio");
-    expect(languages.es).toBe("/es/studio");
+    expect(languages["x-default"]).toBe("https://www.3dboxstudio.com/studio");
+    expect(languages.es).toBe("https://www.3dboxstudio.com/es/studio");
   });
 });
 

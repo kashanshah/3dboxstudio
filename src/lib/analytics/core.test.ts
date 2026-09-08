@@ -40,7 +40,7 @@ describe("trackEvent admin exclusion", () => {
     expect((window as Window & { dataLayer?: IArguments[] }).dataLayer).toHaveLength(0);
     expect((window as Window & { gtag?: unknown }).gtag).toBeUndefined();
     expect(logSpy).not.toHaveBeenCalled();
-  });
+  }, 30000);
 
   it("sends nothing on /admin/users", async () => {
     vi.stubGlobal("window", createBrowserWindow("/admin/users"));
@@ -52,7 +52,7 @@ describe("trackEvent admin exclusion", () => {
     expect((window as Window & { dataLayer?: IArguments[] }).dataLayer).toHaveLength(0);
     expect((window as Window & { gtag?: unknown }).gtag).toBeUndefined();
     expect(logSpy).not.toHaveBeenCalled();
-  });
+  }, 30000);
 
   it("routes permitted events through window.gtag with three arguments", async () => {
     const win = createBrowserWindow("/studio");

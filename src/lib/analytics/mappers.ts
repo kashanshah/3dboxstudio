@@ -1,5 +1,6 @@
 import type { FaceId } from "@/types";
 import { BOX_TEMPLATES } from "@/boxTemplates";
+import { locales } from "@/i18n/config";
 import type {
   BoxType,
   ExportFormat,
@@ -77,6 +78,15 @@ export function pathnameToSourcePageType(pathname: string): SourcePageType {
   if (path.startsWith("/blog/")) return "guide";
   if (path === "/faq" || path === "/contact") return "landing_page";
   return "other";
+}
+
+export function pathnameToLocale(pathname: string): string {
+  const path = pathname.split("?")[0] || "/";
+  for (const locale of locales) {
+    if (locale === "en") continue;
+    if (path === `/${locale}` || path.startsWith(`/${locale}/`)) return locale;
+  }
+  return "en";
 }
 
 export function pathnameToEntryPoint(pathname: string): StudioEntryPoint {

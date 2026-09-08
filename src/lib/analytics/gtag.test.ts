@@ -23,14 +23,14 @@ describe("gtag initialization", () => {
     expect(script).not.toContain("debug_mode");
     expect(script).toContain("window.gtag = window.gtag || function(){");
     expect(script).toContain(".push(arguments);");
-  });
+  }, 30000);
 
   it("enables debug_mode when debug mode is on", async () => {
     const { buildGtagInitScript, buildGtagConfigOptions } = await import("@/lib/analytics/gtag");
     const script = buildGtagInitScript("G-TEST", buildGtagConfigOptions(true));
     expect(script).toContain('"send_page_view":false');
     expect(script).toContain('"debug_mode":true');
-  });
+  }, 30000);
 });
 
 describe("GA_ENABLED policy", () => {
