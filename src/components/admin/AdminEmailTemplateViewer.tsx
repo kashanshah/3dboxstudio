@@ -31,7 +31,9 @@ export default function AdminEmailTemplateViewer() {
 
         if (!res.ok) throw new Error(body.error ?? "Could not load email templates.");
         if (!cancelled) {
-          setTemplates(body.items ?? []);
+          const items = body.items ?? [];
+          setTemplates(items);
+          setSelectedId((current) => current ?? items[0]?.id ?? null);
           setError(null);
         }
       } catch (e) {

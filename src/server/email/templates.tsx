@@ -144,7 +144,12 @@ function renderShell(eyebrow: string, title: string, body: string): string {
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;">3D Box Studio</td>
+                    <td style="padding:0 32px 28px;color:#64748b;font-size:12px;line-height:1.6;text-align:center;">
+                      <hr style="border:0;border-top:1px solid #e2e8f0;margin:16px 0;" />
+                      <p style="margin:0;text-align:center;">
+                        <span>www.3dboxstudio.com</span>
+                      </p>
+                    </td>
                   </tr>
                 </table>
               </td>
