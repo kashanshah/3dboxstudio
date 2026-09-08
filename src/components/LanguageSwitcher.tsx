@@ -103,7 +103,8 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
       )}
       <select
         className="language-switcher__native"
-        aria-label={t("label")}
+        aria-hidden="true"
+        tabIndex={-1}
         value={locale}
         onChange={(e) => {
           const next = e.target.value as Locale;
