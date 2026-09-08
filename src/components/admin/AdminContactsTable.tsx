@@ -11,6 +11,7 @@ import {
 } from "@/lib/adminListQuery";
 import AdminListToolbar from "./AdminListToolbar";
 import AdminContactReplyComposer from "./AdminContactReplyComposer";
+import AdminSubmissionDetailsButton from "./AdminSubmissionDetailsButton";
 import AdminSortHeader from "./AdminSortHeader";
 
 type AdminContactsTableProps = {
@@ -164,7 +165,10 @@ export default function AdminContactsTable({
                     </td>
                     <td>{formatAdminDateTime(item.createdAt)}</td>
                     <td>
-                      {item.kind === "contact_message" ? <AdminContactReplyComposer submission={item} /> : "—"}
+                      <div className="admin-row-actions">
+                        <AdminSubmissionDetailsButton submission={item} />
+                        {item.kind === "contact_message" ? <AdminContactReplyComposer submission={item} /> : null}
+                      </div>
                     </td>
                   </tr>
                 ))

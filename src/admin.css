@@ -502,6 +502,10 @@
   max-width: 34ch;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
 }
 
 .admin-template-grid {
@@ -690,6 +694,13 @@
   min-width: 280px;
 }
 
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
 .admin-reply-feedback {
   margin-top: 0.6rem;
 }
@@ -798,6 +809,59 @@
 .admin-reply-actions .admin-muted {
   flex-basis: 100%;
   margin: 0;
+}
+
+.admin-submission-details {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.admin-submission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem 1rem;
+}
+
+.admin-submission-grid-span {
+  grid-column: 1 / -1;
+}
+
+.admin-submission-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-submission-grid p {
+  margin: 0;
+}
+
+.admin-submission-break {
+  overflow-wrap: anywhere;
+}
+
+.admin-submission-message-card {
+  padding: 0.95rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.admin-submission-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+@media (max-width: 760px) {
+  .admin-submission-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .admin-rich-editor {
