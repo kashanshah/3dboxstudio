@@ -27,8 +27,9 @@ function withXDefault(alternates: Record<string, string>, englishUrl: string): R
 
 export function buildSitemapEntries(): SitemapEntry[] {
   const origin = getSiteOrigin();
+  const sitemapStaticPaths = staticPaths.filter((path) => path !== "/privacy" && path !== "/terms");
 
-  const staticRoutes: SitemapEntry[] = staticPaths.flatMap((path) => {
+  const staticRoutes: SitemapEntry[] = sitemapStaticPaths.flatMap((path) => {
     const pageLocales = getIndexableAlternateLocales(path);
     const englishUrl = absoluteUrl(origin, path, "en");
     const alternates = withXDefault(
