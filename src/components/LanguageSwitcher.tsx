@@ -4,11 +4,13 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { locales, localeNames, type Locale } from "@/i18n/config";
+import { resolveLanguageSwitcherPath } from "@/i18n/seoPolicy";
 
 const localeFlags: Record<Locale, string> = {
   en: "🇺🇸",
   fr: "🇫🇷",
   es: "🇪🇸",
+  de: "🇩🇪",
   zh: "🇨🇳",
 };
 
@@ -59,6 +61,12 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
   const currentLabel = localeNames[locale] ?? t(locale);
   const currentFlag = localeFlags[locale];
 
+  const switchTo = (next: Locale) => {
+    if (next === locale) return;
+    const targetPath = resolveLanguageSwitcherPath(pathname, next);
+    router.replace(targetPath, { locale: next });
+  };
+
   return (
     <div className={`language-switcher ${className}`.trim()} ref={rootRef}>
       <span className="visually-hidden">{t("label")}</span>
@@ -88,9 +96,7 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
               className={`language-switcher__option${locale === code ? " is-active" : ""}`}
               onClick={() => {
                 setOpen(false);
-                if (code === locale) return;
-                const next = code as Locale;
-                router.replace(pathname, { locale: next });
+                switchTo(code);
               }}
             >
               <span className="language-switcher__flag" aria-hidden>
@@ -107,8 +113,7 @@ export default function LanguageSwitcher({ className = "" }: LanguageSwitcherPro
         tabIndex={-1}
         value={locale}
         onChange={(e) => {
-          const next = e.target.value as Locale;
-          router.replace(pathname, { locale: next });
+          switchTo(e.target.value as Locale);
         }}
       >
         {locales.map((code) => (

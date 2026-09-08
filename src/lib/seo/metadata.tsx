@@ -19,26 +19,27 @@ import { hasBlogTranslation } from "@/content/blogLocales";
 import { displayShareLabel } from "@/lib/shareName";
 import {
   buildLandingJsonLd,
-  LANDING_DESCRIPTION,
-  LANDING_KEYWORDS,
   LANDING_OG_IMAGE_ALT,
   LANDING_OG_IMAGE_HEIGHT,
   LANDING_OG_IMAGE_PATH,
   LANDING_OG_IMAGE_TYPE,
   LANDING_OG_IMAGE_WIDTH,
-  LANDING_TITLE,
 } from "@/seo/landingHead";
 import { buildFaqJsonLd } from "@/seo/faqHead";
-import {
-  STUDIO_DESCRIPTION,
-  STUDIO_KEYWORDS,
-  STUDIO_TITLE,
-  buildStudioJsonLd,
-} from "@/seo/studioHead";
+import { buildStudioJsonLd } from "@/seo/studioHead";
+import { getLandingPageMeta, getStudioPageMeta } from "@/seo/localePageMeta";
 import { SITE_KEYWORDS_META } from "@/seo/siteKeywords";
 import { locales, type Locale } from "@/i18n/config";
+import { absoluteLocalizedUrl, localeOgLocale, localizePath } from "@/i18n/localePaths";
 import {
-  getStaticPageAlternateLocales,
+  buildBlogLanguageAlternates,
+  buildLanguageAlternates,
+  getIndexableAlternateLocales,
+  parseLocale,
+  robotsForBlogPost,
+  robotsForStaticPage,
+} from "@/i18n/seoPolicy";
+import {
   getStaticPageCanonicalLocale,
   isStaticPageTranslated,
   type StaticPath,
@@ -54,39 +55,15 @@ function resolveOgImageVersion(): string {
   return process.env.NEXT_PUBLIC_OG_IMAGE_VERSION?.trim() || "1";
 }
 
-function localizePath(path: string, locale: string = "en"): string {
-  if (locale === "en") return path;
-  if (path === "/") return `/${locale}`;
-  return `/${locale}${path}`;
-}
-
-function localizedAlternates(
-  path: string,
-  supportedLocales: readonly Locale[] = locales,
-): NonNullable<Metadata["alternates"]>["languages"] {
-  return Object.fromEntries(
-    supportedLocales.map((locale) => [locale, localizePath(path, locale)]),
-  );
-}
-
 function resolveStaticPagePath(path: StaticPath, locale: string) {
-  const normalizedLocale = (locales as readonly string[]).includes(locale) ? (locale as Locale) : "en";
+  const normalizedLocale = parseLocale(locale);
   const canonicalLocale = getStaticPageCanonicalLocale(normalizedLocale, path);
-  const alternates = localizedAlternates(path, getStaticPageAlternateLocales(path));
+  const alternates = buildLanguageAlternates(path, getIndexableAlternateLocales(path));
   return {
     canonicalLocale,
     canonicalPath: localizePath(path, canonicalLocale),
     alternates,
   };
-}
-
-function localizedBlogAlternates(slug: string): NonNullable<Metadata["alternates"]>["languages"] {
-  const path = `/blog/${slug}`;
-  return Object.fromEntries(
-    locales
-      .filter((locale) => locale === "en" || hasBlogTranslation(locale, slug))
-      .map((locale) => [locale, localizePath(path, locale)]),
-  );
 }
 
 export function getOgImageUrl(origin: string): string {
@@ -115,6 +92,7 @@ function buildOpenGraph(
     type?: string;
   } | null,
   article?: { publishedTime: string; modifiedTime: string },
+  locale: Locale = "en",
 ): Metadata["openGraph"] {
   const origin = getSiteOrigin();
   const imageUrl = image?.url ?? getOgImageUrl(origin);
@@ -122,6 +100,7 @@ function buildOpenGraph(
     title,
     description,
     type,
+    locale: localeOgLocale[locale],
     url: `${origin}${path}`,
     images: [
       {
@@ -170,27 +149,33 @@ function sharePageDescription(meta: ShareSeoMeta): string {
 }
 
 export function createLandingMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/", locale);
+  const normalized = parseLocale(locale);
+  const meta = getLandingPageMeta(normalized);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/", normalized);
   return {
-    title: absoluteTitle(LANDING_TITLE),
-    description: LANDING_DESCRIPTION,
-    keywords: LANDING_KEYWORDS.split(", "),
+    title: absoluteTitle(meta.title),
+    description: meta.description,
+    keywords: meta.keywords.split(", ").map((k) => k.trim()).filter(Boolean),
     metadataBase: new URL(getSiteOrigin()),
+    robots: robotsForStaticPage(normalized, "/"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(LANDING_TITLE, LANDING_DESCRIPTION, canonicalPath),
-    twitter: buildTwitter(LANDING_TITLE, LANDING_DESCRIPTION),
+    openGraph: buildOpenGraph(meta.title, meta.description, canonicalPath, "website", null, undefined, normalized),
+    twitter: buildTwitter(meta.title, meta.description),
   };
 }
 
 export function createStudioMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/studio", locale);
+  const normalized = parseLocale(locale);
+  const meta = getStudioPageMeta(normalized);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/studio", normalized);
   return {
-    title: absoluteTitle(STUDIO_TITLE),
-    description: STUDIO_DESCRIPTION,
-    keywords: STUDIO_KEYWORDS.split(", "),
+    title: absoluteTitle(meta.title),
+    description: meta.description,
+    keywords: meta.keywords.split(", ").map((k) => k.trim()).filter(Boolean),
+    robots: robotsForStaticPage(normalized, "/studio"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(STUDIO_TITLE, STUDIO_DESCRIPTION, canonicalPath),
-    twitter: buildTwitter(STUDIO_TITLE, STUDIO_DESCRIPTION),
+    openGraph: buildOpenGraph(meta.title, meta.description, canonicalPath, "website", null, undefined, normalized),
+    twitter: buildTwitter(meta.title, meta.description),
   };
 }
 
@@ -218,61 +203,71 @@ export function createShareMetadata(meta: ShareSeoMeta): Metadata {
 }
 
 export function createFaqMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/faq", locale);
+  const normalized = parseLocale(locale);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/faq", normalized);
   return {
     title: absoluteTitle(FAQ_PAGE_TITLE),
     description: FAQ_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
+    robots: robotsForStaticPage(normalized, "/faq"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION, canonicalPath),
+    openGraph: buildOpenGraph(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(FAQ_PAGE_TITLE, FAQ_PAGE_DESCRIPTION),
   };
 }
 
 export function createContactMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/contact", locale);
+  const normalized = parseLocale(locale);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/contact", normalized);
   return {
     title: absoluteTitle(CONTACT_PAGE_TITLE),
     description: CONTACT_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
+    robots: robotsForStaticPage(normalized, "/contact"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION, canonicalPath),
+    openGraph: buildOpenGraph(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(CONTACT_PAGE_TITLE, CONTACT_PAGE_DESCRIPTION),
   };
 }
 
 export function createPrivacyMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/privacy", locale);
+  const normalized = parseLocale(locale);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/privacy", normalized);
   return {
     title: absoluteTitle(PRIVACY_PAGE_TITLE),
     description: PRIVACY_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
+    robots: robotsForStaticPage(normalized, "/privacy"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION, canonicalPath),
+    openGraph: buildOpenGraph(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(PRIVACY_PAGE_TITLE, PRIVACY_PAGE_DESCRIPTION),
   };
 }
 
 export function createTermsMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/terms", locale);
+  const normalized = parseLocale(locale);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/terms", normalized);
   return {
     title: absoluteTitle(TERMS_PAGE_TITLE),
     description: TERMS_PAGE_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
+    robots: robotsForStaticPage(normalized, "/terms"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION, canonicalPath),
+    openGraph: buildOpenGraph(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(TERMS_PAGE_TITLE, TERMS_PAGE_DESCRIPTION),
   };
 }
 
 export function createBlogIndexMetadata(locale: string = "en"): Metadata {
-  const { canonicalPath, alternates } = resolveStaticPagePath("/blog", locale);
+  const normalized = parseLocale(locale);
+  const { canonicalPath, alternates } = resolveStaticPagePath("/blog", normalized);
   return {
     title: absoluteTitle(BLOG_INDEX_TITLE),
     description: BLOG_INDEX_DESCRIPTION,
     keywords: SITE_KEYWORDS_META.split(", "),
+    robots: robotsForStaticPage(normalized, "/blog"),
     alternates: { canonical: canonicalPath, languages: alternates },
-    openGraph: buildOpenGraph(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION, canonicalPath),
+    openGraph: buildOpenGraph(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION, canonicalPath, "website", null, undefined, normalized),
     twitter: buildTwitter(BLOG_INDEX_TITLE, BLOG_INDEX_DESCRIPTION),
   };
 }
@@ -281,8 +276,9 @@ export function createBlogPostMetadata(
   post: BlogPost,
   locale: string = "en"
 ): Metadata {
-  const localizedLocale =
-    locale !== "en" && hasBlogTranslation(locale as Locale, post.slug) ? locale : "en";
+  const normalized = parseLocale(locale);
+  const hasTranslation = normalized === "en" || hasBlogTranslation(normalized, post.slug);
+  const localizedLocale = hasTranslation ? normalized : "en";
   const seoTitle = post.seoTitle ?? post.title;
   const title = post.seoTitle
     ? `${post.seoTitle} | 3D Box Studio`
@@ -306,24 +302,44 @@ export function createBlogPostMetadata(
     title: absoluteTitle(title),
     description: post.description,
     keywords,
+    robots: robotsForBlogPost(normalized, post.slug),
     alternates: {
       canonical: localizedPath,
-      languages: localizedBlogAlternates(post.slug),
+      languages: buildBlogLanguageAlternates(post.slug),
     },
-    openGraph: buildOpenGraph(seoTitle, post.description, localizedPath, "article", ogImage, {
-      publishedTime: post.published,
-      modifiedTime: post.updated ?? post.published,
-    }),
+    openGraph: buildOpenGraph(
+      seoTitle,
+      post.description,
+      localizedPath,
+      "article",
+      ogImage,
+      {
+        publishedTime: post.published,
+        modifiedTime: post.updated ?? post.published,
+      },
+      localizedLocale,
+    ),
     twitter: buildTwitter(seoTitle, post.description, imageUrl),
   };
 }
 
-export function LandingJsonLd() {
+export function LandingJsonLd({ locale = "en" }: { locale?: string }) {
+  const normalized = parseLocale(locale);
   const origin = getSiteOrigin();
+  const meta = getLandingPageMeta(normalized);
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(buildLandingJsonLd(origin)) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(
+          buildLandingJsonLd(origin, {
+            locale: normalized,
+            description: meta.description,
+            homeUrl: absoluteLocalizedUrl(origin, "/", normalized),
+            studioUrl: absoluteLocalizedUrl(origin, "/studio", normalized),
+          }),
+        ),
+      }}
     />
   );
 }
@@ -341,12 +357,21 @@ export function FaqJsonLd({ locale = "en" }: { locale?: string }) {
   );
 }
 
-export function StudioJsonLd() {
+export function StudioJsonLd({ locale = "en" }: { locale?: string }) {
+  const normalized = parseLocale(locale);
   const origin = getSiteOrigin();
+  const meta = getStudioPageMeta(normalized);
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStudioJsonLd(origin)) }}
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(
+          buildStudioJsonLd(origin, {
+            description: meta.description,
+            url: absoluteLocalizedUrl(origin, "/studio", normalized),
+          }),
+        ),
+      }}
     />
   );
 }
@@ -381,11 +406,21 @@ export function BlogIndexJsonLd({ locale = "en" }: { locale?: string }) {
   );
 }
 
-export function BlogPostJsonLd({ post }: { post: BlogPost }) {
+export function BlogPostJsonLd({
+  post,
+  locale = "en",
+}: {
+  post: BlogPost;
+  locale?: string;
+}) {
+  const normalized = parseLocale(locale);
+  const hasTranslation = normalized === "en" || hasBlogTranslation(normalized, post.slug);
+  const localizedLocale = hasTranslation ? normalized : "en";
   const origin = getSiteOrigin();
-  const url = `${origin}/blog/${post.slug}`;
+  const url = absoluteLocalizedUrl(origin, `/blog/${post.slug}`, localizedLocale);
   const blogPosting = {
     "@type": "BlogPosting",
+    inLanguage: localizedLocale,
     headline: post.title,
     description: post.description,
     datePublished: post.published,

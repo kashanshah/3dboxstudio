@@ -200,10 +200,15 @@ export function trackStudioError(errorCategory: StudioErrorCategory, stage: Stud
 }
 
 /** Supplementary route context — paired with explicit page_view from AnalyticsPageView. */
-export function trackPageContext(pagePath: string, pageType: string): void {
+export function trackPageContext(
+  pagePath: string,
+  pageType: string,
+  extras: { locale?: string } = {},
+): void {
   trackEvent("page_context", {
     page_path: pagePath,
     page_type: pageType,
+    ...(extras.locale ? { locale: extras.locale } : {}),
   });
 }
 

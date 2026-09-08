@@ -19,10 +19,11 @@ describe("mergeMessages", () => {
 });
 
 describe("stripLocalePrefix", () => {
-  it("strips French prefix for analytics helpers", () => {
+  it("strips locale prefixes for analytics helpers", () => {
     expect(stripLocalePrefix("/fr")).toBe("/");
     expect(stripLocalePrefix("/fr/studio")).toBe("/studio");
-    expect(stripLocalePrefix("/fr/blog/foo")).toBe("/blog/foo");
+    expect(stripLocalePrefix("/es/blog/foo")).toBe("/blog/foo");
+    expect(stripLocalePrefix("/de")).toBe("/");
     expect(stripLocalePrefix("/studio")).toBe("/studio");
   });
 });

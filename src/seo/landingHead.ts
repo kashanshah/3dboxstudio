@@ -68,20 +68,32 @@ function applyLandingSocialMeta(
   setMeta(doc, "twitter:image", imageUrl);
 }
 
-export function buildLandingJsonLd(origin: string) {
+export function buildLandingJsonLd(
+  origin: string,
+  options?: {
+    locale?: string;
+    description?: string;
+    homeUrl?: string;
+    studioUrl?: string;
+  },
+) {
+  const description = options?.description ?? LANDING_DESCRIPTION;
+  const homeUrl = options?.homeUrl ?? (origin ? `${origin}/` : "/");
+  const studioUrl = options?.studioUrl ?? (origin ? `${origin}/studio` : "/studio");
   return {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebSite",
         name: "3D Box Studio",
+        inLanguage: options?.locale ?? "en",
         alternateName: [
           "3D Box Maker",
           "Free Packaging Mockup Generator",
           "3dboxstudio.com",
         ],
-        description: LANDING_DESCRIPTION,
-        url: origin ? `${origin}/` : "/",
+        description,
+        url: homeUrl,
       },
       {
         "@type": "WebApplication",
@@ -91,8 +103,8 @@ export function buildLandingJsonLd(origin: string) {
         operatingSystem: "Any",
         browserRequirements: "Requires JavaScript. WebGL recommended.",
         offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-        description: LANDING_DESCRIPTION,
-        url: origin ? `${origin}/studio` : "/studio",
+        description,
+        url: studioUrl,
         featureList: [
           "Custom box dimensions (mm, cm, in)",
           "PBR packaging materials",
@@ -108,8 +120,8 @@ export function buildLandingJsonLd(origin: string) {
       {
         "@type": "Organization",
         name: "3D Box Studio",
-        url: origin ? `${origin}/` : "/",
-        description: LANDING_DESCRIPTION,
+        url: homeUrl,
+        description,
       },
       {
         "@type": "FAQPage",
