@@ -9,6 +9,7 @@ import { IconExternalLink, IconRename } from "./StudioIcons";
 import { BUYMEACOFFEE_URL } from "@/siteMeta";
 import type { AuthUser } from "@/lib/authTypes";
 import type { StudioThemePreference } from "@/lib/studioTheme";
+import { useTranslations } from "next-intl";
 
 type OpenMenu = "brand" | "file" | "view" | "help" | "account" | null;
 
@@ -83,6 +84,7 @@ export default function StudioMenuBar({
   onSetThemePreference,
   authGate = false,
 }: StudioMenuBarProps) {
+  const t = useTranslations("studio.menu");
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const brandRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLDivElement>(null);
@@ -148,7 +150,7 @@ export default function StudioMenuBar({
               href="/"
               onClick={closeMenus}
             >
-              <span>Home</span>
+              <span>{t("home")}</span>
             </Link>
             <div className="studio-menu-sep" role="separator" />
             <a
@@ -159,7 +161,7 @@ export default function StudioMenuBar({
               rel="noopener noreferrer"
               onClick={closeMenus}
             >
-              <span>Buy me a coffee</span>
+              <span>{t("buyMeACoffee")}</span>
               <IconExternalLink />
             </a>
           </div>
@@ -175,19 +177,19 @@ export default function StudioMenuBar({
           aria-haspopup="menu"
           onClick={() => setOpenMenu((m) => (m === "file" ? null : "file"))}
         >
-          File
+          {t("file")}
         </button>
         {openMenu === "file" && (
           <div className="studio-menu-dropdown" role="menu">
             <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(onNew)}>
-              <span>New Design</span>
+              <span>{t("newDesign")}</span>
             </button>
             <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("open"))}>
-              <span>Open…</span>
+              <span>{t("open")}</span>
               <kbd>⌘O</kbd>
             </button>
             <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("recent"))}>
-              <span>View Recent</span>
+              <span>{t("viewRecent")}</span>
             </button>
             <div className="studio-menu-sep" role="separator" />
             {!viewOnly && (
@@ -198,7 +200,7 @@ export default function StudioMenuBar({
                 disabled={cloudBusy || authLoading}
                 onClick={() => pickFile(onSave)}
               >
-                <span>{cloudBusy ? "Saving…" : "Save"}</span>
+                <span>{cloudBusy ? t("saving") : t("save")}</span>
                 <kbd>⌘S</kbd>
               </button>
             )}
@@ -209,7 +211,7 @@ export default function StudioMenuBar({
               disabled={cloudBusy || authLoading}
               onClick={() => pickFile(onSaveAs)}
             >
-              <span>Save As…</span>
+              <span>{t("saveAs")}</span>
               {!viewOnly && <kbd>⇧⌘S</kbd>}
             </button>
             {!viewOnly && (
@@ -221,7 +223,7 @@ export default function StudioMenuBar({
                   disabled={cloudBusy || !canSaveCopy}
                   onClick={() => pickFile(onSaveCopy)}
                 >
-                  <span>Save a Copy…</span>
+                  <span>{t("saveCopy")}</span>
                 </button>
                 <button
                   type="button"
@@ -230,7 +232,7 @@ export default function StudioMenuBar({
                   disabled={cloudBusy || !canRename}
                   onClick={() => pickFile(onRename)}
                 >
-                  <span>Rename…</span>
+                  <span>{t("rename")}</span>
                 </button>
                 <div className="studio-menu-sep" role="separator" />
                 <button
@@ -240,7 +242,7 @@ export default function StudioMenuBar({
                   disabled={!canSharePreview}
                   onClick={() => pickFile(onSharePreview)}
                 >
-                  <span>Share Preview Link…</span>
+                  <span>{t("sharePreview")}</span>
                 </button>
                 <button
                   type="button"
@@ -249,16 +251,16 @@ export default function StudioMenuBar({
                   disabled={!canSharePreview}
                   onClick={() => pickFile(onCopyPreviewLink)}
                 >
-                  <span>Copy Preview Link</span>
+                  <span>{t("copyPreview")}</span>
                 </button>
                 <div className="studio-menu-sep" role="separator" />
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("import"))}>
-                  <span>Import JSON…</span>
+                  <span>{t("importJson")}</span>
                 </button>
               </>
             )}
             <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickFile(() => onOpenModal("export"))}>
-              <span>Export JSON…</span>
+              <span>{t("exportJson")}</span>
             </button>
           </div>
         )}
@@ -274,7 +276,7 @@ export default function StudioMenuBar({
           aria-haspopup="menu"
           onClick={() => setOpenMenu((m) => (m === "view" ? null : "view"))}
         >
-          View
+          {t("view")}
         </button>
         {openMenu === "view" && (
           <div className="studio-menu-dropdown" role="menu">
@@ -284,7 +286,7 @@ export default function StudioMenuBar({
                 className="studio-menu-action studio-menu-submenu-trigger"
                 aria-haspopup="menu"
               >
-                <span>Toolbars</span>
+                <span>{t("toolbars")}</span>
               </button>
               <div className="studio-menu-dropdown studio-menu-submenu-panel" role="menu">
                 <button
@@ -297,7 +299,7 @@ export default function StudioMenuBar({
                   <span className="studio-menu-check" aria-hidden>
                     {sidebarOpen ? "✓" : ""}
                   </span>
-                  <span>Configuration Panel</span>
+                  <span>{t("configurationPanel")}</span>
                 </button>
               </div>
             </div>
@@ -312,7 +314,7 @@ export default function StudioMenuBar({
               <span className="studio-menu-check" aria-hidden>
                 {themePreference === "system" ? "✓" : ""}
               </span>
-              <span>Use system setting</span>
+              <span>{t("systemTheme")}</span>
             </button>
             <button
               type="button"
@@ -324,7 +326,7 @@ export default function StudioMenuBar({
               <span className="studio-menu-check" aria-hidden>
                 {themePreference === "dark" ? "✓" : ""}
               </span>
-              <span>Dark appearance</span>
+              <span>{t("darkTheme")}</span>
             </button>
             <button
               type="button"
@@ -336,14 +338,14 @@ export default function StudioMenuBar({
               <span className="studio-menu-check" aria-hidden>
                 {themePreference === "light" ? "✓" : ""}
               </span>
-              <span>Light appearance</span>
+              <span>{t("lightTheme")}</span>
             </button>
           </div>
         )}
       </div>
       )}
 
-      {!authGate && viewOnly && <span className="studio-menu-preview-badge">View-only preview</span>}
+      {!authGate && viewOnly && <span className="studio-menu-preview-badge">{t("viewOnly")}</span>}
 
       <div className="studio-menu-item" ref={helpRef}>
         <button
@@ -353,7 +355,7 @@ export default function StudioMenuBar({
           aria-haspopup="menu"
           onClick={() => setOpenMenu((m) => (m === "help" ? null : "help"))}
         >
-          Help
+          {t("help")}
         </button>
         {openMenu === "help" && (
           <div className="studio-menu-dropdown" role="menu">
@@ -363,7 +365,7 @@ export default function StudioMenuBar({
               role="menuitem"
               onClick={() => pickHelp(() => onOpenHelpModal("about"))}
             >
-              <span>About 3D Box Studio</span>
+              <span>{t("about")}</span>
             </button>
             <button
               type="button"
@@ -371,7 +373,7 @@ export default function StudioMenuBar({
               role="menuitem"
               onClick={() => pickHelp(() => onOpenHelpModal("share-app"))}
             >
-              <span>Share 3D Box Studio with friends</span>
+              <span>{t("shareWithFriends")}</span>
             </button>
             <div className="studio-menu-sep" role="separator" />
             <Link
@@ -380,7 +382,7 @@ export default function StudioMenuBar({
               href="/contact"
               onClick={closeMenus}
             >
-              <span>Contact</span>
+              <span>{t("contact")}</span>
             </Link>
           </div>
         )}
@@ -397,8 +399,8 @@ export default function StudioMenuBar({
             className="studio-doc-rename-btn"
             onClick={onRename}
             disabled={cloudBusy}
-            aria-label="Rename design"
-            title="Rename design"
+            aria-label={t("renameDesign")}
+            title={t("renameDesign")}
           >
             <IconRename />
           </button>
@@ -415,7 +417,7 @@ export default function StudioMenuBar({
       <div className="studio-menu-item studio-menu-account-item" ref={accountRef}>
         {authLoading ? (
           <span className="studio-menu-trigger studio-menu-account-trigger studio-menu-account-loading" aria-busy="true">
-            Account…
+            {t("accountLoading")}
           </span>
         ) : user ? (
           <>
@@ -434,13 +436,13 @@ export default function StudioMenuBar({
             {openMenu === "account" && (
               <div className="studio-menu-dropdown studio-menu-dropdown--right" role="menu">
                 <div className="studio-menu-account-header">
-                  <span className="studio-menu-account-name">{user.name || "Signed in"}</span>
+                  <span className="studio-menu-account-name">{user.name || t("signedIn")}</span>
                   <span className="studio-menu-account-email">{user.email}</span>
-                  {!user.emailVerified && <span className="studio-menu-account-unverified">Email not verified</span>}
+                  {!user.emailVerified && <span className="studio-menu-account-unverified">{t("emailNotVerified")}</span>}
                 </div>
                 <div className="studio-menu-sep" role="separator" />
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onOpenProjects)}>
-                  <span>My Projects…</span>
+                  <span>{t("myProjects")}</span>
                 </button>
                 <button
                   type="button"
@@ -448,7 +450,7 @@ export default function StudioMenuBar({
                   role="menuitem"
                   onClick={() => pickAccount(() => onOpenAccountSettings("account"))}
                 >
-                  <span>Account settings…</span>
+                  <span>{t("accountSettings")}</span>
                 </button>
                 <button
                   type="button"
@@ -456,11 +458,11 @@ export default function StudioMenuBar({
                   role="menuitem"
                   onClick={() => pickAccount(() => onOpenAccountSettings("profile"))}
                 >
-                  <span>Profile settings…</span>
+                  <span>{t("profileSettings")}</span>
                 </button>
                 <div className="studio-menu-sep" role="separator" />
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignOut)}>
-                  <span>Sign out</span>
+                  <span>{t("signOut")}</span>
                 </button>
               </div>
             )}
@@ -474,15 +476,15 @@ export default function StudioMenuBar({
               aria-haspopup="menu"
               onClick={() => setOpenMenu((m) => (m === "account" ? null : "account"))}
             >
-              Sign in
+              {t("signIn")}
             </button>
             {openMenu === "account" && (
               <div className="studio-menu-dropdown studio-menu-dropdown--right" role="menu">
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignIn)}>
-                  <span>Sign in</span>
+                  <span>{t("signIn")}</span>
                 </button>
                 <button type="button" className="studio-menu-action" role="menuitem" onClick={() => pickAccount(onSignUp)}>
-                  <span>Create account</span>
+                  <span>{t("createAccount")}</span>
                 </button>
               </div>
             )}

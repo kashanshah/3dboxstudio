@@ -94,12 +94,19 @@ function loadDotEnvFile(path) {
 }
 
 async function translateBatch(texts, target, apiKey) {
+  const placeholders = texts.map((value) => [...value.matchAll(/\{[A-Za-z][A-Za-z0-9_]*\}/g)].map((match) => match[0]));
+  const protectedTexts = texts.map((value, textIndex) =>
+    placeholders[textIndex].reduce(
+      (result, placeholder, placeholderIndex) => result.replaceAll(placeholder, `__I18N_${placeholderIndex}__`),
+      value
+    )
+  );
   const url = `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(apiKey)}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      q: texts,
+      q: protectedTexts,
       source: "en",
       target,
       format: "text",
@@ -110,7 +117,12 @@ async function translateBatch(texts, target, apiKey) {
     throw new Error(`Translate API ${res.status}: ${body}`);
   }
   const data = await res.json();
-  return data.data.translations.map((t) => t.translatedText);
+  return data.data.translations.map((t, textIndex) =>
+    placeholders[textIndex].reduce(
+      (result, placeholder, placeholderIndex) => result.replaceAll(`__I18N_${placeholderIndex}__`, placeholder),
+      t.translatedText
+    )
+  );
 }
 
 async function translateInChunks(texts, target, apiKey) {

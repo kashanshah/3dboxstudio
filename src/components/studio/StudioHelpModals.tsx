@@ -4,14 +4,11 @@ import { useCallback, useState, type ReactNode } from "react";
 import StudioDialog from "./StudioDialog";
 import { IconExternalLink } from "./StudioIcons";
 import { BUYMEACOFFEE_URL, SITE_ORIGIN_PUBLIC } from "@/siteMeta";
+import { useTranslations } from "next-intl";
 
 export type StudioHelpModal = "about" | "share-app" | null;
 
 const APP_SHARE_URL = `${SITE_ORIGIN_PUBLIC}/studio`;
-const APP_SHARE_TITLE = "3D Box Studio — Free 3D Box Designer";
-const APP_SHARE_TEXT =
-  "Design folding cartons and mailer-style boxes in your browser—materials, openings, per-face artwork, and more. Free account signup required to start designing.";
-
 type ExternalLinkProps = {
   href: string;
   children: ReactNode;
@@ -33,94 +30,91 @@ type StudioHelpModalsProps = {
 };
 
 export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHelpModalsProps) {
+  const t = useTranslations("studio.help");
   const [shareBusy, setShareBusy] = useState(false);
 
   const copyAppLink = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(APP_SHARE_URL);
-      onStatus?.("Link copied to clipboard.");
+      onStatus?.(t("linkCopied"));
     } catch {
-      onStatus?.("Could not copy link.");
+      onStatus?.(t("copyFailed"));
     }
-  }, [onStatus]);
+  }, [onStatus, t]);
 
   const shareApp = useCallback(async () => {
     setShareBusy(true);
     try {
       if (navigator.share) {
         await navigator.share({
-          title: APP_SHARE_TITLE,
-          text: APP_SHARE_TEXT,
+          title: t("shareTitle"),
+          text: t("shareText"),
           url: APP_SHARE_URL,
         });
         onClose();
-        onStatus?.("Thanks for sharing 3D Box Studio!");
+        onStatus?.(t("thanks"));
       } else {
         await copyAppLink();
       }
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      onStatus?.("Could not open share dialog.");
+      onStatus?.(t("shareFailed"));
     } finally {
       setShareBusy(false);
     }
-  }, [copyAppLink, onClose, onStatus]);
+  }, [copyAppLink, onClose, onStatus, t]);
 
   return (
     <>
       <StudioDialog
-        title="About 3D Box Studio"
+        title={t("aboutTitle")}
         open={modal === "about"}
         onClose={onClose}
         width={480}
         footer={
           <button type="button" className="btn btn-primary" onClick={onClose}>
-            Close
+            {t("close")}
           </button>
         }
       >
         <p className="studio-dialog-lead">
-          <strong>3D Box Studio</strong> is a free packaging box designer that runs in your browser. Preview
-          folding cartons and mailer-style boxes with PBR materials, HDRI lighting, lid and flap openings, per-face artwork,
-          cloud save &amp; share links, PNG export, and JSON import/export.
+          {t.rich("aboutLead", { strong: (chunks) => <strong>{chunks}</strong> })}
         </p>
         <p className="studio-dialog-hint">
-          Create a free account to open the studio and start designing. Email verification is optional for now.
-          Shared project links and view-only previews stay open without an account.
+          {t("aboutHint")}
         </p>
         <nav className="studio-about-links" aria-label="3D Box Studio links">
-          <ExternalLink href={SITE_ORIGIN_PUBLIC}>Website</ExternalLink>
-          <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/studio`}>Open studio</ExternalLink>
+          <ExternalLink href={SITE_ORIGIN_PUBLIC}>{t("website")}</ExternalLink>
+          <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/studio`}>{t("openStudio")}</ExternalLink>
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/faq`}>FAQ</ExternalLink>
           <ExternalLink href={`${SITE_ORIGIN_PUBLIC}/blog`}>Blog</ExternalLink>
-          <ExternalLink href={BUYMEACOFFEE_URL}>Buy me a coffee</ExternalLink>
+          <ExternalLink href={BUYMEACOFFEE_URL}>{t("buyMeACoffee")}</ExternalLink>
         </nav>
       </StudioDialog>
 
       <StudioDialog
-        title="Share 3D Box Studio"
+        title={t("shareDialogTitle")}
         open={modal === "share-app"}
         onClose={onClose}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn" onClick={() => void copyAppLink()}>
-              Copy link
+              {t("copyLink")}
             </button>
             <button type="button" className="btn btn-primary" disabled={shareBusy} onClick={() => void shareApp()}>
-              {shareBusy ? "Sharing…" : "Share…"}
+              {shareBusy ? t("sharing") : t("share")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Tell friends about the free 3D box designer. Share the studio link so they can launch the app and start designing
-          cartons in minutes.
+          {t("shareLead")}
         </p>
         <label className="studio-dialog-label" htmlFor="studio-app-share-url">
-          Studio link
+          {t("studioLink")}
         </label>
         <input
           id="studio-app-share-url"
@@ -132,8 +126,8 @@ export default function StudioHelpModals({ modal, onClose, onStatus }: StudioHel
         />
         <p className="studio-dialog-hint">
           {typeof navigator !== "undefined" && "share" in navigator
-            ? "Share opens your device share sheet (email, messages, social, etc.)."
-            : "Copy the link and paste it anywhere."}
+            ? t("nativeShareHint")
+            : t("copyHint")}
         </p>
       </StudioDialog>
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import StudioDialog from "../studio/StudioDialog";
 import { useAuth } from "./AuthProvider";
+import { useTranslations, useLocale } from "next-intl";
 
 export type AccountSettingsTab = "account" | "profile" | "password";
 
@@ -15,17 +16,13 @@ type AccountSettingsModalProps = {
   onStatus?: (message: string) => void;
 };
 
-const TABS: { id: AccountSettingsTab; label: string; hint: string }[] = [
-  { id: "account", label: "Account", hint: "Email and verification" },
-  { id: "profile", label: "Profile", hint: "Display name" },
-  { id: "password", label: "Password", hint: "Change password" },
-];
+const TABS: AccountSettingsTab[] = ["account", "profile", "password"];
 
-function formatMemberSince(iso: string): string {
+function formatMemberSince(iso: string, locale: string): string {
   if (!iso) return "—";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(date);
+  return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date);
 }
 
 export default function AccountSettingsModal({
@@ -34,6 +31,8 @@ export default function AccountSettingsModal({
   onClose,
   onStatus,
 }: AccountSettingsModalProps) {
+  const t = useTranslations("studio.settings");
+  const locale = useLocale();
   const { user, updateProfile, updateEmail, changePassword, resendVerification } = useAuth();
   const [tab, setTab] = useState<AccountSettingsTab>(initialTab);
   const [name, setName] = useState("");
@@ -62,7 +61,7 @@ export default function AccountSettingsModal({
     setShowEmailForm(false);
   }, [open, initialTab, user?.name]);
 
-  const memberSince = useMemo(() => formatMemberSince(user?.createdAt ?? ""), [user?.createdAt]);
+  const memberSince = useMemo(() => formatMemberSince(user?.createdAt ?? "", locale), [user?.createdAt, locale]);
 
   const saveProfile = async () => {
     setError(null);
@@ -74,8 +73,8 @@ export default function AccountSettingsModal({
       setError(result.error);
       return;
     }
-    setSuccess("Profile updated.");
-    onStatus?.("Profile updated.");
+    setSuccess(t("profileUpdated"));
+    onStatus?.(t("profileUpdated"));
   };
 
   const savePassword = async () => {
@@ -83,15 +82,15 @@ export default function AccountSettingsModal({
     setError(null);
     setSuccess(null);
     if (user.hasPassword && !currentPassword) {
-      setError("Enter your current password.");
+      setError(t("enterCurrentPassword"));
       return;
     }
     if (newPassword.length < MIN_PASSWORD_LENGTH) {
-      setError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      setError(t("newPasswordMinimum", { count: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setError(t("passwordsMismatch"));
       return;
     }
     setBusy(true);
@@ -104,8 +103,8 @@ export default function AccountSettingsModal({
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
-    setSuccess(user.hasPassword ? "Password changed." : "Password set.");
-    onStatus?.(user.hasPassword ? "Password changed." : "Password set.");
+    setSuccess(user.hasPassword ? t("passwordChanged") : t("passwordSet"));
+    onStatus?.(user.hasPassword ? t("passwordChanged") : t("passwordSet"));
   };
 
   const handleResend = async () => {
@@ -118,8 +117,8 @@ export default function AccountSettingsModal({
       setError(result.error);
       return;
     }
-    setSuccess("Verification email sent. Check your inbox.");
-    onStatus?.("Verification email sent. Check your inbox.");
+    setSuccess(t("verificationSent"));
+    onStatus?.(t("verificationSent"));
   };
 
   const saveEmail = async () => {
@@ -128,11 +127,11 @@ export default function AccountSettingsModal({
     setSuccess(null);
     const trimmedEmail = newEmail.trim();
     if (!trimmedEmail) {
-      setError("Enter a new email address.");
+      setError(t("enterNewEmail"));
       return;
     }
     if (user.hasPassword && !emailPassword) {
-      setError("Enter your current password to confirm this change.");
+      setError(t("confirmWithPassword"));
       return;
     }
     setBusy(true);
@@ -144,35 +143,35 @@ export default function AccountSettingsModal({
     }
     setNewEmail("");
     setEmailPassword("");
-    setSuccess("Email updated. Check your inbox to verify the new address.");
-    onStatus?.("Email updated. Check your inbox to verify the new address.");
+    setSuccess(t("emailUpdated"));
+    onStatus?.(t("emailUpdated"));
     setShowEmailForm(false);
   };
 
   if (!user) return null;
 
   return (
-    <StudioDialog title="Account settings" open={open} onClose={onClose} width={680}>
+    <StudioDialog title={t("title")} open={open} onClose={onClose} width={680}>
       <div className="studio-settings-layout">
-        <nav className="studio-settings-tabs" role="tablist" aria-label="Account settings sections">
+        <nav className="studio-settings-tabs" role="tablist" aria-label={t("sections")}>
           {TABS.map((item) => (
             <button
-              key={item.id}
+              key={item}
               type="button"
               role="tab"
-              id={`settings-tab-${item.id}`}
-              aria-selected={tab === item.id}
-              aria-controls={`settings-panel-${item.id}`}
-              className={`studio-settings-tab${tab === item.id ? " is-active" : ""}`}
+              id={`settings-tab-${item}`}
+              aria-selected={tab === item}
+              aria-controls={`settings-panel-${item}`}
+              className={`studio-settings-tab${tab === item ? " is-active" : ""}`}
               onClick={() => {
-                setTab(item.id);
+                setTab(item);
                 setError(null);
                 setSuccess(null);
                 setShowEmailForm(false);
               }}
             >
-              <span className="studio-settings-tab-label">{item.label}</span>
-              <span className="studio-settings-tab-hint">{item.hint}</span>
+              <span className="studio-settings-tab-label">{t(`tabs.${item}.label`)}</span>
+              <span className="studio-settings-tab-hint">{t(`tabs.${item}.hint`)}</span>
             </button>
           ))}
         </nav>
@@ -185,30 +184,30 @@ export default function AccountSettingsModal({
               aria-labelledby="settings-tab-account"
               className="studio-settings-section"
             >
-              <h3 className="studio-settings-section-title">Account</h3>
+              <h3 className="studio-settings-section-title">{t("account")}</h3>
               <p className="studio-dialog-hint studio-settings-section-lead">
-                Your sign-in email and verification status.
+                {t("accountLead")}
               </p>
 
               <div className="studio-settings-field">
-                <span className="studio-settings-field-label">Current email</span>
+                <span className="studio-settings-field-label">{t("currentEmail")}</span>
                 <span className="studio-settings-field-value">{user.email}</span>
               </div>
 
               <div className="studio-settings-field">
-                <span className="studio-settings-field-label">Verification</span>
+                <span className="studio-settings-field-label">{t("verification")}</span>
                 <span className="studio-settings-field-value">
                   {user.emailVerified ? (
-                    <span className="studio-settings-badge studio-settings-badge--ok">Verified</span>
+                    <span className="studio-settings-badge studio-settings-badge--ok">{t("verified")}</span>
                   ) : (
-                    <span className="studio-settings-badge studio-settings-badge--warn">Not verified</span>
+                    <span className="studio-settings-badge studio-settings-badge--warn">{t("notVerified")}</span>
                   )}
                 </span>
               </div>
 
               {!user.emailVerified && (
                 <p className="studio-dialog-hint">
-                  Verify your email to save and share projects from the cloud.
+                  {t("verifyHint")}
                 </p>
               )}
 
@@ -216,15 +215,15 @@ export default function AccountSettingsModal({
 
               {showEmailForm ? (
                 <>
-                  <h4 className="studio-settings-subsection-title">Change email</h4>
+                  <h4 className="studio-settings-subsection-title">{t("changeEmail")}</h4>
                   <p className="studio-dialog-hint studio-settings-section-lead">
                     {user.hasPassword
-                      ? "Enter a new address and your current password. We'll send a verification link to the new email."
-                      : "Enter a new address. We'll send a verification link to the new email."}
+                      ? t("changeEmailPasswordLead")
+                      : t("changeEmailLead")}
                   </p>
 
                   <label className="studio-dialog-label" htmlFor="settings-new-email">
-                    New email
+                    {t("newEmail")}
                   </label>
                   <input
                     id="settings-new-email"
@@ -243,7 +242,7 @@ export default function AccountSettingsModal({
                   {user.hasPassword && (
                     <>
                       <label className="studio-dialog-label" htmlFor="settings-email-password">
-                        Current password
+                        {t("currentPassword")}
                       </label>
                       <input
                         id="settings-email-password"
@@ -265,7 +264,7 @@ export default function AccountSettingsModal({
 
                   <div className="studio-settings-actions">
                     <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveEmail()}>
-                      {busy ? "Updating…" : "Update email"}
+                      {busy ? t("updating") : t("updateEmail")}
                     </button>
                     <button
                       type="button"
@@ -278,18 +277,18 @@ export default function AccountSettingsModal({
                         setError(null);
                       }}
                     >
-                      Cancel
+                      {t("cancel")}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="studio-settings-actions">
                   <button type="button" className="btn" onClick={() => setShowEmailForm(true)}>
-                    Update email
+                    {t("updateEmail")}
                   </button>
                   {!user.emailVerified && (
                     <button type="button" className="btn" disabled={resendBusy} onClick={() => void handleResend()}>
-                      {resendBusy ? "Sending…" : "Resend verification email"}
+                      {resendBusy ? t("sending") : t("resendVerification")}
                     </button>
                   )}
                 </div>
@@ -298,12 +297,12 @@ export default function AccountSettingsModal({
               <div className="studio-settings-divider" aria-hidden />
 
               <div className="studio-settings-field">
-                <span className="studio-settings-field-label">Member since</span>
+                <span className="studio-settings-field-label">{t("memberSince")}</span>
                 <span className="studio-settings-field-value">{memberSince}</span>
               </div>
 
               <div className="studio-settings-field">
-                <span className="studio-settings-field-label">Account ID</span>
+                <span className="studio-settings-field-label">{t("accountId")}</span>
                 <span className="studio-settings-field-value studio-settings-mono">{user.id}</span>
               </div>
             </div>
@@ -316,14 +315,14 @@ export default function AccountSettingsModal({
               aria-labelledby="settings-tab-profile"
               className="studio-settings-section"
             >
-              <h3 className="studio-settings-section-title">Profile</h3>
+              <h3 className="studio-settings-section-title">{t("profile")}</h3>
               <p className="studio-dialog-hint studio-settings-section-lead">
-                This name appears in the studio menu and on your saved projects.
+                {t("profileLead")}
               </p>
 
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-name">
-                Display name
+                {t("displayName")}
               </label>
               <input
                 id="settings-name"
@@ -338,12 +337,12 @@ export default function AccountSettingsModal({
                   setSuccess(null);
                 }}
               />
-              <p className="studio-dialog-hint">Leave blank to show your email initial in the menu avatar.</p>
+              <p className="studio-dialog-hint">{t("displayNameHint")}</p>
               </div>
 
               <div className="studio-settings-actions">
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void saveProfile()}>
-                  {busy ? "Saving…" : "Save profile"}
+                  {busy ? t("saving") : t("saveProfile")}
                 </button>
               </div>
             </div>
@@ -357,18 +356,18 @@ export default function AccountSettingsModal({
               className="studio-settings-section"
             >
               <h3 className="studio-settings-section-title">
-                {user.hasPassword ? "Change password" : "Set a password"}
+                {user.hasPassword ? t("changePassword") : t("setAPassword")}
               </h3>
               <p className="studio-dialog-hint studio-settings-section-lead">
                 {user.hasPassword
-                  ? "Choose a strong password you do not use on other sites."
-                  : "Add a password if you also want to sign in with email."}
+                  ? t("passwordLead")
+                  : t("setPasswordLead")}
               </p>
 
               {user.hasPassword && (
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-current-password">
-                Current password
+                {t("currentPassword")}
               </label>
               <input
                 id="settings-current-password"
@@ -387,14 +386,14 @@ export default function AccountSettingsModal({
 
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-new-password">
-                New password
+                {t("newPassword")}
               </label>
               <input
                 id="settings-new-password"
                 className="studio-dialog-input"
                 type="password"
                 autoComplete="new-password"
-                placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+                placeholder={t("atLeastCharacters", { count: MIN_PASSWORD_LENGTH })}
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
@@ -406,7 +405,7 @@ export default function AccountSettingsModal({
 
               <div className="mb-3">
               <label className="studio-dialog-label" htmlFor="settings-confirm-password">
-                Confirm new password
+                {t("confirmNewPassword")}
               </label>
               <input
                 id="settings-confirm-password"
@@ -426,7 +425,7 @@ export default function AccountSettingsModal({
               </div>
               <div className="studio-settings-actions">
                 <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void savePassword()}>
-                  {busy ? "Updating…" : user.hasPassword ? "Change password" : "Set password"}
+                  {busy ? t("updating") : user.hasPassword ? t("changePassword") : t("setPassword")}
                 </button>
               </div>
             </div>

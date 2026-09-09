@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import StudioDialog from "../studio/StudioDialog";
 import { useAuth } from "./AuthProvider";
 import GoogleSignInButton from "./GoogleSignInButton";
+import { useTranslations } from "next-intl";
 
 type AuthMode = "signin" | "signup" | "forgot";
 
@@ -14,13 +15,8 @@ type AuthModalProps = {
   onSuccess?: () => void;
 };
 
-const titles: Record<AuthMode, string> = {
-  signin: "Sign in",
-  signup: "Create your account",
-  forgot: "Reset your password",
-};
-
 export default function AuthModal({ open, initialMode = "signin", onClose, onSuccess }: AuthModalProps) {
+  const t = useTranslations("studio.auth");
   const { signIn, signUp, forgotPassword } = useAuth();
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
@@ -48,7 +44,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
   const submit = async () => {
     setError(null);
     if (!email.trim()) {
-      setError("Enter your email address.");
+      setError(t("enterEmail"));
       return;
     }
 
@@ -60,12 +56,12 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
         setError(result.error);
         return;
       }
-      setNotice("If an account exists for that email, we've sent a password reset link. Check your inbox.");
+      setNotice(t("resetSent"));
       return;
     }
 
     if (mode === "signup" && password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("passwordMinimum"));
       return;
     }
     setBusy(true);
@@ -83,22 +79,22 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
   };
 
   const submitLabel = busy
-    ? "Please wait…"
+    ? t("pleaseWait")
     : mode === "signin"
-      ? "Sign in"
+      ? t("signIn")
       : mode === "signup"
-        ? "Create account"
-        : "Send reset link";
+        ? t("createAccount")
+        : t("sendResetLink");
 
   return (
     <StudioDialog
-      title={titles[mode]}
+      title={t(`titles.${mode}`)}
       open={open}
       onClose={onClose}
       footer={
         <>
           <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Cancel
+            {t("cancel")}
           </button>
           <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void submit()}>
             {submitLabel}
@@ -108,17 +104,17 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
     >
       <p className="studio-dialog-lead">
         {mode === "signin"
-          ? "Sign in to open the studio, save, and share your projects."
+          ? t("signInLead")
           : mode === "signup"
-            ? "Create a free account to start designing. We'll send a verification link—confirming your email is optional for now."
-            : "Enter your account email and we'll send you a link to choose a new password."}
+            ? t("signUpLead")
+            : t("forgotLead")}
       </p>
 
       {mode !== "forgot" && (
         <>
           <GoogleSignInButton className="mb-5" disabled={busy} />
           <div className="block studio-auth-divider mb-3" role="separator">
-            <span>or</span>
+            <span>{t("or")}</span>
           </div>
         </>
       )}
@@ -126,7 +122,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       {mode === "signup" && (
         <div className="mb-3">
           <label className="studio-dialog-label" htmlFor="auth-name">
-            Name <span className="studio-dialog-optional">(optional)</span>
+            {t("name")} <span className="studio-dialog-optional">{t("optional")}</span>
           </label>
           <input
             id="auth-name"
@@ -142,7 +138,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
 
       <div className="mb-3">
       <label className="studio-dialog-label" htmlFor="auth-email">
-        Email
+        {t("email")}
       </label>
       <input
         id="auth-email"
@@ -163,14 +159,14 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       {mode !== "forgot" && (
         <div className="mb-3">
           <label className="studio-dialog-label" htmlFor="auth-password">
-            Password
+            {t("password")}
           </label>
           <input
             id="auth-password"
             className="studio-dialog-input"
             type="password"
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            placeholder={mode === "signup" ? "At least 8 characters" : ""}
+            placeholder={mode === "signup" ? t("atLeastEight") : ""}
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -186,7 +182,7 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       {mode === "signin" && (
         <div className="studio-auth-forgot-row">
           <button type="button" className="studio-auth-switch" onClick={() => switchMode("forgot")}>
-            Forgot password?
+            {t("forgotPassword")}
           </button>
         </div>
       )}
@@ -206,25 +202,25 @@ export default function AuthModal({ open, initialMode = "signin", onClose, onSuc
       <p className="studio-dialog-hint">
         {mode === "signin" && (
           <>
-            No account yet?{" "}
+            {t("noAccount")} {" "}
             <button type="button" className="studio-auth-switch" onClick={() => switchMode("signup")}>
-              Create one
+              {t("createOne")}
             </button>
           </>
         )}
         {mode === "signup" && (
           <div className="mb-3">
-            Already have an account?{" "}
+            {t("alreadyAccount")} {" "}
             <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
-              Sign in
+              {t("signIn")}
             </button>
           </div>
         )}
         {mode === "forgot" && (
           <div className="mb-3">
-            Remembered it?{" "}
+            {t("remembered")} {" "}
             <button type="button" className="studio-auth-switch" onClick={() => switchMode("signin")}>
-              Back to sign in
+              {t("backToSignIn")}
             </button>
           </div>
         )}

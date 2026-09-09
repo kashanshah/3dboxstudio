@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function StudioRouteError({
   error,
@@ -9,13 +10,13 @@ export default function StudioRouteError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations("studio.routeError");
   return (
     <div className="studio-error-fallback studio-error-fallback--page" role="alert">
       <div className="studio-error-fallback-card">
-        <h1 className="studio-error-fallback-title">Something went wrong in the studio</h1>
+        <h1 className="studio-error-fallback-title">{t("title")}</h1>
         <p className="studio-error-fallback-lead">
-          The 3D Box Studio page hit an unexpected error. Your design may still be recoverable from a share link or JSON
-          export.
+          {t("lead")}
         </p>
         {error.message && (
           <p className="studio-error-fallback-detail">
@@ -24,13 +25,13 @@ export default function StudioRouteError({
         )}
         <div className="studio-error-fallback-actions">
           <button type="button" className="btn btn-primary" onClick={() => reset()}>
-            Try again
+            {t("tryAgain")}
           </button>
           <Link href="/studio" className="btn">
-            Reload studio
+            {t("reload")}
           </Link>
           <Link href="/" className="btn btn-ghost">
-            Back to home
+            {t("backHome")}
           </Link>
         </div>
       </div>

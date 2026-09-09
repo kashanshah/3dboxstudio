@@ -6,6 +6,7 @@ import StudioProjectsPanel from "./StudioProjectsPanel";
 import type { useStudioDocument } from "@/hooks/useStudioDocument";
 import type { AuthUser } from "@/lib/authTypes";
 import { formatRecentTimestamp } from "@/lib/recentDesigns";
+import { useTranslations } from "next-intl";
 
 type StudioFileModalsProps = {
   doc: ReturnType<typeof useStudioDocument>;
@@ -14,6 +15,7 @@ type StudioFileModalsProps = {
 };
 
 export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFileModalsProps) {
+  const t = useTranslations("studio.files");
   const [dragOver, setDragOver] = useState(false);
 
   const onImportChange = useCallback(
@@ -39,22 +41,22 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
     if (!doc.saveAsLink) return;
     try {
       await navigator.clipboard.writeText(doc.saveAsLink);
-      doc.showStatus("Editor link copied to clipboard.");
+      doc.showStatus(t("editorCopied"));
     } catch {
-      doc.showStatus("Could not copy link.");
+      doc.showStatus(t("copyFailed"));
     }
-  }, [doc]);
+  }, [doc, t]);
 
   const copySaveAsPreviewLink = useCallback(async () => {
     const url = doc.saveAsPreviewLink ?? doc.getPreviewLink();
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      doc.showStatus("Preview link copied to clipboard.");
+      doc.showStatus(t("previewCopied"));
     } catch {
-      doc.showStatus("Could not copy preview link.");
+      doc.showStatus(t("previewCopyFailed"));
     }
-  }, [doc]);
+  }, [doc, t]);
 
   return (
     <>
@@ -68,26 +70,26 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
       />
 
       <StudioDialog
-        title="Open"
+        title={t("openTitle")}
         open={doc.modal === "open"}
         onClose={() => doc.setModal(null)}
         width={560}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.openFromInput()}>
-              {doc.cloudBusy ? "Opening…" : "Open from link"}
+              {doc.cloudBusy ? t("opening") : t("openFromLink")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Paste a share link or ID, or open a project from your account.
+          {t("openLead")}
         </p>
         <label className="studio-dialog-label" htmlFor="studio-open-input">
-          Share link or ID
+          {t("shareLinkOrId")}
         </label>
         <input
           id="studio-open-input"
@@ -111,7 +113,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
         )}
 
         <div className="studio-open-section">
-          <h3 className="studio-open-section-title">My projects</h3>
+          <h3 className="studio-open-section-title">{t("myProjects")}</h3>
           <StudioProjectsPanel
             open={doc.modal === "open"}
             user={authUser}
@@ -123,7 +125,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
       </StudioDialog>
 
       <StudioDialog
-        title="Recent Designs"
+        title={t("recentTitle")}
         open={doc.modal === "recent"}
         onClose={() => doc.setModal(null)}
         width={520}
@@ -131,22 +133,21 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
           <>
             {doc.recentDesigns.length > 0 && (
               <button type="button" className="btn btn-ghost studio-recent-clear" onClick={doc.clearAllRecentDesigns}>
-                Clear list
+                {t("clearList")}
               </button>
             )}
             <button type="button" className="btn btn-primary" onClick={() => doc.setModal(null)}>
-              Close
+              {t("close")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Cloud designs you saved or opened on this browser. Select one to reopen, or remove entries you no longer need.
+          {t("recentLead")}
         </p>
         {doc.recentDesigns.length === 0 ? (
           <p className="studio-dialog-hint studio-recent-empty">
-            No recent designs yet. Use <strong>File → Save As</strong> to create a share link, or open a design from a link to
-            see it here.
+            {t.rich("recentEmpty", { strong: (chunks) => <strong>{chunks}</strong> })}
           </p>
         ) : (
           <ul className="studio-recent-list">
@@ -159,7 +160,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
                     {entry.name && " · "}
                     {formatRecentTimestamp(entry.lastOpenedAt)}
                     {" · "}
-                    {entry.source === "saved" ? "Saved" : "Opened"}
+                    {entry.source === "saved" ? t("saved") : t("opened")}
                   </span>
                 </div>
                 <div className="studio-recent-item-actions">
@@ -169,15 +170,15 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
                     disabled={doc.cloudBusy}
                     onClick={() => void doc.openRecentDesign(entry.id)}
                   >
-                    Open
+                    {t("open")}
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost"
-                    aria-label={`Remove ${entry.id} from recent`}
+                    aria-label={t("removeFromRecent", { id: entry.id })}
                     onClick={() => doc.removeRecentDesignEntry(entry.id)}
                   >
-                    Remove
+                    {t("remove")}
                   </button>
                 </div>
               </li>
@@ -187,7 +188,7 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
       </StudioDialog>
 
       <StudioDialog
-        title={doc.saveAsIsCopy ? "Save a Copy" : "Save As"}
+        title={doc.saveAsIsCopy ? t("saveCopyTitle") : t("saveAsTitle")}
         open={doc.modal === "save-as"}
         onClose={() => {
           doc.cancelPendingLeave();
@@ -198,22 +199,22 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
           doc.saveAsLink ? (
             <>
               <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-                Close
+                {t("close")}
               </button>
               <button type="button" className="btn btn-ghost" onClick={() => void copySaveAsPreviewLink()}>
-                Copy preview link
+                {t("copyPreviewLink")}
               </button>
               <button type="button" className="btn btn-primary" onClick={() => void copySaveAsLink()}>
-                Copy editor link
+                {t("copyEditorLink")}
               </button>
             </>
           ) : (
             <>
               <button type="button" className="btn btn-ghost" onClick={doc.cancelPendingLeave}>
-                Cancel
+                {t("cancel")}
               </button>
               <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.saveCloudAs()}>
-                {doc.cloudBusy ? "Saving…" : "Save to cloud"}
+                {doc.cloudBusy ? t("saving") : t("saveToCloud")}
               </button>
             </>
           )
@@ -224,16 +225,16 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
             <p className="studio-dialog-lead">
               {doc.saveAsIsCopy
                 ? doc.activeShareName
-                  ? `A copy “${doc.activeShareName}” was created as a new project. Copy an editor link for yourself or a view-only preview link for clients.`
-                  : "A copy was created as a new project. Copy an editor link for yourself or a view-only preview link for clients."
+                  ? t("namedCopyCreated", { name: doc.activeShareName })
+                  : t("copyCreated")
                 : doc.activeShareName
-                  ? `“${doc.activeShareName}” was uploaded. Copy an editor link for yourself or a view-only preview link for clients.`
-                  : "Your design was uploaded. Copy an editor link for yourself or a view-only preview link for clients."}
+                  ? t("namedUploaded", { name: doc.activeShareName })
+                  : t("uploaded")}
             </p>
-            <label className="studio-dialog-label">Editor link</label>
+            <label className="studio-dialog-label">{t("editorLink")}</label>
             <input className="studio-dialog-input" type="text" readOnly value={doc.saveAsLink} onFocus={(e) => e.target.select()} />
-            <p className="studio-dialog-hint">Full studio access — you can edit and save changes with File → Save (⌘S).</p>
-            <label className="studio-dialog-label">View-only preview link</label>
+            <p className="studio-dialog-hint">{t("editorLinkHint")}</p>
+            <label className="studio-dialog-label">{t("previewLink")}</label>
             <input
               className="studio-dialog-input"
               type="text"
@@ -242,24 +243,24 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
               onFocus={(e) => e.target.select()}
             />
             <p className="studio-dialog-hint">
-              Clients can orbit, zoom, and export PNGs but cannot change dimensions, artwork, or save over your design.
+              {t("previewLinkHint")}
             </p>
           </>
         ) : (
           <>
             <p className="studio-dialog-lead">
               {doc.saveAsIsCopy
-                ? "Duplicate this design as a new project with its own link. Your original project stays unchanged."
-                : "Upload the current design to the cloud and get a new shareable link. Images and settings are stored on AWS; config is saved in the database."}
+                ? t("duplicateLead")
+                : t("saveAsLead")}
             </p>
             <label className="studio-dialog-label" htmlFor="studio-save-as-name">
-              Design name <span className="studio-dialog-optional">(optional)</span>
+              {t("designName")} <span className="studio-dialog-optional">{t("optional")}</span>
             </label>
             <input
               id="studio-save-as-name"
               className="studio-dialog-input"
               type="text"
-              placeholder="e.g. Holiday gift box"
+              placeholder={t("namePlaceholder")}
               value={doc.saveAsName}
               maxLength={120}
               onChange={(e) => {
@@ -276,35 +277,34 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
                 {doc.saveAsNameError}
               </p>
             )}
-            <p className="studio-dialog-hint">Use Save (⌘S) later to update an existing link without creating a new one.</p>
+            <p className="studio-dialog-hint">{t("saveLaterHint")}</p>
           </>
         )}
       </StudioDialog>
 
       <StudioDialog
-        title="Share Preview Link"
+        title={t("sharePreviewTitle")}
         open={doc.modal === "share-preview"}
         onClose={() => doc.setModal(null)}
         width={520}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-              Close
+              {t("close")}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => void doc.copyEditorLink()}>
-              Copy editor link
+              {t("copyEditorLink")}
             </button>
             <button type="button" className="btn btn-primary" onClick={() => void doc.copyPreviewLink()}>
-              Copy preview link
+              {t("copyPreviewLink")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Send clients a view-only link for presentations and approvals. They can explore the 3D box, adjust lighting, and
-          export PNGs — without editing your design.
+          {t("sharePreviewLead")}
         </p>
-        <label className="studio-dialog-label">View-only preview link</label>
+        <label className="studio-dialog-label">{t("previewLink")}</label>
         <input
           className="studio-dialog-input"
           type="text"
@@ -313,10 +313,9 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
           onFocus={(e) => e.target.select()}
         />
         <p className="studio-dialog-hint studio-share-preview-note">
-          Preview links use a separate token (<code>/preview/…</code>) and do not reveal the editor share id. Keep your
-          editor link private.
+          {t.rich("previewSecurityHint", { code: (chunks) => <code>{chunks}</code> })}
         </p>
-        <label className="studio-dialog-label">Editor link</label>
+        <label className="studio-dialog-label">{t("editorLink")}</label>
         <input
           className="studio-dialog-input"
           type="text"
@@ -327,29 +326,29 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
       </StudioDialog>
 
       <StudioDialog
-        title="Rename Design"
+        title={t("renameTitle")}
         open={doc.modal === "rename"}
         onClose={() => doc.setModal(null)}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn btn-primary" disabled={doc.cloudBusy} onClick={() => void doc.renameCloudShare()}>
-              {doc.cloudBusy ? "Saving…" : "Rename"}
+              {doc.cloudBusy ? t("saving") : t("rename")}
             </button>
           </>
         }
       >
-        <p className="studio-dialog-lead">Change the name shown in the title bar and recent list for this cloud design.</p>
+        <p className="studio-dialog-lead">{t("renameLead")}</p>
         <label className="studio-dialog-label" htmlFor="studio-rename-input">
-          Design name
+          {t("designName")}
         </label>
         <input
           id="studio-rename-input"
           className="studio-dialog-input"
           type="text"
-          placeholder="Leave blank to remove the name"
+          placeholder={t("renamePlaceholder")}
           value={doc.renameInput}
           maxLength={120}
           onChange={(e) => {
@@ -366,41 +365,41 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
             {doc.renameError}
           </p>
         )}
-        <p className="studio-dialog-hint">The share link and ID stay the same. Only the display name changes.</p>
+        <p className="studio-dialog-hint">{t("renameHint")}</p>
       </StudioDialog>
 
       <StudioDialog
-        title="Export JSON"
+        title={t("exportTitle")}
         open={doc.modal === "export"}
         onClose={() => doc.setModal(null)}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn btn-primary" onClick={() => void doc.exportJson()}>
-              Download JSON
+              {t("downloadJson")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Download a v1 JSON file with dimensions, materials, openings, viewport options, per-face rotations, and embedded images as base64.
+          {t("exportLead")}
         </p>
-        <p className="studio-dialog-hint">Use this for offline backups or to move a design between machines without cloud storage.</p>
+        <p className="studio-dialog-hint">{t("exportHint")}</p>
       </StudioDialog>
 
       <StudioDialog
-        title="Import JSON"
+        title={t("importTitle")}
         open={doc.modal === "import"}
         onClose={() => doc.setModal(null)}
         footer={
           <button type="button" className="btn btn-ghost" onClick={() => doc.setModal(null)}>
-            Cancel
+            {t("cancel")}
           </button>
         }
       >
-        <p className="studio-dialog-lead">Import a v1 JSON export from this studio. The current design will be replaced.</p>
+        <p className="studio-dialog-lead">{t("importLead")}</p>
         <div
           className={`studio-import-drop${dragOver ? " is-dragover" : ""}`}
           onDragOver={(e) => {
@@ -410,24 +409,24 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
         >
-          <p>Drop a .json file here</p>
+          <p>{t("dropJson")}</p>
           <button type="button" className="btn" onClick={() => doc.importInputRef.current?.click()}>
-            Choose file…
+            {t("chooseFile")}
           </button>
         </div>
       </StudioDialog>
 
       <StudioDialog
-        title={doc.pendingLeaveAction === "new" ? "Save before starting a new design?" : "Save before opening another design?"}
+        title={doc.pendingLeaveAction === "new" ? t("saveBeforeNewTitle") : t("saveBeforeOpenTitle")}
         open={doc.modal === "unsaved" || doc.modal === "new"}
         onClose={doc.cancelPendingLeave}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={doc.cancelPendingLeave}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn" onClick={doc.confirmDiscardAndLeave}>
-              {"Don't Save"}
+              {t("dontSave")}
             </button>
             <button
               type="button"
@@ -435,17 +434,17 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
               disabled={doc.cloudBusy}
               onClick={() => void doc.confirmSaveAndLeave()}
             >
-              {doc.cloudBusy ? "Saving…" : "Save"}
+              {doc.cloudBusy ? t("saving") : t("save")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
           {doc.pendingLeaveAction === "new"
-            ? "You have unsaved changes. Save this design before starting a new one?"
-            : "You have unsaved changes. Save this design before opening another one?"}
+            ? t("saveBeforeNewLead")
+            : t("saveBeforeOpenLead")}
         </p>
-        <p className="studio-dialog-hint">{"Existing cloud share links are not deleted if you don't save."}</p>
+        <p className="studio-dialog-hint">{t("dontSaveHint")}</p>
       </StudioDialog>
     </>
   );

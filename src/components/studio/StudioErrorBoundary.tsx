@@ -2,12 +2,15 @@
 
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { trackStudioError } from "@/lib/analytics";
+import { useTranslations } from "next-intl";
 
 type StudioErrorBoundaryProps = {
   children: ReactNode;
   title?: string;
   onReset?: () => void;
 };
+
+type StudioErrorCopy = { unavailable: string; webglLead: string; webglHint: string; genericLead: string; reload: string; retry: string };
 
 type StudioErrorBoundaryState = {
   error: Error | null;
@@ -50,7 +53,7 @@ export class ResettableErrorBoundary extends Component<
   }
 }
 
-export default class StudioErrorBoundary extends Component<StudioErrorBoundaryProps, StudioErrorBoundaryState> {
+class StudioErrorBoundaryInner extends Component<StudioErrorBoundaryProps & { copy: StudioErrorCopy }, StudioErrorBoundaryState> {
   state: StudioErrorBoundaryState = { error: null };
 
   static getDerivedStateFromError(error: Error): StudioErrorBoundaryState {
@@ -74,24 +77,21 @@ export default class StudioErrorBoundary extends Component<StudioErrorBoundaryPr
         <div className="studio-error-fallback" role="alert">
           <div className="studio-error-fallback-card">
             <h2 className="studio-error-fallback-title">
-              {this.props.title ?? "3D preview unavailable"}
+              {this.props.title ?? this.props.copy.unavailable}
             </h2>
             {webgl ? (
               <>
                 <p className="studio-error-fallback-lead">
-                  Your browser could not initialize the WebGL viewport. This can happen on older GPUs, when hardware
-                  acceleration is disabled, or after a graphics driver update.
+                  {this.props.copy.webglLead}
                 </p>
                 <p className="studio-error-fallback-hint">
-                  Try reloading the page, enabling hardware acceleration in your browser settings, or using a different
-                  browser. You can still use File → Export JSON if you have a saved design.
+                  {this.props.copy.webglHint}
                 </p>
               </>
             ) : (
               <>
                 <p className="studio-error-fallback-lead">
-                  The 3D preview hit an error and stopped. Try again, or reload the studio. You can still use File →
-                  Export JSON if you have a saved design.
+                  {this.props.copy.genericLead}
                 </p>
                 {this.state.error.message ? (
                   <p className="studio-error-fallback-detail">
@@ -102,10 +102,10 @@ export default class StudioErrorBoundary extends Component<StudioErrorBoundaryPr
             )}
             <div className="studio-error-fallback-actions">
               <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
-                Reload studio
+                {this.props.copy.reload}
               </button>
               <button type="button" className="btn" onClick={this.handleReset}>
-                Try again
+                {this.props.copy.retry}
               </button>
             </div>
           </div>
@@ -115,4 +115,13 @@ export default class StudioErrorBoundary extends Component<StudioErrorBoundaryPr
 
     return this.props.children;
   }
+}
+
+export default function StudioErrorBoundary(props: StudioErrorBoundaryProps) {
+  const t = useTranslations("studio.renderError");
+  const copy: StudioErrorCopy = {
+    unavailable: t("unavailable"), webglLead: t("webglLead"), webglHint: t("webglHint"),
+    genericLead: t("genericLead"), reload: t("reload"), retry: t("retry"),
+  };
+  return <StudioErrorBoundaryInner {...props} copy={copy} />;
 }

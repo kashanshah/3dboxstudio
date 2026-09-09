@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 type GoogleSignInButtonProps = {
   disabled?: boolean;
   className?: string;
@@ -9,8 +11,9 @@ type GoogleSignInButtonProps = {
 export default function GoogleSignInButton({
   disabled = false,
   className = "",
-  label = "Continue with Google",
+  label,
 }: GoogleSignInButtonProps) {
+  const t = useTranslations("studio.auth");
   return (
     <button
       type="button"
@@ -40,7 +43,7 @@ export default function GoogleSignInButton({
           />
         </svg>
       </span>
-      <span>{label}</span>
+      <span>{label ?? t("continueGoogle")}</span>
     </button>
   );
 }

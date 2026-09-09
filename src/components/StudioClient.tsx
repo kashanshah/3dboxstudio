@@ -2,10 +2,16 @@
 
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
+
+function StudioLoading() {
+  const t = useTranslations("studio.editor");
+  return <div className="studio-loading">{t("loadingStudio")}</div>;
+}
 
 const StudioPage = dynamic(() => import("@/views/StudioPage"), {
   ssr: false,
-  loading: () => <div className="studio-loading">Loading 3D Box Studio…</div>,
+  loading: StudioLoading,
 });
 
 type StudioClientProps = {
@@ -21,7 +27,7 @@ export default function StudioClient({
 }: StudioClientProps) {
   return (
     <Suspense
-      fallback={<div className="studio-loading">Loading 3D Box Studio…</div>}
+      fallback={<StudioLoading />}
     >
       <StudioPage
         initialShareId={initialShareId}
