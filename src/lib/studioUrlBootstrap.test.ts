@@ -16,7 +16,7 @@ afterEach(() => {
 });
 
 describe("runUrlBootstrapOnce", () => {
-  it("runs the loader once when called concurrently (Strict Mode)", async () => {
+  it("concurrent calls share one in-flight request (Strict Mode)", async () => {
     let loads = 0;
     const loader = vi.fn(async () => {
       loads += 1;
@@ -33,6 +33,7 @@ describe("runUrlBootstrapOnce", () => {
     expect(b).toBe("ok");
     expect(loads).toBe(1);
     expect(loader).toHaveBeenCalledTimes(1);
+    expect(getUrlBootstrapCacheSizeForTesting()).toBe(0);
   });
 
   it("allows retry after failure", async () => {
@@ -49,11 +50,12 @@ describe("runUrlBootstrapOnce", () => {
     expect(loader).toHaveBeenCalledTimes(2);
   });
 
-  it("does not re-run after success", async () => {
+  it("runs the loader again after a completed success (SPA re-entry)", async () => {
     const loader = vi.fn(async () => undefined);
     const key = shareBootstrapKey("done");
     expect(await runUrlBootstrapOnce(key, loader)).toBe("ok");
+    expect(getUrlBootstrapCacheSizeForTesting()).toBe(0);
     expect(await runUrlBootstrapOnce(key, loader)).toBe("ok");
-    expect(loader).toHaveBeenCalledTimes(1);
+    expect(loader).toHaveBeenCalledTimes(2);
   });
 });

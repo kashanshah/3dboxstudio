@@ -1,54 +1,55 @@
 /**
- * Strict-Mode-safe URL bootstrap: one in-flight load per key, share the same
- * promise across effect remounts, drop failed keys so a later attempt can retry.
+ * Strict-Mode-safe URL bootstrap: share one in-flight load per key.
+ * Entries are removed when the promise settles (success or failure) so a later
+ * SPA navigation / remount can load the same id again.
  */
 
 export type UrlBootstrapResult = "ok" | "error";
 
 type CacheEntry = {
   promise: Promise<UrlBootstrapResult>;
-  status: "inflight" | "ok" | "error";
 };
 
-const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, CacheEntry>();
 
 export function resetUrlBootstrapCacheForTesting(): void {
-  cache.clear();
+  inflight.clear();
 }
 
 export function getUrlBootstrapCacheSizeForTesting(): number {
-  return cache.size;
+  return inflight.size;
 }
 
 /**
- * Run `loader` at most once per `key` while a request is in flight or has succeeded.
  * Concurrent callers (React Strict Mode double-mount) await the same promise.
- * On failure the key is removed so a subsequent call can retry.
+ * After settle the key is removed — a later call runs the loader again.
  */
 export function runUrlBootstrapOnce(
   key: string,
   loader: () => Promise<void>
 ): Promise<UrlBootstrapResult> {
-  const existing = cache.get(key);
-  if (existing && existing.status !== "error") {
+  const existing = inflight.get(key);
+  if (existing) {
     return existing.promise;
   }
 
   const entry: CacheEntry = {
-    status: "inflight",
-    promise: Promise.resolve().then(async () => {
-      try {
-        await loader();
-        entry.status = "ok";
-        return "ok" as const;
-      } catch {
-        entry.status = "error";
-        cache.delete(key);
-        return "error" as const;
-      }
-    }),
+    promise: Promise.resolve()
+      .then(async () => {
+        try {
+          await loader();
+          return "ok" as const;
+        } catch {
+          return "error" as const;
+        }
+      })
+      .finally(() => {
+        if (inflight.get(key) === entry) {
+          inflight.delete(key);
+        }
+      }),
   };
-  cache.set(key, entry);
+  inflight.set(key, entry);
   return entry.promise;
 }
 

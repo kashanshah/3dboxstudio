@@ -11,6 +11,7 @@ import {
   beginTrackedDesignSession,
 } from "@/lib/analytics/events";
 import {
+  PROJECT_REOPEN_DEDUPE_MS,
   resetAnalyticsDedupeForTesting,
   resetDesignSession,
 } from "@/lib/analytics/session";
@@ -267,6 +268,84 @@ describe("useStudioUrlBootstrap Strict Mode", () => {
     });
     await waitFor(() => expect(result.current).toBe(true));
     expect(loadShareById).toHaveBeenCalledTimes(1);
+  });
+
+  it("unmount and remount with the same ID loads again and emits project_reopened per re-entry", async () => {
+    let loads = 0;
+    const loadShareById = vi.fn(async (shareId: string) => {
+      loads += 1;
+      await new Promise((r) => setTimeout(r, 15));
+      beginReopenedDesignSession({ userStatus: "guest" }, shareId);
+      return true;
+    });
+
+    const first = renderHook(
+      () => {
+        const [sessionReady, setSessionReady] = useState(false);
+        const docRef = useRef({
+          loadShareById,
+          loadShareByPreviewToken: vi.fn(),
+          showStatus: vi.fn(),
+          markClean: vi.fn(),
+        });
+        useStudioUrlBootstrap({
+          shareIdFromUrl: "share_reentry",
+          previewTokenFromUrl: null,
+          docRef,
+          sharedOpenedMessage: "opened",
+          sharedLoadFailedMessage: "failed",
+          previewOpenedMessage: "preview",
+          previewLoadFailedMessage: "preview-failed",
+          onCloudLoadFailed: vi.fn(),
+          onSettled: () => setSessionReady(true),
+        });
+        return sessionReady;
+      },
+      { reactStrictMode: true }
+    );
+
+    await waitFor(() => expect(first.result.current).toBe(true));
+    expect(loads).toBe(1);
+    expect(trackEventMock.mock.calls.filter((c) => c[0] === "project_reopened")).toHaveLength(1);
+    first.unmount();
+
+    // Past reopen dedupe window — genuine SPA return to /studio/A.
+    const base = Date.now();
+    const dateNow = vi.spyOn(Date, "now").mockImplementation(() => base + PROJECT_REOPEN_DEDUPE_MS + 50);
+    trackEventMock.mockClear();
+
+    const second = renderHook(
+      () => {
+        const [sessionReady, setSessionReady] = useState(false);
+        const docRef = useRef({
+          loadShareById,
+          loadShareByPreviewToken: vi.fn(),
+          showStatus: vi.fn(),
+          markClean: vi.fn(),
+        });
+        useStudioUrlBootstrap({
+          shareIdFromUrl: "share_reentry",
+          previewTokenFromUrl: null,
+          docRef,
+          sharedOpenedMessage: "opened",
+          sharedLoadFailedMessage: "failed",
+          previewOpenedMessage: "preview",
+          previewLoadFailedMessage: "preview-failed",
+          onCloudLoadFailed: vi.fn(),
+          onSettled: () => setSessionReady(true),
+        });
+        return sessionReady;
+      },
+      { reactStrictMode: true }
+    );
+
+    await waitFor(() => expect(second.result.current).toBe(true));
+    expect(loads).toBe(2);
+    expect(loadShareById).toHaveBeenCalledTimes(2);
+    expect(trackEventMock.mock.calls.filter((c) => c[0] === "project_reopened")).toHaveLength(1);
+    expect(trackEventMock.mock.calls.filter((c) => c[0] === "design_started")).toHaveLength(0);
+    second.unmount();
+    dateNow.mockRestore();
   });
 });
 

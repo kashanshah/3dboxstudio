@@ -126,7 +126,7 @@ Fire when the user **genuinely opens an existing project**:
 2. Calls `resetExistingDesignSession()` — fresh `designSessionId`, clears `design_customized` categories, marks `designStarted` so **`design_started` will not emit**
 3. Emits `project_reopened` once
 
-Share/preview URL loads use `runUrlBootstrapOnce` so Strict Mode remounts share one in-flight promise; failures clear the cache and can retry.
+Share/preview URL loads use `runUrlBootstrapOnce` so Strict Mode remounts share one in-flight promise. The cache entry is removed when the promise settles (success or failure), so navigating away and returning to the same `/studio/{id}` loads again and can emit a fresh `project_reopened`.
 
 ### `studio_error` semantics
 
