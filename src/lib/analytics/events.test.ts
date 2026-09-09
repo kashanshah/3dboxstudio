@@ -27,7 +27,7 @@ import {
   trackTemplateSelected,
 } from "@/lib/analytics/events";
 import { pathnameToLocale } from "@/lib/analytics/mappers";
-import { resetDesignSession } from "@/lib/analytics/session";
+import { resetAnalyticsDedupeForTesting, resetDesignSession } from "@/lib/analytics/session";
 
 function createStorage() {
   const store = new Map<string, string>();
@@ -59,6 +59,7 @@ beforeEach(() => {
   trackEventMock.mockClear();
   localStorage.clear();
   sessionStorage.clear();
+  resetAnalyticsDedupeForTesting();
   resetDesignSession();
 });
 
@@ -125,7 +126,7 @@ describe("analytics locale propagation", () => {
     trackExportCompleted("png", "viewport", { userStatus: "signed_in" });
     trackExportFailed("png", "download_failed", { userStatus: "signed_in" });
     trackProjectSaved({ userStatus: "signed_in" });
-    trackProjectReopened({ userStatus: "signed_in" });
+    trackProjectReopened({ userStatus: "signed_in" }, "share_test");
 
     const names = trackEventMock.mock.calls.map((call) => call[0]);
     expect(names).toEqual([

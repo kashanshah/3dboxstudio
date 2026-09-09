@@ -15,10 +15,9 @@ import { useTranslations } from "next-intl";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
 import { shouldFireStudioOpen } from "@/lib/analytics/studioOpen";
 import {
-  resetDesignSession,
+  beginTrackedDesignSession,
   trackArtworkUploaded,
   trackDesignCustomized,
-  trackDesignStarted,
   trackExportClicked,
   trackExportCompleted,
   trackExportFailed,
@@ -29,7 +28,7 @@ import {
   trackStudioOpen,
   trackTemplateSelected,
   userStatusFromAuth,
-} from "@/lib/analytics";
+} from "@/lib/analytics/events";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -265,6 +264,8 @@ export default function BoxDesigner({
   });
   const studioOpenTrackedRef = useRef(false);
   const templateInitRef = useRef(true);
+  const shareBootstrapKeyRef = useRef<string | null>(null);
+  const previewBootstrapKeyRef = useRef<string | null>(null);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
   const [opening, setOpening] = useState<OpeningStyle>("closed");
@@ -312,8 +313,14 @@ export default function BoxDesigner({
       user: auth.user,
       userStatus: userStatusFromAuth(auth.user),
     }),
-    [boxTemplateId, auth.user]
+    // Use stable identity fields — auth.user object identity churns on /api/auth/me polls.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boxTemplateId, auth.user?.id, auth.user?.emailVerified]
   );
+
+  const beginDesignSession = useCallback(() => {
+    beginTrackedDesignSession(studioAnalyticsCtx());
+  }, [studioAnalyticsCtx]);
 
   const {
     phase: recordPhase,
@@ -356,14 +363,6 @@ export default function BoxDesigner({
       r3fRef.current?.invalidate();
     },
     [isRecordingViewport]
-  );
-
-  const beginDesignSession = useCallback(
-    () => {
-      resetDesignSession();
-      trackDesignStarted(studioAnalyticsCtx());
-    },
-    [studioAnalyticsCtx]
   );
 
   const applyBoxTemplate = useCallback(
@@ -566,6 +565,8 @@ export default function BoxDesigner({
     getAnalyticsContext: studioAnalyticsCtx,
     onDesignSessionStart: beginDesignSession,
   });
+  const docRef = useRef(doc);
+  docRef.current = doc;
 
   const openProjects = useCallback(() => {
     doc.requestOpen();
@@ -653,22 +654,27 @@ export default function BoxDesigner({
 
   useEffect(() => {
     if (!shareIdFromUrl) return;
+    // Bootstrap each share id once per mount — do not re-fetch when callback
+    // identities churn (auth poll, recent-name update, template change).
+    if (shareBootstrapKeyRef.current === shareIdFromUrl) return;
+    shareBootstrapKeyRef.current = shareIdFromUrl;
 
     let cancelled = false;
+    const docApi = docRef.current;
 
     void (async () => {
       try {
-        await doc.loadShareById(shareIdFromUrl);
-        if (!cancelled) doc.showStatus(t("sharedOpened"));
+        await docApi.loadShareById(shareIdFromUrl, "opened");
+        if (!cancelled) docApi.showStatus(t("sharedOpened"));
       } catch {
         if (!cancelled) {
-          doc.showStatus(t("sharedLoadFailed"), 5000);
+          docApi.showStatus(t("sharedLoadFailed"), 5000);
           trackStudioError("cloud_load_failed", "studio_load");
         }
       } finally {
         if (!cancelled) {
           setSessionReady(true);
-          doc.markClean();
+          docApi.markClean();
         }
       }
     })();
@@ -676,29 +682,32 @@ export default function BoxDesigner({
     return () => {
       cancelled = true;
     };
-  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean, t]);
+  }, [shareIdFromUrl, t]);
 
   useEffect(() => {
     if (!previewTokenFromUrl) return;
+    if (previewBootstrapKeyRef.current === previewTokenFromUrl) return;
+    previewBootstrapKeyRef.current = previewTokenFromUrl;
 
     let cancelled = false;
+    const docApi = docRef.current;
 
     void (async () => {
       try {
-        await doc.loadShareByPreviewToken(previewTokenFromUrl);
+        await docApi.loadShareByPreviewToken(previewTokenFromUrl);
         if (!cancelled) {
-          doc.showStatus(t("previewOpened"));
-          beginDesignSession();
+          docApi.showStatus(t("previewOpened"));
+          // Preview is an existing shared project — project_reopened is emitted inside loadShareByPreviewToken.
         }
       } catch {
         if (!cancelled) {
-          doc.showStatus(t("previewLoadFailed"), 5000);
+          docApi.showStatus(t("previewLoadFailed"), 5000);
           trackStudioError("cloud_load_failed", "studio_load");
         }
       } finally {
         if (!cancelled) {
           setSessionReady(true);
-          doc.markClean();
+          docApi.markClean();
         }
       }
     })();
@@ -706,7 +715,7 @@ export default function BoxDesigner({
     return () => {
       cancelled = true;
     };
-  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean, beginDesignSession, t]);
+  }, [previewTokenFromUrl, t]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomWithAnalytics(t);
@@ -1698,7 +1707,7 @@ export default function BoxDesigner({
         }}
         onImport={() => {
           setStartDialogOpen(false);
-          beginDesignSession();
+          // design_started fires after a successful import in importJsonFile
           doc.setModal("import");
         }}
         onRequireSignUp={openSignUp}

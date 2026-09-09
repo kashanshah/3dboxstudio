@@ -74,8 +74,11 @@ Admin routes (`/admin`, `/admin/*`) are excluded at three layers:
 | Mechanism | Events protected |
 |-----------|------------------|
 | Route tracker (`routeTracking.ts`) + rAF cleanup | `page_view`, `page_context` |
-| `sessionStorage` per design session | `design_started`, `design_customized` (per category) |
+| `sessionStorage` per design session + `claimNewDesignSession` | `design_started`, `design_customized` (per category) |
+| `markProjectReopenedOnce(projectKey)` short window | `project_reopened` |
+| `markStudioErrorOnce(category, stage)` cooldown | `studio_error` |
 | `studioOpenTrackedRef` per `BoxDesigner` mount | `studio_open` |
+| Share/preview bootstrap refs (once per id per mount) | URL load → `project_reopened` |
 | `templateInitRef` | Skips initial template dropdown render |
 
 ### `page_view` / `page_context` frequency
@@ -91,6 +94,49 @@ Admin routes (`/admin`, `/admin/*`) are excluded at three layers:
 - **Re-fire** when leaving Studio and returning
 - **Do not** fire during auth loading, on the auth gate, or on rerenders within the same mount
 
+### `design_started` semantics
+
+Fire **once per genuine new design session**:
+
+| Fires | Does **not** fire |
+|-------|-------------------|
+| Start dialog → Create new / Close (blank canvas) | Template dropdown changes |
+| File → New | Autosave / cloud sync |
+| Successful JSON import | Opening an existing cloud/share/recent/preview project |
+| | React rerenders, Strict Mode double-invokes, auth `/me` polls |
+
+Implementation: `beginTrackedDesignSession()` → `claimNewDesignSession()` (resets milestones, Strict Mode safe) → single `design_started`.
+
+Opening an existing project fires **`project_reopened` only** (not `design_started`).
+
+### `project_reopened` semantics
+
+Fire when the user **genuinely opens an existing project**:
+
+| Fires (once per open action) | Does **not** fire |
+|------------------------------|-------------------|
+| Start dialog → open project | Effect re-runs from unstable callbacks |
+| File → Open / Recent | Auth user object identity churn |
+| Share URL bootstrap (`/studio/{id}`) — once per id per mount | Autosave / save-as reload |
+| Preview token bootstrap — once per token per mount | Rerenders / Strict Mode duplicates (3s key dedupe) |
+
+`project_reopened` is **not** paired with `design_started`.
+
+### `studio_error` semantics
+
+| `error_category` | `stage` | Code triggers |
+|------------------|---------|---------------|
+| `cloud_save_failed` | `other` | `saveCloud` / `autoSaveCloud` / `saveCloudAs` catch |
+| `cloud_load_failed` | `studio_load` | Share URL or preview load catch |
+| `export_failed` | `export` | PNG/JSON/recording failure paths |
+| `file_validation_failed` | `artwork_upload` | Face artwork validation reject |
+| `webgl_init_failed` | `rendering` | `StudioErrorBoundary` (WebGL-like errors) |
+| `unknown` | `rendering` | `StudioErrorBoundary` (other render errors) |
+
+**Deduping:** same `error_category` + `stage` is rate-limited (~10s). Error boundary tracks once per failure until Retry. Continuous autosave failures no longer flood GA4.
+
+**Sept 2–8 production note:** 221 `studio_error` / 35 users is consistent with repeated `cloud_save_failed` from autosave retries and/or `cloud_load_failed` from share-URL effect storms (same root instability as `project_reopened`). Category breakdown is not available from app logs alone; use GA4 Explorations filtered by `error_category` / `stage`.
+
 ### `template_selected` parameters
 
 Payload order ensures the **newly selected** template wins over stale React state:
@@ -105,6 +151,10 @@ Payload order ensures the **newly selected** template wins over stale React stat
 }
 ```
 
+### `export_clicked` / `export_completed`
+
+Unchanged: one click → `export_clicked`; successful finish → `export_completed` (with `is_first_export`). Do not gate or merge these with design-session milestones.
+
 ---
 
 ## `design_completed` — not implemented
@@ -115,7 +165,7 @@ Removed: first cloud save fired immediately after `artwork_uploaded` via auto-sa
 
 `session_start` → `studio_open` → `design_started` → `artwork_uploaded` → `design_customized` → `export_clicked` → `export_completed`
 
-Use `project_saved` separately for cloud persistence.
+Use `project_saved` for cloud persistence and `project_reopened` for returning to existing work (separate from `design_started`).
 
 ---
 
@@ -140,6 +190,9 @@ NEXT_PUBLIC_ANALYTICS_DEBUG=true npm run dev  # DebugView QA
 - [ ] `template_selected` records the newly selected template ID
 - [ ] Returning to the same URL after leaving fires `page_view` again
 - [ ] Re-entering Studio fires `studio_open` again
+- [ ] Opening a share URL fires one `project_reopened` (not a stream) and **no** `design_started`
+- [ ] Create new / import fires one `design_started`; Strict Mode does not duplicate
+- [ ] Failed autosave does not emit `studio_error` more than once per ~10s per category
 
 ---
 
@@ -152,5 +205,7 @@ NEXT_PUBLIC_ANALYTICS_DEBUG=true npm run dev  # DebugView QA
 | `src/lib/analytics/core.ts` | `trackEvent` + admin guard |
 | `src/lib/analytics/pageview.ts` | Explicit `page_view` |
 | `src/lib/analytics/routeTracking.ts` | Route dedupe state machine |
+| `src/lib/analytics/session.ts` | Design-session + reopen + error dedupe |
+| `src/lib/analytics/events.ts` | Typed event helpers |
 | `src/components/GoogleAnalytics.tsx` | gtag script loader |
 | `src/components/AnalyticsPageView.tsx` | SPA `page_view` + `page_context` |
