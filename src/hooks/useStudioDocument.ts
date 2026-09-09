@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  beginReopenedDesignSession,
   trackExportClicked,
   trackExportCompleted,
   trackExportFailed,
-  trackProjectReopened,
   trackProjectSaved,
   trackStudioError,
   type BoxType,
@@ -185,7 +185,7 @@ export function useStudioDocument({
 
   const markProjectReopened = useCallback(
     (projectKey: string) => {
-      trackProjectReopened(analyticsCtx(), projectKey);
+      beginReopenedDesignSession(analyticsCtx(), projectKey);
     },
     [analyticsCtx]
   );

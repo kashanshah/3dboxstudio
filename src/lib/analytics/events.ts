@@ -18,6 +18,7 @@ import {
   markProjectReopenedOnce,
   markStudioErrorOnce,
   claimNewDesignSession,
+  claimReopenedDesignSession,
   hasExportedBefore,
 } from "./session";
 import type {
@@ -242,7 +243,21 @@ export function trackProjectSaved(ctx: StudioContextParams = {}): void {
 
 /**
  * Fire when the user genuinely opens an existing project (cloud id, share URL,
- * recent, or preview). `projectKey` is the share id or `preview:<token>`.
+ * recent, or preview). Resets customization milestones for the new design window
+ * without emitting `design_started`.
+ */
+export function beginReopenedDesignSession(
+  ctx: StudioContextParams = {},
+  projectKey: string
+): void {
+  if (!claimReopenedDesignSession(projectKey)) return;
+  trackEvent("project_reopened", studioParams(ctx));
+}
+
+/**
+ * @deprecated Prefer beginReopenedDesignSession — kept for callers that only need
+ * the emit+dedupe without milestone reset (tests). Prefer beginReopenedDesignSession
+ * for production open paths.
  */
 export function trackProjectReopened(
   ctx: StudioContextParams = {},

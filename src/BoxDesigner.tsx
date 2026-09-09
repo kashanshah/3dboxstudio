@@ -29,6 +29,7 @@ import {
   trackTemplateSelected,
   userStatusFromAuth,
 } from "@/lib/analytics/events";
+import { useStudioUrlBootstrap } from "@/hooks/useStudioUrlBootstrap";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -264,8 +265,6 @@ export default function BoxDesigner({
   });
   const studioOpenTrackedRef = useRef(false);
   const templateInitRef = useRef(true);
-  const shareBootstrapKeyRef = useRef<string | null>(null);
-  const previewBootstrapKeyRef = useRef<string | null>(null);
   const [textureRotationDeg, setTextureRotationDeg] = useState<Partial<Record<FaceId, TextureRotationDeg>>>({});
   const [materialId, setMaterialId] = useState(MATERIAL_PRESETS[0].id);
   const [opening, setOpening] = useState<OpeningStyle>("closed");
@@ -568,6 +567,18 @@ export default function BoxDesigner({
   const docRef = useRef(doc);
   docRef.current = doc;
 
+  useStudioUrlBootstrap({
+    shareIdFromUrl,
+    previewTokenFromUrl,
+    docRef,
+    sharedOpenedMessage: t("sharedOpened"),
+    sharedLoadFailedMessage: t("sharedLoadFailed"),
+    previewOpenedMessage: t("previewOpened"),
+    previewLoadFailedMessage: t("previewLoadFailed"),
+    onCloudLoadFailed: () => trackStudioError("cloud_load_failed", "studio_load"),
+    onSettled: () => setSessionReady(true),
+  });
+
   const openProjects = useCallback(() => {
     doc.requestOpen();
   }, [doc]);
@@ -651,71 +662,6 @@ export default function BoxDesigner({
     pendingAutoSaveRef.current = false;
     void doc.autoSaveCloud();
   }, [faceFiles, faceImagePlacements, doc.autoSaveCloud, doc.viewOnly]);
-
-  useEffect(() => {
-    if (!shareIdFromUrl) return;
-    // Bootstrap each share id once per mount — do not re-fetch when callback
-    // identities churn (auth poll, recent-name update, template change).
-    if (shareBootstrapKeyRef.current === shareIdFromUrl) return;
-    shareBootstrapKeyRef.current = shareIdFromUrl;
-
-    let cancelled = false;
-    const docApi = docRef.current;
-
-    void (async () => {
-      try {
-        await docApi.loadShareById(shareIdFromUrl, "opened");
-        if (!cancelled) docApi.showStatus(t("sharedOpened"));
-      } catch {
-        if (!cancelled) {
-          docApi.showStatus(t("sharedLoadFailed"), 5000);
-          trackStudioError("cloud_load_failed", "studio_load");
-        }
-      } finally {
-        if (!cancelled) {
-          setSessionReady(true);
-          docApi.markClean();
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [shareIdFromUrl, t]);
-
-  useEffect(() => {
-    if (!previewTokenFromUrl) return;
-    if (previewBootstrapKeyRef.current === previewTokenFromUrl) return;
-    previewBootstrapKeyRef.current = previewTokenFromUrl;
-
-    let cancelled = false;
-    const docApi = docRef.current;
-
-    void (async () => {
-      try {
-        await docApi.loadShareByPreviewToken(previewTokenFromUrl);
-        if (!cancelled) {
-          docApi.showStatus(t("previewOpened"));
-          // Preview is an existing shared project — project_reopened is emitted inside loadShareByPreviewToken.
-        }
-      } catch {
-        if (!cancelled) {
-          docApi.showStatus(t("previewLoadFailed"), 5000);
-          trackStudioError("cloud_load_failed", "studio_load");
-        }
-      } finally {
-        if (!cancelled) {
-          setSessionReady(true);
-          docApi.markClean();
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [previewTokenFromUrl, t]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomWithAnalytics(t);

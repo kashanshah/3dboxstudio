@@ -78,7 +78,7 @@ Admin routes (`/admin`, `/admin/*`) are excluded at three layers:
 | `markProjectReopenedOnce(projectKey)` short window | `project_reopened` |
 | `markStudioErrorOnce(category, stage)` cooldown | `studio_error` |
 | `studioOpenTrackedRef` per `BoxDesigner` mount | `studio_open` |
-| Share/preview bootstrap refs (once per id per mount) | URL load → `project_reopened` |
+| `runUrlBootstrapOnce` (shared in-flight promise per id/token) | URL load → `project_reopened` |
 | `templateInitRef` | Skips initial template dropdown render |
 
 ### `page_view` / `page_context` frequency
@@ -117,10 +117,16 @@ Fire when the user **genuinely opens an existing project**:
 |------------------------------|-------------------|
 | Start dialog → open project | Effect re-runs from unstable callbacks |
 | File → Open / Recent | Auth user object identity churn |
-| Share URL bootstrap (`/studio/{id}`) — once per id per mount | Autosave / save-as reload |
-| Preview token bootstrap — once per token per mount | Rerenders / Strict Mode duplicates (3s key dedupe) |
+| Share URL bootstrap (`/studio/{id}`) — once per id (Strict Mode safe) | Autosave / save-as reload |
+| Preview token bootstrap — once per token | Rerenders / Strict Mode duplicates |
 
-`project_reopened` is **not** paired with `design_started`.
+`beginReopenedDesignSession(projectKey)`:
+
+1. Dedupes identical keys (short window)
+2. Calls `resetExistingDesignSession()` — fresh `designSessionId`, clears `design_customized` categories, marks `designStarted` so **`design_started` will not emit**
+3. Emits `project_reopened` once
+
+Share/preview URL loads use `runUrlBootstrapOnce` so Strict Mode remounts share one in-flight promise; failures clear the cache and can retry.
 
 ### `studio_error` semantics
 
@@ -207,5 +213,7 @@ NEXT_PUBLIC_ANALYTICS_DEBUG=true npm run dev  # DebugView QA
 | `src/lib/analytics/routeTracking.ts` | Route dedupe state machine |
 | `src/lib/analytics/session.ts` | Design-session + reopen + error dedupe |
 | `src/lib/analytics/events.ts` | Typed event helpers |
+| `src/lib/studioUrlBootstrap.ts` | Strict-Mode-safe share/preview URL load cache |
+| `src/hooks/useStudioUrlBootstrap.ts` | BoxDesigner share/preview bootstrap effects |
 | `src/components/GoogleAnalytics.tsx` | gtag script loader |
 | `src/components/AnalyticsPageView.tsx` | SPA `page_view` + `page_context` |

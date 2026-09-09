@@ -122,6 +122,29 @@ export function claimNewDesignSession(): boolean {
   return markDesignStarted();
 }
 
+/**
+ * Fresh internal design-session window for an opened existing project.
+ * Resets customization category dedupe and rotates designSessionId, but marks
+ * design_started as already satisfied so `design_started` will not emit.
+ */
+export function resetExistingDesignSession(): void {
+  const store = readStore();
+  store.designStarted = true;
+  store.customization = new Set();
+  store.designSessionId = createDesignSessionId();
+  persistStore(store);
+}
+
+/**
+ * Prepare milestones for an opened existing project without emitting design_started.
+ * Returns false when the projectKey was recently opened (Strict Mode / effect storm).
+ */
+export function claimReopenedDesignSession(projectKey: string): boolean {
+  if (!markProjectReopenedOnce(projectKey)) return false;
+  resetExistingDesignSession();
+  return true;
+}
+
 export function markCustomization(category: string): boolean {
   const store = readStore();
   if (store.customization.has(category)) return false;
