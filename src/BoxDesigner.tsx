@@ -11,6 +11,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
 import { shouldFireStudioOpen } from "@/lib/analytics/studioOpen";
 import {
@@ -122,6 +123,13 @@ const openingOptions: { value: OpeningStyle; label: string; hint: string }[] = [
   },
 ];
 
+const faceTranslationKeys: Record<string, string> = {
+  "Front (+Z)": "front", "Back (−Z)": "back", "Left (−X)": "left", "Right (+X)": "right",
+  "Top (whole)": "top", Bottom: "bottom", "Top — left flap": "topLeft", "Top — right flap": "topRight",
+  "Top — left flap (−X half)": "topLeftX", "Top — right flap (+X half)": "topRightX",
+  "Top — back flap (−Z half)": "topBackZ", "Top — front flap (+Z half)": "topFrontZ",
+};
+
 const faceArtIconBtn: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -218,6 +226,8 @@ export default function BoxDesigner({
   const requiresAccount = !shareIdFromUrl && !previewTokenFromUrl && !viewOnly;
 
   const auth = useAuth();
+  const t = useTranslations("studio.editor");
+  const tx = useCallback((key: string) => t(key as Parameters<typeof t>[0]), [t]);
   const { preference: themePreference, resolvedTheme, setPreference: setThemePreference } = useStudioTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -578,8 +588,8 @@ export default function BoxDesigner({
 
   const resendVerification = useCallback(async () => {
     const result = await auth.resendVerification();
-    doc.showStatus(result.ok ? "Verification email sent. Check your inbox." : result.error, 6000);
-  }, [auth, doc]);
+    doc.showStatus(result.ok ? t("verificationSent") : result.error, 6000);
+  }, [auth, doc, t]);
 
   const showAuthGate = requiresAccount && !auth.loading && !auth.user;
 
@@ -631,9 +641,9 @@ export default function BoxDesigner({
     } else {
       trackLogin("google");
     }
-    doc.showStatus(welcome ? "Welcome! Your account is ready." : "Signed in with Google.", 5000);
+    doc.showStatus(welcome ? t("welcome") : t("signedInGoogle"), 5000);
     router.replace("/studio", { scroll: false });
-  }, [searchParams, auth.user, doc.showStatus, router]);
+  }, [searchParams, auth.user, doc.showStatus, router, t]);
 
   useEffect(() => {
     if (doc.viewOnly || !pendingAutoSaveRef.current) return;
@@ -649,10 +659,10 @@ export default function BoxDesigner({
     void (async () => {
       try {
         await doc.loadShareById(shareIdFromUrl);
-        if (!cancelled) doc.showStatus("Opened shared design from link.");
+        if (!cancelled) doc.showStatus(t("sharedOpened"));
       } catch {
         if (!cancelled) {
-          doc.showStatus("Could not load shared design.", 5000);
+          doc.showStatus(t("sharedLoadFailed"), 5000);
           trackStudioError("cloud_load_failed", "studio_load");
         }
       } finally {
@@ -666,7 +676,7 @@ export default function BoxDesigner({
     return () => {
       cancelled = true;
     };
-  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean]);
+  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean, t]);
 
   useEffect(() => {
     if (!previewTokenFromUrl) return;
@@ -677,12 +687,12 @@ export default function BoxDesigner({
       try {
         await doc.loadShareByPreviewToken(previewTokenFromUrl);
         if (!cancelled) {
-          doc.showStatus("View-only preview opened.");
+          doc.showStatus(t("previewOpened"));
           beginDesignSession();
         }
       } catch {
         if (!cancelled) {
-          doc.showStatus("Could not load preview.", 5000);
+          doc.showStatus(t("previewLoadFailed"), 5000);
           trackStudioError("cloud_load_failed", "studio_load");
         }
       } finally {
@@ -696,7 +706,7 @@ export default function BoxDesigner({
     return () => {
       cancelled = true;
     };
-  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean, beginDesignSession]);
+  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean, beginDesignSession, t]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomWithAnalytics(t);
@@ -855,8 +865,8 @@ export default function BoxDesigner({
 
   const faceArtworkLabel = useCallback(
     (fid: FaceId) =>
-      fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid],
-    [splitTopHingeSide]
+      tx(`faces.${faceTranslationKeys[fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid]]}`),
+    [splitTopHingeSide, tx]
   );
 
   const exportPng = useCallback(() => {
@@ -888,8 +898,8 @@ export default function BoxDesigner({
     startViewportRecording(getPreviewCanvas);
   }, [startViewportRecording, getPreviewCanvas]);
 
-  const dimHint = `Scene units: centimeters (converted from ${unit})`;
-  const openingLabel = openingOptions.find((o) => o.value === opening)?.label ?? opening;
+  const dimHint = t("sceneUnits", { unit });
+  const openingLabel = tx(`openingOptions.${opening}.label`);
   const loadingSharedDesign =
     !sessionReady && Boolean(shareIdFromUrl || previewTokenFromUrl);
 
@@ -941,7 +951,7 @@ export default function BoxDesigner({
 
   return (
     <div className="studio-workspace">
-      {loadingSharedDesign && <StudioSaveOverlay message="Loading shared design…" />}
+      {loadingSharedDesign && <StudioSaveOverlay message={t("loadingShared")} />}
       {doc.saveOverlayMessage && <StudioSaveOverlay message={doc.saveOverlayMessage} />}
       <StudioMenuBar
         documentTitle={doc.documentTitle}
@@ -983,17 +993,16 @@ export default function BoxDesigner({
       />
       {doc.viewOnly && (
         <div className="studio-preview-banner" role="status">
-          View-only preview — explore the design, start a new one or open another project (File menu), export PNGs or JSON, or save a copy via File → Save As (sign in required).
+          {t("previewBanner")}
         </div>
       )}
       {!doc.viewOnly && auth.user && !auth.user.emailVerified && (
         <div className="studio-verify-banner studio-verify-banner--optional" role="status">
           <span>
-            Email not verified yet (<strong>{auth.user.email}</strong>). Verification is optional for now—you can
-            still save and share.
+            {t.rich("verificationBanner", { email: auth.user.email, strong: (chunks) => <strong>{chunks}</strong> })}
           </span>
           <button type="button" className="studio-verify-resend" onClick={() => void resendVerification()}>
-            Resend email
+            {t("resendEmail")}
           </button>
         </div>
       )}
@@ -1003,12 +1012,12 @@ export default function BoxDesigner({
         </div>
       )}
       {!loadingSharedDesign && (
-        <nav className="studio-mobile-tabs" aria-label="Studio sections" role="tablist">
+        <nav className="studio-mobile-tabs" aria-label={t("studioSections")} role="tablist">
           {(
             [
-              ["viewport", "Viewport"],
-              ["design", "Design"],
-              ["export", "Export"],
+              ["viewport", t("viewport")],
+              ["design", t("design")],
+              ["export", t("export")],
             ] as const
           ).map(([tab, label]) => (
             <button
@@ -1031,8 +1040,8 @@ export default function BoxDesigner({
           type="button"
           className="studio-panel-toggle"
           aria-expanded={sidebarOpen}
-          aria-label={sidebarOpen ? "Hide configuration panel" : "Show configuration panel"}
-          title={sidebarOpen ? "Hide panel" : "Show panel"}
+          aria-label={sidebarOpen ? t("hideConfiguration") : t("showConfiguration")}
+          title={sidebarOpen ? t("hidePanel") : t("showPanel")}
           onClick={() => setSidebarOpen((v) => !v)}
         >
           <IconPanelToggle />
@@ -1139,15 +1148,14 @@ export default function BoxDesigner({
         {showViewportHint && (
           <div className="viewport-hint" role="note">
             <p className="viewport-hint-text">
-              Drag to orbit · Scroll to zoom · Right-drag to pan. Inspired by packaging configurators — this is a
-              lightweight structural + artwork preview (not a full CAD die-line engine).
+              {t("viewportHint")}
             </p>
             <button
               type="button"
               className="viewport-hint-close"
               onClick={dismissViewportHintOverlay}
-              aria-label="Dismiss viewport hint"
-              title="Dismiss for 24 hours"
+              aria-label={t("dismissViewportHint")}
+              title={t("dismissFor24Hours")}
             >
               <IconTimes />
             </button>
@@ -1160,18 +1168,18 @@ export default function BoxDesigner({
           <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
           <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>
             {viewOnly
-              ? "Client preview mode — orbit the box, adjust lighting, and export PNGs or a short video."
-              : "Dimensions, materials, openings, and per-face artwork. Use File for open, save, and import/export."}
+              ? t("clientPreviewMode")
+              : t("editorIntro")}
           </p>
           {!viewOnly && (
             <p style={{ margin: "0.5rem 0 0", fontSize: "0.75rem", color: "var(--muted)" }}>
               {doc.activeShareId ? (
                 <>
-                  Cloud share · <span className="dim-badge">{doc.activeShareId}</span>
-                  {doc.isDirty ? " · unsaved changes" : " · saved"}
+                  {t("cloudShare")} · <span className="dim-badge">{doc.activeShareId}</span>
+                  {doc.isDirty ? ` · ${t("unsavedChanges")}` : ` · ${t("saved")}`}
                 </>
               ) : (
-                <>Use File → Save or Save As to upload this design and get share links.</>
+                <>{t("savePrompt")}</>
               )}
             </p>
           )}
@@ -1180,66 +1188,66 @@ export default function BoxDesigner({
         <div className="studio-mobile-pane studio-mobile-pane--design">
         {viewOnly ? (
           <>
-          <PanelCollapse title="Design summary">
+          <PanelCollapse title={t("designSummary")}>
             <dl className="studio-preview-summary">
               <div>
-                <dt>Name</dt>
+                <dt>{t("name")}</dt>
                 <dd>{doc.activeShareName ?? DEFAULT_UNTITLED_SHARE_NAME}</dd>
               </div>
               <div>
-                <dt>Dimensions</dt>
+                <dt>{t("dimensions")}</dt>
                 <dd>
                   {dims.width} × {dims.height} × {dims.length} {unit}
                 </dd>
               </div>
               <div>
-                <dt>Material</dt>
-                <dd>{preset.label}</dd>
+                <dt>{t("material")}</dt>
+                <dd>{tx(`materials.${preset.id}`)}</dd>
               </div>
               <div>
-                <dt>Opening</dt>
+                <dt>{t("opening")}</dt>
                 <dd>{openingLabel}</dd>
               </div>
             </dl>
           </PanelCollapse>
           {opening !== "closed" && (
-            <PanelCollapse title="Presentation">
+            <PanelCollapse title={t("presentation")}>
               <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-                Drag the slider to show how the box opens — useful for client walkthroughs.
+                {t("presentationHint")}
               </p>
-              <label>Open amount ({Math.round(openT * 100)}%)</label>
+              <label>{t("openAmount", { amount: Math.round(openT * 100) })}</label>
               <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => commitOpenT(Number(e.target.value))} />
             </PanelCollapse>
           )}
           </>
         ) : (
           <>
-        <PanelCollapse title="Outer dimensions">
+        <PanelCollapse title={t("outerDimensions")}>
           <div style={{ marginBottom: "0.65rem" }}>
-            <label>Box template</label>
+            <label>{t("boxTemplate")}</label>
             <select value={boxTemplateId} onChange={(e) => applyBoxTemplate(e.target.value)}>
-              <option value="custom">Custom (manual)</option>
+              <option value="custom">{t("customManual")}</option>
               {BOX_TEMPLATES.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.label}
+                  {tx(`templates.${t.id}.label`)}
                 </option>
               ))}
             </select>
             <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
-              {getBoxTemplate(boxTemplateId)?.hint ?? "Start from a common box size, then fine-tune below."}
+              {boxTemplateId === "custom" ? t("templateHint") : tx(`templates.${boxTemplateId}.hint`)}
             </p>
           </div>
           <div style={{ marginBottom: "0.65rem" }}>
-            <label>Unit</label>
+            <label>{t("unit")}</label>
             <select value={unit} onChange={(e) => setUnitWithAnalytics(e.target.value as LengthUnit)}>
-              <option value="mm">Millimeters (mm)</option>
-              <option value="cm">Centimeters (cm)</option>
-              <option value="in">Inches (in)</option>
+              <option value="mm">{t("millimeters")}</option>
+              <option value="cm">{t("centimeters")}</option>
+              <option value="in">{t("inches")}</option>
             </select>
           </div>
           <div className="row-3">
             <div>
-              <label>Width</label>
+              <label>{t("width")}</label>
               <input
                 type="number"
                 min={0.1}
@@ -1249,7 +1257,7 @@ export default function BoxDesigner({
               />
             </div>
             <div>
-              <label>Height</label>
+              <label>{t("height")}</label>
               <input
                 type="number"
                 min={0.1}
@@ -1259,7 +1267,7 @@ export default function BoxDesigner({
               />
             </div>
             <div>
-              <label>Length (depth)</label>
+              <label>{t("length")}</label>
               <input
                 type="number"
                 min={0.1}
@@ -1272,66 +1280,63 @@ export default function BoxDesigner({
           <div className="dim-badge">{dimHint}</div>
         </PanelCollapse>
 
-        <PanelCollapse title="Board / material">
-          <label>Preset</label>
+        <PanelCollapse title={t("boardMaterial")}>
+          <label>{t("preset")}</label>
           <select value={materialId} onChange={(e) => setMaterialWithAnalytics(e.target.value)}>
             {MATERIAL_PRESETS.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.label}
+                {tx(`materials.${p.id}`)}
               </option>
             ))}
           </select>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.5rem" }}>
-            PBR-style response (roughness, clearcoat, metalness). Drop your own substrate by swapping presets in code.
+            {t("materialHint")}
           </p>
         </PanelCollapse>
 
-        <PanelCollapse title="Opening style">
-          <label>Mechanism</label>
+        <PanelCollapse title={t("openingStyle")}>
+          <label>{t("mechanism")}</label>
           <select value={opening} onChange={(e) => commitOpeningWithAnalytics(e.target.value as OpeningStyle)}>
             {openingOptions.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {tx(`openingOptions.${o.value}.label`)}
               </option>
             ))}
           </select>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
-            {openingOptions.find((o) => o.value === opening)?.hint}
+            {tx(`openingOptions.${opening}.hint`)}
           </p>
           {opening === "top_split_meet_center" && (
             <div style={{ marginTop: "0.75rem" }}>
-              <label>Split top — hinge pair</label>
+              <label>{t("splitTopHinge")}</label>
               <select value={splitTopHingeSide} onChange={(e) => setSplitTopHingeSide(e.target.value as SplitTopHingeSide)}>
                 {SPLIT_TOP_HINGE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {tx(`hinges.${o.value}.label`)}
                   </option>
                 ))}
               </select>
               <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0.45rem 0 0" }}>
-                {SPLIT_TOP_HINGE_OPTIONS.find((o) => o.value === splitTopHingeSide)?.hint}
+                {tx(`hinges.${splitTopHingeSide}.hint`)}
               </p>
             </div>
           )}
           {opening !== "closed" && (
             <div style={{ marginTop: "0.75rem" }}>
-              <label>Open amount ({Math.round(openT * 100)}%)</label>
+              <label>{t("openAmount", { amount: Math.round(openT * 100) })}</label>
               <input type="range" min={0} max={1} step={0.01} value={openT} onChange={(e) => commitOpenT(Number(e.target.value))} />
             </div>
           )}
         </PanelCollapse>
 
-        <PanelCollapse title="Face artwork">
+        <PanelCollapse title={t("faceArtwork")}>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            PNG or JPG recommended, up to {formatFileSize(MAX_FACE_ARTWORK_BYTES)} per image. After upload, crop the
-            original to this face’s aspect ratio. The same source image can be reused on every side with an independent
-            crop. Hover the rotate, apply-to-all, and clear icons beside each face for hints; rotation advances 90° per
-            click.
+            {t("artworkHint", { size: formatFileSize(MAX_FACE_ARTWORK_BYTES) })}
           </p>
           {(splitTop ? [...ALL_FACES.filter((f) => f !== "top"), ...SPLIT_TOP_FACES] : ALL_FACES).map((fid) => (
             <div key={fid} style={{ marginBottom: "0.65rem" }}>
               <label>
-                {fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid]}
+                {tx(`faces.${faceTranslationKeys[fid === "topLeft" || fid === "topRight" ? labelForSplitTopFace(fid, splitTopHingeSide) : faceLabels[fid]]}`)}
               </label>
               <input
                 type="file"
@@ -1341,13 +1346,13 @@ export default function BoxDesigner({
               />
               {reusableSources.length > 0 && (
                 <div className="face-artwork-reuse">
-                  <span className="face-artwork-reuse-label">Use uploaded</span>
+                  <span className="face-artwork-reuse-label">{t("useUploaded")}</span>
                   {reusableSources.map((source) => (
                     <button
                       key={source.id}
                       type="button"
                       className="btn btn-ghost face-artwork-reuse-btn"
-                      title={`Use ${source.originalFileName || "uploaded image"} on this face`}
+                      title={t("useImageOnFace", { name: source.originalFileName || t("uploadedImage") })}
                       onClick={() =>
                         openCropSession(
                           fid,
@@ -1358,7 +1363,7 @@ export default function BoxDesigner({
                         )
                       }
                     >
-                      {source.originalFileName || "Image"}
+                      {source.originalFileName || t("image")}
                     </button>
                   ))}
                 </div>
@@ -1369,17 +1374,17 @@ export default function BoxDesigner({
                   className="btn"
                   onClick={() => handleCropEdit(fid)}
                   disabled={!faceFiles[fid]}
-                  title="Crop or edit this face using the original image"
+                  title={t("cropEditTitle")}
                 >
-                  Crop / Edit
+                  {t("cropEdit")}
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost"
                   style={faceArtIconBtn}
                   onClick={() => bumpTextureRotationBy90(fid)}
-                  title="Rotate artwork 90° on this face"
-                  aria-label="Rotate artwork 90 degrees on this face"
+                  title={t("rotateArtworkTitle")}
+                  aria-label={t("rotateArtworkLabel")}
                 >
                   <IconRotate90 />
                 </button>
@@ -1389,8 +1394,8 @@ export default function BoxDesigner({
                   style={faceArtIconBtn}
                   onClick={() => setApplyToAllFace(fid)}
                   disabled={!faceFiles[fid]}
-                  title="Use this image for all faces"
-                  aria-label="Use this image for all faces"
+                  title={t("useAllFaces")}
+                  aria-label={t("useAllFaces")}
                 >
                   <IconApplyToAll />
                 </button>
@@ -1400,8 +1405,8 @@ export default function BoxDesigner({
                   style={faceArtIconBtn}
                   onClick={() => setFile(fid, null)}
                   disabled={!faceFiles[fid]}
-                  title="Remove image from this face"
-                  aria-label="Remove image from this face"
+                  title={t("removeImage")}
+                  aria-label={t("removeImage")}
                 >
                   <IconClearImage />
                 </button>
@@ -1413,37 +1418,37 @@ export default function BoxDesigner({
           ))}
           <div style={{ marginTop: "0.5rem" }}>
             <button type="button" className="btn" style={{ width: "100%" }} onClick={clearAllTextures}>
-              Clear all artwork
+              {t("clearAllArtwork")}
             </button>
           </div>
         </PanelCollapse>
           </>
         )}
 
-        <PanelCollapse title="Viewport & lighting">
+        <PanelCollapse title={t("viewportLighting")}>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            HDRI lighting, camera zoom, and how the preview is drawn (grid, gizmo, wireframe, turntable).
+            {t("viewportLightingHint")}
           </p>
-          <label>HDRI preset</label>
+          <label>{t("hdriPreset")}</label>
           <select value={envPreset} onChange={(e) => setEnvWithAnalytics(e.target.value as EnvPreset)}>
-            <option value="city">City</option>
-            <option value="studio">Studio</option>
-            <option value="warehouse">Warehouse</option>
-            <option value="sunset">Sunset</option>
-            <option value="dawn">Dawn</option>
+            <option value="city">{t("city")}</option>
+            <option value="studio">{t("studio")}</option>
+            <option value="warehouse">{t("warehouse")}</option>
+            <option value="sunset">{t("sunset")}</option>
+            <option value="dawn">{t("dawn")}</option>
           </select>
           <div style={{ marginTop: "0.75rem" }}>
-            <label>Zoom</label>
+            <label>{t("zoom")}</label>
             <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: "0.25rem 0 0.4rem" }}>
-              Scroll or pinch on the viewport still zooms; the slider stays in sync with camera distance.
+              {t("zoomHint")}
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
               <button
                 type="button"
                 className="btn btn-ghost"
                 style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
-                title="Zoom out (camera farther)"
-                aria-label="Zoom out"
+                title={t("zoomOutTitle")}
+                aria-label={t("zoomOut")}
                 onClick={() =>
                   setZoomWithAnalytics(Math.min(1, Math.round((zoomFraction + 0.04) * 1000) / 1000))
                 }
@@ -1461,14 +1466,14 @@ export default function BoxDesigner({
                 aria-valuemin={0}
                 aria-valuemax={1}
                 aria-valuenow={zoomFraction}
-                aria-label="Zoom level"
+                aria-label={t("zoomLevel")}
               />
               <button
                 type="button"
                 className="btn btn-ghost"
                 style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
-                title="Zoom in (camera closer)"
-                aria-label="Zoom in"
+                title={t("zoomInTitle")}
+                aria-label={t("zoomIn")}
                 onClick={() =>
                   setZoomWithAnalytics(Math.max(0, Math.round((zoomFraction - 0.04) * 1000) / 1000))
                 }
@@ -1480,30 +1485,30 @@ export default function BoxDesigner({
           <div style={{ marginTop: "0.75rem" }}>
             <label className="checkbox-row" style={{ marginBottom: 0 }}>
               <input type="checkbox" checked={wireframe} onChange={(e) => setWireframe(e.target.checked)} />
-              Wireframe overlay
+              {t("wireframe")}
             </label>
             <label className="checkbox-row" style={{ marginBottom: 0 }}>
               <input type="checkbox" checked={showGrid} onChange={(e) => setShowGrid(e.target.checked)} />
-              Floor grid
+              {t("floorGrid")}
             </label>
             <label className="checkbox-row" style={{ marginBottom: 0 }}>
               <input type="checkbox" checked={showAxesGizmo} onChange={(e) => setShowAxesGizmo(e.target.checked)} />
-              Orientation gizmo
+              {t("orientationGizmo")}
             </label>
             <label className="checkbox-row" style={{ marginBottom: 0 }}>
               <input type="checkbox" checked={autoRotate} onChange={(e) => setAutoRotate(e.target.checked)} />
-              Auto-rotate (turntable)
+              {t("autoRotate")}
             </label>
             {autoRotate && (
               <div style={{ marginTop: "0.65rem", paddingLeft: "1.5rem" }}>
-                <label>Auto-rotate speed ({autoRotateSpeed.toFixed(2)})</label>
+                <label>{t("autoRotateSpeed", { speed: autoRotateSpeed.toFixed(2) })}</label>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
                   <button
                     type="button"
                     className="btn btn-ghost"
                     style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
-                    title="Decrease speed"
-                    aria-label="Decrease auto-rotate speed"
+                    title={t("decreaseSpeed")}
+                    aria-label={t("decreaseAutoRotateSpeed")}
                     onClick={() =>
                       setAutoRotateSpeed((s) => Math.max(0.1, Math.round((s - 0.1) * 100) / 100))
                     }
@@ -1526,8 +1531,8 @@ export default function BoxDesigner({
                     type="button"
                     className="btn btn-ghost"
                     style={{ padding: "0.35rem 0.55rem", minWidth: "2.25rem" }}
-                    title="Increase speed"
-                    aria-label="Increase auto-rotate speed"
+                    title={t("increaseSpeed")}
+                    aria-label={t("increaseAutoRotateSpeed")}
                     onClick={() =>
                       setAutoRotateSpeed((s) => Math.min(4, Math.round((s + 0.1) * 100) / 100))
                     }
@@ -1535,13 +1540,13 @@ export default function BoxDesigner({
                     +
                   </button>
                 </div>
-                <label className="checkbox-row" style={{ marginTop: "0.6rem", marginBottom: 0 }} title="Spin the turntable the other way">
+                <label className="checkbox-row" style={{ marginTop: "0.6rem", marginBottom: 0 }} title={t("reverseHint")}>
                   <input
                     type="checkbox"
                     checked={autoRotateReverse}
                     onChange={(e) => setAutoRotateReverse(e.target.checked)}
                   />
-                  Reverse direction
+                  {t("reverseDirection")}
                 </label>
               </div>
             )}
@@ -1550,13 +1555,9 @@ export default function BoxDesigner({
         </div>
 
         <div className="studio-mobile-pane studio-mobile-pane--export">
-        <PanelCollapse title="Viewport capture">
+        <PanelCollapse title={t("viewportCapture")}>
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
-            <strong style={{ color: "var(--text)", fontWeight: 600 }}>Export & record.</strong> PNG is a still of the 3D
-            preview on the left (not this panel). Video records that same viewport: after a 3-second countdown, capture runs up
-            to 15 seconds while you change options in the sidebar; you can stop early. A one-second end card credits{" "}
-            <strong style={{ color: "var(--text)", fontWeight: 600 }}>www.3dboxstudio.com</strong>. Output is MP4 when your
-            browser supports it, otherwise WebM.
+            {t("captureHint")}
           </p>
           {recordPhase === "recording" ? (
             <>
@@ -1567,12 +1568,12 @@ export default function BoxDesigner({
                   onClick={stopViewportRecording}
                   style={{ width: "100%", borderColor: "#b91c1c", color: "#fecaca" }}
                 >
-                  Stop & download video
+                  {t("stopDownloadVideo")}
                 </button>
               </div>
               <div style={{ marginBottom: "0.75rem" }}>
                 <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
-                  Export viewport PNG
+                  {t("exportPng")}
                 </button>
               </div>
             </>
@@ -1580,25 +1581,25 @@ export default function BoxDesigner({
             <>
               <div className="row-2" style={{ marginBottom: "0.5rem" }}>
                 <button type="button" className="btn btn-ghost" onClick={cancelRecordCountdown}>
-                  Cancel countdown
+                  {t("cancelCountdown")}
                 </button>
                 <span className="dim-badge" style={{ marginTop: 0, alignSelf: "center" }}>
-                  Starting in {recordCountdown}…
+                  {t("startingIn", { seconds: recordCountdown ?? 0 })}
                 </span>
               </div>
               <div style={{ marginBottom: "0.75rem" }}>
                 <button type="button" className="btn" onClick={exportPng} style={{ width: "100%" }}>
-                  Export viewport PNG
+                  {t("exportPng")}
                 </button>
               </div>
             </>
           ) : (
             <div className="row-1" style={{ marginBottom: "0.75rem" }}>
               <button type="button" className="btn btn-primary" onClick={startPresentationRecording}>
-                Record presentation (15s)
+                {t("recordPresentation")}
               </button>
               <button type="button" className="btn" onClick={exportPng}>
-                Export viewport PNG
+                {t("exportPng")}
               </button>
             </div>
           )}
@@ -1615,60 +1616,53 @@ export default function BoxDesigner({
       <StudioFileModals doc={doc} authUser={auth.user} onSignIn={openSignIn} />
       <StudioHelpModals modal={helpModal} onClose={() => setHelpModal(null)} onStatus={doc.showStatus} />
       <StudioDialog
-        title="Apply image to all faces?"
+        title={t("applyAllTitle")}
         open={applyToAllFace !== null}
         onClose={() => setApplyToAllFace(null)}
         footer={
           <>
             <button type="button" className="btn btn-ghost" onClick={() => setApplyToAllFace(null)}>
-              Cancel
+              {t("cancel")}
             </button>
             <button type="button" className="btn btn-primary" onClick={confirmApplyOneToAll}>
-              Apply to all faces
+              {t("applyAll")}
             </button>
           </>
         }
       >
         <p className="studio-dialog-lead">
-          Assign the source image and current crop from{" "}
-          <strong>{applyToAllFace ? faceArtworkLabel(applyToAllFace) : "this face"}</strong> to every face. Existing
-          artwork on other faces will be replaced.
+          {t.rich("applyAllLead", { face: applyToAllFace ? faceArtworkLabel(applyToAllFace) : t("thisFace"), strong: (chunks) => <strong>{chunks}</strong> })}
         </p>
         <p className="studio-dialog-hint">
           {(applyToAllFace && (textureRotationDeg[applyToAllFace] ?? 0) !== 0)
-            ? `The current crop and ${textureRotationDeg[applyToAllFace]}° rotation on this face will be copied to all faces as well. `
-            : "The current crop, position, and zoom will be copied to every face. "}
-          This cannot be undone in one step—use Clear all artwork if you need to reset.
+            ? t("applyAllRotatedHint", { rotation: textureRotationDeg[applyToAllFace] ?? 0 })
+            : t("applyAllHint")}
         </p>
       </StudioDialog>
       <StudioDialog
         title={
           artworkUploadError?.kind === "unsupported"
-            ? "Unsupported image"
+            ? t("unsupportedImage")
             : artworkUploadError?.kind === "unreadable"
-              ? "Could not read image"
-              : "Image too large"
+              ? t("couldNotReadImage")
+              : t("imageTooLarge")
         }
         open={artworkUploadError !== null}
         onClose={() => setArtworkUploadError(null)}
         footer={
           <button type="button" className="btn btn-primary" onClick={() => setArtworkUploadError(null)}>
-            OK
+            {t("ok")}
           </button>
         }
       >
         {artworkUploadError && artworkUploadError.kind === "too_large" && (
           <>
             <p className="studio-dialog-lead">
-              <strong>{artworkUploadError.fileName}</strong> is {formatFileSize(artworkUploadError.fileSize)}. Face artwork
-              must be {formatFileSize(artworkUploadError.maxBytes)} or smaller.
+              {t.rich("imageTooLargeLead", { name: artworkUploadError.fileName, size: formatFileSize(artworkUploadError.fileSize), max: formatFileSize(artworkUploadError.maxBytes), strong: (chunks) => <strong>{chunks}</strong> })}
             </p>
-            <p className="studio-dialog-hint">How to fix:</p>
+            <p className="studio-dialog-hint">{t("howToFix")}</p>
             <ul className="studio-dialog-list">
-              <li>Export or save as JPG instead of PNG if the file is a photo or full-color print.</li>
-              <li>Reduce image dimensions (e.g. 2000–3000 px on the longest side is usually enough for preview).</li>
-              <li>Compress the file in Photoshop, Affinity, Figma, or a free tool such as Squoosh or TinyPNG.</li>
-              <li>Remove unused layers or embedded profiles before exporting.</li>
+              <li>{t("fixJpg")}</li><li>{t("fixDimensions")}</li><li>{t("fixCompress")}</li><li>{t("fixLayers")}</li>
             </ul>
           </>
         )}

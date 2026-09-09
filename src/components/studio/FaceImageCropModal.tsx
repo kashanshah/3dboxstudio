@@ -14,6 +14,7 @@ import {
   type SideImagePlacement,
 } from "@/lib/faceImageCrop";
 import type { SourceImageRecord } from "@/lib/sourceImages";
+import { useTranslations } from "next-intl";
 
 /**
  * react-easy-crop: locked aspect ratio, drag-to-reposition, pinch/scroll zoom,
@@ -43,6 +44,7 @@ export default function FaceImageCropModal({
   onCancel,
   onApply,
 }: FaceImageCropModalProps) {
+  const t = useTranslations("studio.crop");
   const zoomLabelId = useId();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
@@ -124,26 +126,26 @@ export default function FaceImageCropModal({
 
   return (
     <StudioDialog
-      title={`Crop image for ${faceName}`}
+      title={t("title", { face: faceName })}
       open={open}
       onClose={onCancel}
       width={720}
-      description="Drag to reposition and use zoom to fit this side."
+      description={t("description")}
       footer={
         <>
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
-            Cancel
+            {t("cancel")}
           </button>
           <button type="button" className="btn" onClick={handleReset} disabled={!source || loadState === "error"}>
-            Reset
+            {t("reset")}
           </button>
           <button type="button" className="btn btn-primary" onClick={handleApply} disabled={applyDisabled}>
-            Apply
+            {t("apply")}
           </button>
         </>
       }
     >
-      <p className="studio-dialog-lead">Drag to reposition and use zoom to fit this side.</p>
+      <p className="studio-dialog-lead">{t("description")}</p>
       <div className="face-image-crop-stage" aria-busy={loadState === "loading"}>
         {imageUrl && loadState !== "error" && (
           <Cropper
@@ -161,7 +163,7 @@ export default function FaceImageCropModal({
             zoomWithScroll
             initialCroppedAreaPercentages={restoreCrop}
             mediaProps={{
-              alt: `Artwork for ${faceName}`,
+              alt: t("artworkAlt", { face: faceName }),
               onError: () => setLoadState("error"),
             }}
             onCropChange={setCrop}
@@ -180,18 +182,18 @@ export default function FaceImageCropModal({
         )}
         {loadState === "loading" && (
           <div className="face-image-crop-status" role="status">
-            Loading image…
+            {t("loading")}
           </div>
         )}
         {loadState === "error" && (
           <div className="face-image-crop-status face-image-crop-status--error" role="alert">
-            This image could not be displayed. It may be corrupt or in an unsupported format.
+            {t("error")}
           </div>
         )}
       </div>
       <div className="face-image-crop-controls">
         <label id={zoomLabelId} htmlFor="face-image-crop-zoom">
-          Zoom
+          {t("zoom")}
         </label>
         <input
           id="face-image-crop-zoom"
