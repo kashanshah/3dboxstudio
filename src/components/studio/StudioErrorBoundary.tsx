@@ -62,10 +62,16 @@ class StudioErrorBoundaryInner extends Component<StudioErrorBoundaryProps & { co
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Studio render error:", error, info.componentStack);
-    trackStudioError(isLikelyWebGLError(error) ? "webgl_init_failed" : "unknown", "rendering");
+    if (!this.errorTracked) {
+      this.errorTracked = true;
+      trackStudioError(isLikelyWebGLError(error) ? "webgl_init_failed" : "unknown", "rendering");
+    }
   }
 
+  private errorTracked = false;
+
   private handleReset = () => {
+    this.errorTracked = false;
     this.setState({ error: null });
     this.props.onReset?.();
   };

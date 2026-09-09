@@ -15,10 +15,9 @@ import { useTranslations } from "next-intl";
 import { googleAuthErrorMessage } from "@/lib/authErrors";
 import { shouldFireStudioOpen } from "@/lib/analytics/studioOpen";
 import {
-  resetDesignSession,
+  beginTrackedDesignSession,
   trackArtworkUploaded,
   trackDesignCustomized,
-  trackDesignStarted,
   trackExportClicked,
   trackExportCompleted,
   trackExportFailed,
@@ -29,7 +28,8 @@ import {
   trackStudioOpen,
   trackTemplateSelected,
   userStatusFromAuth,
-} from "@/lib/analytics";
+} from "@/lib/analytics/events";
+import { useStudioUrlBootstrap } from "@/hooks/useStudioUrlBootstrap";
 import { flushSync } from "react-dom";
 import type { RootState } from "@react-three/fiber";
 import {
@@ -312,8 +312,14 @@ export default function BoxDesigner({
       user: auth.user,
       userStatus: userStatusFromAuth(auth.user),
     }),
-    [boxTemplateId, auth.user]
+    // Use stable identity fields — auth.user object identity churns on /api/auth/me polls.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [boxTemplateId, auth.user?.id, auth.user?.emailVerified]
   );
+
+  const beginDesignSession = useCallback(() => {
+    beginTrackedDesignSession(studioAnalyticsCtx());
+  }, [studioAnalyticsCtx]);
 
   const {
     phase: recordPhase,
@@ -356,14 +362,6 @@ export default function BoxDesigner({
       r3fRef.current?.invalidate();
     },
     [isRecordingViewport]
-  );
-
-  const beginDesignSession = useCallback(
-    () => {
-      resetDesignSession();
-      trackDesignStarted(studioAnalyticsCtx());
-    },
-    [studioAnalyticsCtx]
   );
 
   const applyBoxTemplate = useCallback(
@@ -566,6 +564,20 @@ export default function BoxDesigner({
     getAnalyticsContext: studioAnalyticsCtx,
     onDesignSessionStart: beginDesignSession,
   });
+  const docRef = useRef(doc);
+  docRef.current = doc;
+
+  useStudioUrlBootstrap({
+    shareIdFromUrl,
+    previewTokenFromUrl,
+    docRef,
+    sharedOpenedMessage: t("sharedOpened"),
+    sharedLoadFailedMessage: t("sharedLoadFailed"),
+    previewOpenedMessage: t("previewOpened"),
+    previewLoadFailedMessage: t("previewLoadFailed"),
+    onCloudLoadFailed: () => trackStudioError("cloud_load_failed", "studio_load"),
+    onSettled: () => setSessionReady(true),
+  });
 
   const openProjects = useCallback(() => {
     doc.requestOpen();
@@ -650,63 +662,6 @@ export default function BoxDesigner({
     pendingAutoSaveRef.current = false;
     void doc.autoSaveCloud();
   }, [faceFiles, faceImagePlacements, doc.autoSaveCloud, doc.viewOnly]);
-
-  useEffect(() => {
-    if (!shareIdFromUrl) return;
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        await doc.loadShareById(shareIdFromUrl);
-        if (!cancelled) doc.showStatus(t("sharedOpened"));
-      } catch {
-        if (!cancelled) {
-          doc.showStatus(t("sharedLoadFailed"), 5000);
-          trackStudioError("cloud_load_failed", "studio_load");
-        }
-      } finally {
-        if (!cancelled) {
-          setSessionReady(true);
-          doc.markClean();
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [shareIdFromUrl, doc.loadShareById, doc.showStatus, doc.markClean, t]);
-
-  useEffect(() => {
-    if (!previewTokenFromUrl) return;
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        await doc.loadShareByPreviewToken(previewTokenFromUrl);
-        if (!cancelled) {
-          doc.showStatus(t("previewOpened"));
-          beginDesignSession();
-        }
-      } catch {
-        if (!cancelled) {
-          doc.showStatus(t("previewLoadFailed"), 5000);
-          trackStudioError("cloud_load_failed", "studio_load");
-        }
-      } finally {
-        if (!cancelled) {
-          setSessionReady(true);
-          doc.markClean();
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [previewTokenFromUrl, doc.loadShareByPreviewToken, doc.showStatus, doc.markClean, beginDesignSession, t]);
 
   const setZoomFractionClamped = useCallback((t: number) => {
     setZoomWithAnalytics(t);
@@ -1698,7 +1653,7 @@ export default function BoxDesigner({
         }}
         onImport={() => {
           setStartDialogOpen(false);
-          beginDesignSession();
+          // design_started fires after a successful import in importJsonFile
           doc.setModal("import");
         }}
         onRequireSignUp={openSignUp}

@@ -18,7 +18,7 @@ export {
   markRouteEventsEmitted,
   clearRouteOnLeave,
 } from "./routeTracking";
-export { buildTemplateSelectedParams } from "./events";
+export { buildTemplateSelectedParams, beginTrackedDesignSession, beginReopenedDesignSession } from "./events";
 export { shouldFireStudioOpen } from "./studioOpen";
 export { getAnalyticsPathname, canSendAnalytics } from "./core";
 export {
@@ -46,4 +46,4 @@ export {
   sanitizeTemplateType,
   sanitizeBoxType,
 } from "./mappers";
-export { resetDesignSession } from "./session";
+export { resetDesignSession, resetExistingDesignSession, resetAnalyticsDedupeForTesting } from "./session";

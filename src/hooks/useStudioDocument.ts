@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  beginReopenedDesignSession,
   trackExportClicked,
   trackExportCompleted,
   trackExportFailed,
-  trackProjectReopened,
   trackProjectSaved,
   trackStudioError,
   type BoxType,
@@ -176,14 +176,19 @@ export function useStudioDocument({
     [getAnalyticsContext]
   );
 
+  const activeShareNameRef = useRef<string | null>(null);
+  activeShareNameRef.current = activeShareName;
+
   const markProjectSaved = useCallback(() => {
     trackProjectSaved(analyticsCtx());
   }, [analyticsCtx]);
 
-  const markProjectReopened = useCallback(() => {
-    trackProjectReopened(analyticsCtx());
-    onDesignSessionStart?.();
-  }, [analyticsCtx, onDesignSessionStart]);
+  const markProjectReopened = useCallback(
+    (projectKey: string) => {
+      beginReopenedDesignSession(analyticsCtx(), projectKey);
+    },
+    [analyticsCtx]
+  );
 
   activeShareIdRef.current = activeShareId;
 
@@ -245,10 +250,10 @@ export function useStudioDocument({
 
   const rememberRecent = useCallback(
     (id: string, source: "opened" | "saved", url?: string, name?: string | null) => {
-      addRecentDesign({ id, url, source, name: name ?? activeShareName });
+      addRecentDesign({ id, url, source, name: name ?? activeShareNameRef.current });
       refreshRecentDesigns();
     },
-    [refreshRecentDesigns, activeShareName]
+    [refreshRecentDesigns]
   );
 
   useEffect(() => {
@@ -357,7 +362,7 @@ export function useStudioDocument({
       setIsDirty(false);
       rememberRecent(shareId, source, undefined, shareName);
       if (source === "opened") {
-        markProjectReopened();
+        markProjectReopened(shareId);
       }
       return true;
     },
@@ -380,9 +385,10 @@ export function useStudioDocument({
       setActiveShareName(shareName);
       syncUrlToPreview(previewToken);
       setIsDirty(false);
+      markProjectReopened(`preview:${previewToken}`);
       return true;
     },
-    [applyPersistedState, syncUrlToPreview]
+    [applyPersistedState, syncUrlToPreview, markProjectReopened]
   );
 
   const saveCloud = useCallback(async (): Promise<boolean> => {
