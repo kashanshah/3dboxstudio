@@ -15,6 +15,10 @@ import {
   markCustomization,
   markDesignStarted,
   markFirstExport,
+  markProjectReopenedOnce,
+  markStudioErrorOnce,
+  claimNewDesignSession,
+  claimReopenedDesignSession,
   hasExportedBefore,
 } from "./session";
 import type {
@@ -144,6 +148,15 @@ export function trackDesignStarted(ctx: StudioContextParams = {}): void {
   trackEvent("design_started", studioParams(ctx));
 }
 
+/**
+ * Begin a genuine new design session: reset per-session milestones, then fire
+ * `design_started` once. Strict Mode double-invokes within ~100ms do not double-fire.
+ */
+export function beginTrackedDesignSession(ctx: StudioContextParams = {}): void {
+  if (!claimNewDesignSession()) return;
+  trackEvent("design_started", studioParams(ctx));
+}
+
 export function buildTemplateSelectedParams(
   templateId: string,
   ctx: StudioContextParams = {}
@@ -228,11 +241,40 @@ export function trackProjectSaved(ctx: StudioContextParams = {}): void {
   trackEvent("project_saved", studioParams(ctx));
 }
 
-export function trackProjectReopened(ctx: StudioContextParams = {}): void {
+/**
+ * Fire when the user genuinely opens an existing project (cloud id, share URL,
+ * recent, or preview). Resets customization milestones for the new design window
+ * without emitting `design_started`.
+ */
+export function beginReopenedDesignSession(
+  ctx: StudioContextParams = {},
+  projectKey: string
+): void {
+  if (!claimReopenedDesignSession(projectKey)) return;
   trackEvent("project_reopened", studioParams(ctx));
 }
 
-export function trackStudioError(errorCategory: StudioErrorCategory, stage: StudioErrorStage): void {
+/**
+ * @deprecated Prefer beginReopenedDesignSession — kept for callers that only need
+ * the emit+dedupe without milestone reset (tests). Prefer beginReopenedDesignSession
+ * for production open paths.
+ */
+export function trackProjectReopened(
+  ctx: StudioContextParams = {},
+  projectKey?: string
+): void {
+  const key = projectKey?.trim();
+  if (key) {
+    if (!markProjectReopenedOnce(key)) return;
+  }
+  trackEvent("project_reopened", studioParams(ctx));
+}
+
+export function trackStudioError(
+  errorCategory: StudioErrorCategory,
+  stage: StudioErrorStage
+): void {
+  if (!markStudioErrorOnce(errorCategory, stage)) return;
   trackEvent("studio_error", {
     error_category: errorCategory,
     stage,
