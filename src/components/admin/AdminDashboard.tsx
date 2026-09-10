@@ -1,46 +1,8 @@
 import type { AdminStats } from "@/server/admin/types";
 import { landingTypeLabel } from "@/lib/landingClassification";
+import AdminActivityChart from "./AdminActivityChart";
 import AdminAnalyticsCharts from "./AdminAnalyticsCharts";
 import AdminS3UsageSection from "./AdminS3UsageSection";
-
-type ActivityChartProps = {
-  title: string;
-  data: { date: string; count: number }[];
-};
-
-function ActivityChart({ title, data }: ActivityChartProps) {
-  const max = Math.max(1, ...data.map((d) => d.count));
-
-  return (
-    <div className="admin-panel">
-      <div className="admin-panel-header">
-        <h2>{title}</h2>
-      </div>
-      <div style={{ padding: "0.75rem 1.1rem 1rem" }}>
-        {data.length === 0 ? (
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>No activity in the last 30 days.</p>
-        ) : (
-          <>
-            <div className="admin-activity-bars" role="img" aria-label={`${title} chart`}>
-              {data.map((point) => (
-                <div
-                  key={point.date}
-                  className="admin-activity-bar"
-                  style={{ height: `${point.count > 0 ? Math.max(4, (point.count / max) * 100) : 0}%` }}
-                  title={`${point.date}: ${point.count}`}
-                />
-              ))}
-            </div>
-            <div className="admin-activity-labels">
-              <span>{data[0]?.date}</span>
-              <span>{data[data.length - 1]?.date}</span>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 type BreakdownListProps = {
   title: string;
@@ -126,8 +88,8 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1rem" }}>
-        <ActivityChart title="Signups (last 30 days)" data={stats.activity.signupsByDay} />
-        <ActivityChart title="Designs created (last 30 days)" data={stats.activity.designsByDay} />
+        <AdminActivityChart title="Signups (last 30 days)" data={stats.activity.signupsByDay} />
+        <AdminActivityChart title="Designs created (last 30 days)" data={stats.activity.designsByDay} />
         <BreakdownList title="Signups by UTM source (30d)" data={stats.activity.signupsBySource} />
         <BreakdownList title="Signups by method (30d)" data={stats.activity.signupsByMethod} />
         <BreakdownList

@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatBytes } from "@/lib/formatBytes";
 import type { AdminAnalytics, AdminAnalyticsGranularity } from "@/server/admin/types";
+import {
+  AdminChartBarHit,
+  AdminChartReadout,
+  useChartHover,
+} from "./AdminChartReadout";
 
 const GRANULARITY_OPTIONS: { id: AdminAnalyticsGranularity; label: string }[] = [
   { id: "daily", label: "Daily" },
@@ -27,6 +32,7 @@ type StackedChartProps = {
 };
 
 function StackedBarChart({ title, periods, series, emptyMessage }: StackedChartProps) {
+  const [hover, setHover] = useChartHover();
   const totals = periods.map((_, index) => series.reduce((sum, item) => sum + item.values[index], 0));
   const max = Math.max(1, ...totals);
   const hasData = totals.some((value) => value > 0);
@@ -49,15 +55,24 @@ function StackedBarChart({ title, periods, series, emptyMessage }: StackedChartP
                 </span>
               ))}
             </div>
+            <AdminChartReadout value={hover} />
             <div className="admin-stacked-chart" role="img" aria-label={`${title} chart`}>
               {periods.map((label, index) => {
                 const total = totals[index];
                 const heightPct = (total / max) * 100;
+                const parts = series
+                  .filter((item) => item.values[index] > 0)
+                  .map((item) => `${item.label} ${item.values[index].toLocaleString()}`);
+                const tooltip =
+                  parts.length > 0
+                    ? `${label}: ${total.toLocaleString()} (${parts.join(" · ")})`
+                    : `${label}: 0`;
                 return (
-                  <div
+                  <AdminChartBarHit
                     key={`${label}-${index}`}
                     className="admin-stacked-bar-col"
-                    title={`${label}: ${total.toLocaleString()}`}
+                    tooltip={tooltip}
+                    onHoverChange={setHover}
                   >
                     <div
                       className="admin-stacked-bar-stack"
@@ -72,12 +87,11 @@ function StackedBarChart({ title, periods, series, emptyMessage }: StackedChartP
                               flexGrow: item.values[index],
                               background: item.color,
                             }}
-                            title={`${label} · ${item.label}: ${item.values[index].toLocaleString()}`}
                           />
                         ) : null
                       )}
                     </div>
-                  </div>
+                  </AdminChartBarHit>
                 );
               })}
             </div>
@@ -102,6 +116,7 @@ type SingleSeriesChartProps = {
 };
 
 function SingleSeriesChart({ title, periods, values, color, emptyMessage, formatValue }: SingleSeriesChartProps) {
+  const [hover, setHover] = useChartHover();
   const max = Math.max(1, ...values);
   const hasData = values.some((value) => value > 0);
   const format = formatValue ?? ((value: number) => value.toLocaleString());
@@ -116,18 +131,27 @@ function SingleSeriesChart({ title, periods, values, color, emptyMessage, format
           <p className="admin-chart-empty">{emptyMessage ?? "No data for this period."}</p>
         ) : (
           <>
+            <AdminChartReadout value={hover} />
             <div className="admin-activity-bars" role="img" aria-label={`${title} chart`}>
-              {values.map((count, index) => (
-                <div
-                  key={`${periods[index]}-${index}`}
-                  className="admin-activity-bar"
-                  style={{
-                    height: `${Math.max(count > 0 ? 6 : 0, (count / max) * 100)}%`,
-                    background: color,
-                  }}
-                  title={`${periods[index]}: ${format(count)}`}
-                />
-              ))}
+              {values.map((count, index) => {
+                const tooltip = `${periods[index]}: ${format(count)}`;
+                return (
+                  <AdminChartBarHit
+                    key={`${periods[index]}-${index}`}
+                    className="admin-activity-bar-hit"
+                    tooltip={tooltip}
+                    onHoverChange={setHover}
+                  >
+                    <div
+                      className="admin-activity-bar"
+                      style={{
+                        height: `${Math.max(count > 0 ? 6 : 0, (count / max) * 100)}%`,
+                        background: color,
+                      }}
+                    />
+                  </AdminChartBarHit>
+                );
+              })}
             </div>
             <div className="admin-activity-labels">
               <span>{periods[0]}</span>

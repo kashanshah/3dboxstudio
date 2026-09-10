@@ -1,50 +1,7 @@
 import { formatBytes, formatUsd } from "@/lib/formatBytes";
 import { SHARE_MAX_IMAGE_BYTES } from "@/server/env";
 import type { AdminDbImageCounts, AdminS3Usage } from "@/server/admin/types";
-
-type ActivityChartProps = {
-  title: string;
-  data: { date: string; count: number }[];
-  formatValue?: (value: number) => string;
-  emptyMessage?: string;
-};
-
-function ActivityChart({ title, data, formatValue, emptyMessage }: ActivityChartProps) {
-  const max = Math.max(1, ...data.map((d) => d.count));
-  const format = formatValue ?? ((value: number) => value.toLocaleString());
-
-  return (
-    <div className="admin-panel">
-      <div className="admin-panel-header">
-        <h2>{title}</h2>
-      </div>
-      <div style={{ padding: "0.75rem 1.1rem 1rem" }}>
-        {data.every((point) => point.count === 0) ? (
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>
-            {emptyMessage ?? "No uploads in the last 30 days."}
-          </p>
-        ) : (
-          <>
-            <div className="admin-activity-bars" role="img" aria-label={`${title} chart`}>
-              {data.map((point) => (
-                <div
-                  key={point.date}
-                  className="admin-activity-bar"
-                  style={{ height: `${point.count > 0 ? Math.max(4, (point.count / max) * 100) : 0}%` }}
-                  title={`${point.date}: ${format(point.count)}`}
-                />
-              ))}
-            </div>
-            <div className="admin-activity-labels">
-              <span>{data[0]?.date}</span>
-              <span>{data[data.length - 1]?.date}</span>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+import AdminActivityChart from "./AdminActivityChart";
 
 type BreakdownListProps = {
   title: string;
@@ -192,15 +149,17 @@ export default function AdminS3UsageSection({ s3, images }: AdminS3UsageSectionP
       </p>
 
       <div className="admin-charts-grid">
-        <ActivityChart
+        <AdminActivityChart
           title={s3.available ? "Images uploaded (last 30 days)" : "Images saved (last 30 days)"}
           data={uploadSeries}
+          emptyMessage="No uploads in the last 30 days."
         />
         {s3.available ? (
-          <ActivityChart
+          <AdminActivityChart
             title="Bytes written (last 30 days)"
             data={s3.objectsByDay.map((point) => ({ date: point.date, count: point.bytes }))}
             formatValue={formatBytes}
+            emptyMessage="No uploads in the last 30 days."
           />
         ) : null}
         <BreakdownList
