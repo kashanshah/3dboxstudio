@@ -44,6 +44,8 @@ type AdminDashboardProps = {
 export default function AdminDashboard({ stats }: AdminDashboardProps) {
   const verifiedPct =
     stats.users.total > 0 ? Math.round((stats.users.verified / stats.users.total) * 100) : 0;
+  const dailyAvgSignups = stats.users.last30Days / 30;
+  const dailyAvgDesigns = stats.designs.last30Days / 30;
 
   return (
     <>
@@ -84,6 +86,24 @@ export default function AdminDashboard({ stats }: AdminDashboardProps) {
           <div className="admin-stat-label">Signups (30d)</div>
           <div className="admin-stat-value">{stats.users.last30Days.toLocaleString()}</div>
           <div className="admin-stat-sub">{stats.designs.last30Days.toLocaleString()} designs created</div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Daily Average Signup</div>
+          <div className="admin-stat-value">
+            {dailyAvgSignups.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+          </div>
+          <div className="admin-stat-sub">
+            {stats.users.last30Days.toLocaleString()} signups over last 30 days
+          </div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="admin-stat-label">Daily Designs Created</div>
+          <div className="admin-stat-value">
+            {dailyAvgDesigns.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+          </div>
+          <div className="admin-stat-sub">
+            {stats.designs.last30Days.toLocaleString()} designs over last 30 days
+          </div>
         </div>
       </section>
 

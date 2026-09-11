@@ -11,8 +11,10 @@ import {
   type DesignFilter,
   type DesignSort,
 } from "@/lib/adminListQuery";
+import AdminDesignThumbnail from "./AdminDesignThumbnail";
 import AdminListToolbar from "./AdminListToolbar";
 import AdminSortHeader from "./AdminSortHeader";
+import type { LightGallerySlide } from "@/lib/loadLightGallery";
 
 type AdminDesignsTableProps = {
   designs: AdminDesignRow[];
@@ -40,6 +42,20 @@ export default function AdminDesignsTable({
 }: AdminDesignsTableProps) {
   const range = resultRange(page, pageSize, total);
   const filtered = designsQueryIsFiltered(query);
+
+  const gallerySlides: LightGallerySlide[] = designs
+    .filter((design): design is AdminDesignRow & { thumbnailUrl: string } => Boolean(design.thumbnailUrl))
+    .map((design) => ({
+      src: design.thumbnailUrl,
+      thumb: design.thumbnailUrl,
+      subHtml: `<div class="admin-lg-caption"><strong>${escapeHtml(design.name ?? "Untitled")}</strong><span>${escapeHtml(design.id)}</span></div>`,
+    }));
+
+  const galleryIndexById = new Map(
+    designs
+      .filter((design) => design.thumbnailUrl)
+      .map((design, index) => [design.id, index] as const)
+  );
 
   function sortHref(column: DesignSort) {
     return designsListHref({
@@ -149,22 +165,18 @@ export default function AdminDesignsTable({
                 designs.map((design) => (
                   <tr key={design.id}>
                     <td>
-                      <a
-                        className="admin-design-thumb"
-                        href={studioSharePath(design.id)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={`Open ${design.name ?? "Untitled"} in studio`}
-                      >
-                        {design.thumbnailUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={design.thumbnailUrl} alt="" loading="lazy" />
-                        ) : (
-                          <span className="admin-design-thumb-empty" aria-hidden>
-                            3D
-                          </span>
-                        )}
-                      </a>
+                      {design.thumbnailUrl && galleryIndexById.has(design.id) ? (
+                        <AdminDesignThumbnail
+                          src={design.thumbnailUrl}
+                          label={design.name ?? "Untitled"}
+                          slides={gallerySlides}
+                          startIndex={galleryIndexById.get(design.id) ?? 0}
+                        />
+                      ) : (
+                        <div className="admin-design-thumb admin-design-thumb--empty" aria-hidden>
+                          <span className="admin-design-thumb-empty">3D</span>
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div>{design.name ?? "Untitled"}</div>
@@ -236,4 +248,13 @@ export default function AdminDesignsTable({
       </div>
     </>
   );
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

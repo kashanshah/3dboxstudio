@@ -614,6 +614,46 @@ export async function listAdminDesigns(options?: {
   };
 }
 
+export async function listAdminDesignsForUser(
+  userId: string,
+  options?: { page?: number; pageSize?: number }
+): Promise<PaginatedResult<AdminDesignRow>> {
+  const sql = getSql();
+  const page = clampPage(options?.page ?? 1);
+  const pageSize = clampPageSize(options?.pageSize ?? MAX_PAGE_SIZE);
+  const offset = (page - 1) * pageSize;
+
+  const countRows = (await sql`
+    SELECT COUNT(*)::int AS total
+    FROM shared_designs
+    WHERE user_id = ${userId}
+  `) as { total: number }[];
+
+  const total = countRows[0]?.total ?? 0;
+
+  const rows = (await sql`
+    SELECT
+      sd.id, sd.name, sd.preview_token, sd.user_id,
+      u.email AS owner_email, u.name AS owner_name,
+      sd.created_at, sd.updated_at, sd.expires_at, sd.view_count,
+      sd.og_image_key, sd.images,
+      (sd.expires_at IS NOT NULL AND sd.expires_at <= NOW()) AS is_expired
+    FROM shared_designs sd
+    LEFT JOIN users u ON u.id = sd.user_id
+    WHERE sd.user_id = ${userId}
+    ORDER BY sd.created_at DESC, sd.id DESC
+    LIMIT ${pageSize} OFFSET ${offset}
+  `) as DesignDbRow[];
+
+  return {
+    items: rows.map(mapDesignRow),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
+}
+
 export async function listAdminSubmissions(options?: {
   page?: number;
   pageSize?: number;

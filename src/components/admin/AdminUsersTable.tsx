@@ -12,6 +12,7 @@ import {
 } from "@/lib/adminListQuery";
 import AdminListToolbar from "./AdminListToolbar";
 import AdminSortHeader from "./AdminSortHeader";
+import AdminUserDesignsButton from "./AdminUserDesignsButton";
 
 type AdminUsersTableProps = {
   users: AdminUserRow[];
@@ -200,9 +201,16 @@ export default function AdminUsersTable({
                       </span>
                     </td>
                     <td className="num">
-                      <Link className="admin-link" href={`/admin/designs?search=${encodeURIComponent(user.email)}`}>
-                        {user.designCount}
-                      </Link>
+                      {user.designCount > 0 ? (
+                        <AdminUserDesignsButton
+                          userId={user.id}
+                          userEmail={user.email}
+                          userName={user.name}
+                          designCount={user.designCount}
+                        />
+                      ) : (
+                        0
+                      )}
                     </td>
                     <td className="num">{user.totalViews.toLocaleString()}</td>
                     <td>{formatAdminDateTime(user.createdAt)}</td>
