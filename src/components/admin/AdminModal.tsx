@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { trapFocus } from "@/lib/focusTrap";
 
 type AdminModalProps = {
@@ -41,7 +42,9 @@ export default function AdminModal({
 
   if (!open) return null;
 
-  return (
+  // Portal to document.body so table-cell styles (e.g. td.num text-align: right)
+  // and overflow clipping cannot affect the dialog.
+  return createPortal(
     <div className="admin-modal-overlay" role="presentation" onMouseDown={onClose}>
       <div
         ref={dialogRef}
@@ -63,6 +66,7 @@ export default function AdminModal({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
