@@ -3,6 +3,7 @@ import { Link } from "@/i18n/routing";
 import ContentPageShell from "@/components/ContentPageShell";
 import BlogPostBody from "@/components/BlogPostBody";
 import BlogEnglishOnlyNote from "@/components/BlogEnglishOnlyNote";
+import PacdoraComparison from "@/components/PacdoraComparison";
 import {
   BLOG_POSTS,
   getBlogPostBySlug,
@@ -103,6 +104,10 @@ export default async function BlogPostPage({ slug }: BlogPostPageProps) {
         </header>
 
         <BlogPostBody post={post} related={related} />
+
+        {locale === "en" && post.slug === "free-pacdora-alternative-3d-box-mockups" ? (
+          <PacdoraComparison />
+        ) : null}
 
         <section className="landing-section">
           <div className="landing-container">
