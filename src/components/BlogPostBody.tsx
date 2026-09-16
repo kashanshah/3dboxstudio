@@ -1,16 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
 import BlogFaqAccordion from "@/components/BlogFaqAccordion";
 import BlogSectionRenderer from "@/components/BlogSectionRenderer";
+import BlogTable from "@/components/BlogTable";
 import OnThisPageToc from "@/components/OnThisPageToc";
 import {
   getBlogPostImageAlt,
   getBlogPostImagePath,
   type BlogPost,
 } from "@/content/blogPosts";
+import { getBlogTables } from "@/content/blogTables";
 import { useScrollSpy } from "@/hooks/useScrollSpy";
 import { buildBlogTocPlan } from "@/lib/blogToc";
 
@@ -25,6 +28,7 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
   const activeId = useScrollSpy(tocItems.map((item) => item.id));
   const showAutoFaq = Boolean(autoFaqId && post.faqs?.length);
   const showToc = tocItems.length >= 2;
+  const tables = getBlogTables(post.slug);
 
   return (
     <>
@@ -37,16 +41,26 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
           <div className={showToc ? "blog-post-layout" : undefined}>
             <div className="blog-post-main">
               <div className="blog-post-body">
-                {post.sections.map((section, index) => (
-                  <BlogSectionRenderer
-                    key={`${section.type}-${index}`}
-                    section={section}
-                    index={index}
-                    pageSlug={post.slug}
-                    faqs={post.faqs}
-                    headingId={sectionHeadingIds[index]}
-                  />
-                ))}
+                {post.sections.map((section, index) => {
+                  const tablesAfterSection =
+                    section.type === "h2"
+                      ? tables.filter((table) => table.afterHeading === section.text)
+                      : [];
+                  return (
+                    <div key={`${section.type}-${index}`} className="blog-post-section-fragment">
+                      <BlogSectionRenderer
+                        section={section}
+                        index={index}
+                        pageSlug={post.slug}
+                        faqs={post.faqs}
+                        headingId={sectionHeadingIds[index]}
+                      />
+                      {tablesAfterSection.map((table) => (
+                        <BlogTable key={table.id} table={table} />
+                      ))}
+                    </div>
+                  );
+                })}
                 {showAutoFaq ? (
                   <>
                     <h2 id={autoFaqId!} className="blog-post-h2">
@@ -88,14 +102,13 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
                     href={`/blog/${item.slug}`}
                     className="blog-index-thumb-link"
                   >
-                    <img
+                    <Image
                       className="blog-index-thumb"
                       src={getBlogPostImagePath(item.slug)}
                       alt={getBlogPostImageAlt(item)}
                       width={1200}
                       height={800}
-                      loading="lazy"
-                      decoding="async"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </Link>
                   <h3 className="blog-index-title">
