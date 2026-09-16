@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/routing";
+import { usePathname } from "@/i18n/routing";
+import Link from "@/components/ContentLink";
 import { useEffect, type ReactNode } from "react";
 import StudioLink from "./StudioLink";
 import LanguageSwitcher from "./LanguageSwitcher";

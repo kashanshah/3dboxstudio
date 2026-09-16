@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/routing";
+import Link from "@/components/ContentLink";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
