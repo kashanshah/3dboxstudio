@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import StudioLink from "@/components/StudioLink";
@@ -101,14 +102,13 @@ export default function BlogPostBody({ post, related }: BlogPostBodyProps) {
                     href={`/blog/${item.slug}`}
                     className="blog-index-thumb-link"
                   >
-                    <img
+                    <Image
                       className="blog-index-thumb"
                       src={getBlogPostImagePath(item.slug)}
                       alt={getBlogPostImageAlt(item)}
                       width={1200}
                       height={800}
-                      loading="lazy"
-                      decoding="async"
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   </Link>
                   <h3 className="blog-index-title">
