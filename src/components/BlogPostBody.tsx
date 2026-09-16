@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import Link from "@/components/ContentLink";
 import StudioLink from "@/components/StudioLink";
 import BlogFaqAccordion from "@/components/BlogFaqAccordion";
 import BlogSectionRenderer from "@/components/BlogSectionRenderer";

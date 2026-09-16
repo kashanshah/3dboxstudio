@@ -5,7 +5,7 @@ import LandingHeroVideo from "../components/LandingHeroVideo";
 import { useCallback, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import LandingHeader from "../components/LandingHeader";
-import { Link } from "@/i18n/routing";
+import Link from "@/components/ContentLink";
 import StudioLink from "../components/StudioLink";
 import LandingStudioCta from "../components/LandingStudioCta";
 import ShowcaseSection from "../components/ShowcaseSection";

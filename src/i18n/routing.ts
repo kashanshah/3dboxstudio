@@ -7,6 +7,9 @@ export const routing = defineRouting({
   defaultLocale,
   localePrefix: "as-needed",
   localeDetection: false,
+  // Page metadata/sitemap advertise only real translations. The automatic
+  // Link header otherwise advertises every locale, including missing articles.
+  alternateLinks: false,
 });
 
 export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation(routing);
