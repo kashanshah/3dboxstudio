@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import ContentPageShell from "@/components/ContentPageShell";
@@ -89,14 +90,14 @@ export default async function BlogPostPage({ slug }: BlogPostPageProps) {
             <p className="landing-section-intro content-page-intro">{post.description}</p>
             <BlogEnglishOnlyNote slug={post.slug} />
             <figure className="blog-post-hero-figure">
-              <img
+              <Image
                 className="blog-post-hero-image"
                 src={getBlogPostImagePath(post.slug)}
                 alt={getBlogPostImageAlt(post)}
                 width={1200}
                 height={800}
-                decoding="async"
-                fetchPriority="high"
+                sizes="(max-width: 768px) 100vw, 1200px"
+                priority
               />
             </figure>
           </div>
