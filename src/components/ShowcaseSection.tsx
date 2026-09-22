@@ -24,7 +24,7 @@ const FALLBACK_ITEMS: ShowcaseItem[] = [
     type: "video",
     layout: "wide",
     alt: "Product packaging-style rotation video",
-    caption: "Example turntable reel from the showcase folder.",
+    caption: "Interactive 3D packaging turntable preview.",
   },
 ];
 
@@ -246,7 +246,6 @@ export default function ShowcaseSection() {
           </div>
         )}
 
-        <p className="landing-showcase-footnote">{t("footnote")}</p>
         <LandingStudioCta />
       </div>
     </section>

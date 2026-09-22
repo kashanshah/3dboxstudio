@@ -1,13 +1,6 @@
 {
   "items": [
     {
-      "src": "/showcase/videos/kazomo-spin-mop.mp4",
-      "type": "video",
-      "layout": "standard",
-      "alt": "Kazomo spin mop — 360° turntable packaging video",
-      "caption": "Turntable reel: gloss highlights, soft shadow tray, and label read at a glance—ideal for Amazon PDP or pitch decks."
-    },
-    {
       "src": "/showcase/images/box-preview-1778645131617.webp",
       "type": "image",
       "layout": "standard",
