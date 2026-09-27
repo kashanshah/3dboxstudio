@@ -11,7 +11,7 @@ import {
   trackPageContext,
 } from "@/lib/analytics";
 import { trackPageView } from "@/lib/analytics/pageview";
-import { GA_ENABLED, isAnalyticsBlockedPath } from "@/lib/analytics/policy";
+import { ANALYTICS_ENABLED, isAnalyticsBlockedPath } from "@/lib/analytics/policy";
 import {
   buildPathKey,
   clearRouteOnLeave,
@@ -34,7 +34,7 @@ function emitRouteEvents(pathname: string, pathKey: string): void {
 
 /**
  * Sends explicit page_view + page_context once per permitted client navigation.
- * gtag is initialized with send_page_view:false — this component owns SPA pageviews.
+ * Vendor auto-pageviews are disabled where supported so this component owns SPA pageviews.
  */
 export default function AnalyticsPageView() {
   const pathname = usePathname();
@@ -43,7 +43,7 @@ export default function AnalyticsPageView() {
   const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!GA_ENABLED || !pathname || isAnalyticsBlockedPath(pathname)) return;
+    if (!ANALYTICS_ENABLED || !pathname || isAnalyticsBlockedPath(pathname)) return;
 
     const pathKey = buildPathKey(pathname, searchParams.toString());
 
