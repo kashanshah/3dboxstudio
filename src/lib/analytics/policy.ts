@@ -1,16 +1,20 @@
-/** Shared GA enablement policy — loader and custom events must use the same rules. */
+/** Shared analytics enablement policy — loaders and custom events use the same rules. */
 
 import { stripLocalePrefix } from "@/i18n/pathname";
 
 export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() ?? "";
+export const POSTHOG_PROJECT_TOKEN = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim() ?? "";
+export const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim() || "https://us.i.posthog.com";
 export const GA_DEBUG = process.env.NEXT_PUBLIC_ANALYTICS_DEBUG === "true";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 /**
- * GA loads and sends only in production builds, or in any environment when
+ * Analytics vendors load and send only in production builds, or in any environment when
  * NEXT_PUBLIC_ANALYTICS_DEBUG=true (local DebugView / QA).
  */
 export const GA_ENABLED = Boolean(GA_MEASUREMENT_ID) && (IS_PRODUCTION || GA_DEBUG);
+export const POSTHOG_ENABLED = Boolean(POSTHOG_PROJECT_TOKEN) && (IS_PRODUCTION || GA_DEBUG);
+export const ANALYTICS_ENABLED = GA_ENABLED || POSTHOG_ENABLED;
 
 export function isAdminPath(pathname: string): boolean {
   const path = stripLocalePrefix(pathname);
@@ -22,7 +26,7 @@ export function isStudioPath(pathname: string): boolean {
   return path === "/studio" || path.startsWith("/studio/") || path.startsWith("/preview/");
 }
 
-/** GA must not record this route (admin panel). */
+/** Product analytics must not record this route (admin panel). */
 export function isAnalyticsBlockedPath(pathname: string): boolean {
   return isAdminPath(pathname);
 }
