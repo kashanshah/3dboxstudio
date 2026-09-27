@@ -10,6 +10,7 @@ export {
   resetGtagForTesting,
   GA_DATA_LAYER,
 } from "./gtag";
+export { capturePostHog } from "./posthog";
 export { trackPageView } from "./pageview";
 export {
   buildPathKey,
@@ -22,9 +23,13 @@ export { buildTemplateSelectedParams, beginTrackedDesignSession, beginReopenedDe
 export { shouldFireStudioOpen } from "./studioOpen";
 export { getAnalyticsPathname, canSendAnalytics } from "./core";
 export {
+  ANALYTICS_ENABLED,
   GA_ENABLED,
   GA_DEBUG,
   GA_MEASUREMENT_ID,
+  POSTHOG_ENABLED,
+  POSTHOG_PROJECT_TOKEN,
+  POSTHOG_HOST,
   isAdminPath,
   isStudioPath,
   isAnalyticsBlockedPath,
