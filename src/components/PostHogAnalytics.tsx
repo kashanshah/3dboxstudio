@@ -62,9 +62,18 @@ window.posthog.init(${token},{
   person_profiles:"identified_only"
 });
 
+if(window.__posthogResetPending){
+  window.posthog.reset();
+  window.__posthogResetPending=false;
+}
+var identities=window.__posthogIdentifyQueue||[];
+for(var i=0;i<identities.length;i++){
+  window.posthog.identify(identities[i][0],identities[i][1]);
+}
+window.__posthogIdentifyQueue=[];
 var queued=window.__posthogCaptureQueue||[];
-for(var i=0;i<queued.length;i++){
-  window.posthog.capture(queued[i][0],queued[i][1]);
+for(var j=0;j<queued.length;j++){
+  window.posthog.capture(queued[j][0],queued[j][1]);
 }
 window.__posthogCaptureQueue=[];
 `.trim();
