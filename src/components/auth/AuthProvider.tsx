@@ -10,7 +10,14 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthActionResult, AuthUser } from "@/lib/authTypes";
-import { trackLogin, trackSignup, trackStudioActivated, type SignupAnalytics } from "@/lib/analytics";
+import {
+  identifyPostHog,
+  resetPostHog,
+  trackLogin,
+  trackSignup,
+  trackStudioActivated,
+  type SignupAnalytics,
+} from "@/lib/analytics";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -91,6 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (loading || !user) return;
+    identifyPostHog(user.id, { email_verified: user.emailVerified });
+  }, [loading, user]);
+
   // While signed in but unverified, watch for verification completed in another tab.
   useEffect(() => {
     if (!user || user.emailVerified) return;
@@ -112,7 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not sign you in.") };
-      setUser(readUser(data));
+      const nextUser = readUser(data);
+      setUser(nextUser);
+      if (nextUser) {
+        identifyPostHog(nextUser.id, { email_verified: nextUser.emailVerified });
+      }
       trackLogin("email");
       return { ok: true };
     } catch {
@@ -134,7 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) return { ok: false, error: readError(data, "Could not create your account.") };
-      setUser(readUser(data));
+      const nextUser = readUser(data);
+      setUser(nextUser);
+      if (nextUser) {
+        identifyPostHog(nextUser.id, { email_verified: nextUser.emailVerified });
+      }
       const analytics = readSignupAnalytics(data);
       if (analytics) {
         trackSignup(analytics);
@@ -153,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     setUser(null);
+    resetPostHog();
   }, []);
 
   const resendVerification = useCallback<AuthContextValue["resendVerification"]>(async () => {
