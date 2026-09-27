@@ -1,5 +1,12 @@
-import { GA_DEBUG, GA_ENABLED, isAnalyticsBlockedPath } from "./policy";
+import {
+  ANALYTICS_ENABLED,
+  GA_DEBUG,
+  GA_ENABLED,
+  POSTHOG_ENABLED,
+  isAnalyticsBlockedPath,
+} from "./policy";
 import { pushGtag } from "./gtag";
+import { capturePostHog } from "./posthog";
 
 /** @deprecated Use GA_ENABLED — kept for existing imports. */
 export const GA_SHOULD_SEND = GA_ENABLED;
@@ -22,13 +29,13 @@ export function getAnalyticsPathname(): string {
 }
 
 export function canSendAnalytics(pathname: string = getAnalyticsPathname()): boolean {
-  if (!GA_ENABLED) return false;
+  if (!ANALYTICS_ENABLED) return false;
   if (isAnalyticsBlockedPath(pathname)) return false;
   return true;
 }
 
 /**
- * Core analytics wrapper. Never throws; safe when GA is blocked or unavailable.
+ * Core analytics wrapper. Never throws; safe when vendors are blocked or unavailable.
  * Does not set source/medium/campaign — attribution is handled by GA4 + AttributionCapture.
  */
 export function trackEvent(eventName: string, params: AnalyticsParams = {}): void {
@@ -44,12 +51,20 @@ export function trackEvent(eventName: string, params: AnalyticsParams = {}): voi
     console.info(`[Analytics] ${eventName}`, payload);
   }
 
-  if (!GA_ENABLED) return;
+  if (GA_ENABLED) {
+    try {
+      pushGtag("event", eventName, payload);
+    } catch {
+      /* ad blockers, script failures */
+    }
+  }
 
-  try {
-    pushGtag("event", eventName, payload);
-  } catch {
-    /* ad blockers, script failures */
+  if (POSTHOG_ENABLED) {
+    try {
+      capturePostHog(eventName, payload);
+    } catch {
+      /* ad blockers, script failures */
+    }
   }
 }
 
