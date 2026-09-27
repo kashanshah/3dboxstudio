@@ -10,7 +10,7 @@ export {
   resetGtagForTesting,
   GA_DATA_LAYER,
 } from "./gtag";
-export { capturePostHog } from "./posthog";
+export { capturePostHog, identifyPostHog, resetPostHog } from "./posthog";
 export { trackPageView } from "./pageview";
 export {
   buildPathKey,
