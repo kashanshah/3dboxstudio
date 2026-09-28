@@ -155,9 +155,9 @@
     "gallery": {
       "eyebrow": "Recorrido por el producto",
       "title": "Dentro del estudio de empaquetado 3D",
-      "introBefore": "A continuación se muestran capturas de pantalla ilustrativas del diseño de la interfaz y los flujos de trabajo clave. Haga clic en cualquier imagen para abrir una ventana emergente a tamaño completo (el mismo visor que el portafolio: teclas de flecha para navegar, Escape para cerrar). Reemplace las imágenes con capturas reales de",
-      "introLink": "tu estudio en vivo",
-      "introAfter": "para una prueba social aún más sólida y una mayor cobertura en la búsqueda de imágenes SEO.",
+      "introBefore": "Explora la interfaz y los principales flujos de trabajo de packaging. Haz clic en cualquier captura para verla a tamaño completo y luego",
+      "introLink": "abre el estudio en vivo",
+      "introAfter": "para probar dimensiones personalizadas, materiales, diseños, aperturas y exportaciones.",
       "openShot": "Abrir captura de pantalla {index} en la galería: {caption}",
       "shot1Alt": "3D Box Studio: panel de control junto a una ventana gráfica 3D en tiempo real con una caja de muestra.",
       "shot1Caption": "Diseño del editor: parámetros y vista previa del empaquetado en 3D en tiempo real, uno al lado del otro.",

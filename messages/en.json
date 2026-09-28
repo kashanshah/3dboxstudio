@@ -155,9 +155,9 @@
     "gallery": {
       "eyebrow": "Product tour",
       "title": "Inside the 3D packaging studio",
-      "introBefore": "Below are illustrative screenshots of the interface layout and key workflows. Click any shot to open a full-size lightbox (same viewer as the portfolio—arrow keys to browse, Escape to close). Replace images with real captures from",
-      "introLink": "your live studio",
-      "introAfter": "for even stronger social proof and SEO image search coverage.",
+      "introBefore": "Explore the interface layout and key packaging workflows. Click any screenshot to open a full-size view, then",
+      "introLink": "open the live studio",
+      "introAfter": "to try custom dimensions, materials, artwork, openings, and exports yourself.",
       "openShot": "Open screenshot {index} in gallery: {caption}",
       "shot1Alt": "3D Box Studio: control panel beside a live 3D viewport with a sample carton",
       "shot1Caption": "Editor layout: parameters and live 3D packaging preview side by side.",
@@ -493,71 +493,162 @@
       "startingIn": "Starting in {seconds}…",
       "recordPresentation": "Record presentation (15s)",
       "loadingStudio": "Loading 3D Box Studio…",
-      "applyAllTitle": "Apply image to all faces?", "cancel": "Cancel", "applyAll": "Apply to all faces",
+      "applyAllTitle": "Apply image to all faces?",
+      "cancel": "Cancel",
+      "applyAll": "Apply to all faces",
       "applyAllLead": "Assign the source image and current crop from <strong>{face}</strong> to every face. Existing artwork on other faces will be replaced.",
-      "thisFace": "this face", "applyAllRotatedHint": "The current crop and {rotation}° rotation on this face will be copied to all faces as well. This cannot be undone in one step—use Clear all artwork if you need to reset.",
+      "thisFace": "this face",
+      "applyAllRotatedHint": "The current crop and {rotation}° rotation on this face will be copied to all faces as well. This cannot be undone in one step—use Clear all artwork if you need to reset.",
       "applyAllHint": "The current crop, position, and zoom will be copied to every face. This cannot be undone in one step—use Clear all artwork if you need to reset.",
-      "unsupportedImage": "Unsupported image", "couldNotReadImage": "Could not read image", "imageTooLarge": "Image too large", "ok": "OK",
-      "imageTooLargeLead": "<strong>{name}</strong> is {size}. Face artwork must be {max} or smaller.", "howToFix": "How to fix:",
+      "unsupportedImage": "Unsupported image",
+      "couldNotReadImage": "Could not read image",
+      "imageTooLarge": "Image too large",
+      "ok": "OK",
+      "imageTooLargeLead": "<strong>{name}</strong> is {size}. Face artwork must be {max} or smaller.",
+      "howToFix": "How to fix:",
       "fixJpg": "Export or save as JPG instead of PNG if the file is a photo or full-color print.",
       "fixDimensions": "Reduce image dimensions (e.g. 2000–3000 px on the longest side is usually enough for preview).",
       "fixCompress": "Compress the file in Photoshop, Affinity, Figma, or a free tool such as Squoosh or TinyPNG.",
       "fixLayers": "Remove unused layers or embedded profiles before exporting.",
       "sceneUnits": "Scene units: centimeters (converted from {unit})",
       "materials": {
-        "kraft": "Kraft paper", "white_card": "White folding carton", "gloss_plastic": "Gloss plastic (PET)",
-        "matte_plastic": "Matte plastic", "corrugated": "Corrugated (brown)", "metallic_foil": "Gold foil",
-        "soft_touch_black": "Soft-touch black", "gloss_black": "Gloss black (PET)", "recycled_kraft_dark": "Recycled kraft (dark)",
-        "pearl_white": "Pearlescent white", "silver_foil": "Silver foil", "rose_gold_foil": "Rose gold foil",
-        "copper_foil": "Copper foil", "frosted_plastic": "Frosted plastic"
+        "kraft": "Kraft paper",
+        "white_card": "White folding carton",
+        "gloss_plastic": "Gloss plastic (PET)",
+        "matte_plastic": "Matte plastic",
+        "corrugated": "Corrugated (brown)",
+        "metallic_foil": "Gold foil",
+        "soft_touch_black": "Soft-touch black",
+        "gloss_black": "Gloss black (PET)",
+        "recycled_kraft_dark": "Recycled kraft (dark)",
+        "pearl_white": "Pearlescent white",
+        "silver_foil": "Silver foil",
+        "rose_gold_foil": "Rose gold foil",
+        "copper_foil": "Copper foil",
+        "frosted_plastic": "Frosted plastic"
       },
       "templates": {
-        "mailer": {"label": "Mailer / shipping box", "hint": "Roll-end mailer with a front-lift lid."},
-        "cube": {"label": "Cube", "hint": "Regular cube with center-meeting top flaps."},
-        "shipping_carton": {"label": "Shipping carton (RSC)", "hint": "Regular slotted carton; flaps meet at the center."},
-        "tuck_end": {"label": "Tuck-end carton (tall)", "hint": "Slim retail carton for cosmetics or pharma."},
-        "rigid_gift": {"label": "Rigid gift box", "hint": "Premium two-piece style with a lift-off lid."},
-        "shoe_box": {"label": "Shoe box", "hint": "Classic lidded shoe box proportions."},
-        "wine_gift": {"label": "Wine / bottle box", "hint": "Tall single-bottle presentation box."},
-        "card_sleeve": {"label": "Slim card sleeve", "hint": "Thin sleeve; try a side-opening panel."},
-        "display_pdq": {"label": "Display / PDQ", "hint": "Retail display; both side panels swing open."}
+        "mailer": {
+          "label": "Mailer / shipping box",
+          "hint": "Roll-end mailer with a front-lift lid."
+        },
+        "cube": {
+          "label": "Cube",
+          "hint": "Regular cube with center-meeting top flaps."
+        },
+        "shipping_carton": {
+          "label": "Shipping carton (RSC)",
+          "hint": "Regular slotted carton; flaps meet at the center."
+        },
+        "tuck_end": {
+          "label": "Tuck-end carton (tall)",
+          "hint": "Slim retail carton for cosmetics or pharma."
+        },
+        "rigid_gift": {
+          "label": "Rigid gift box",
+          "hint": "Premium two-piece style with a lift-off lid."
+        },
+        "shoe_box": {
+          "label": "Shoe box",
+          "hint": "Classic lidded shoe box proportions."
+        },
+        "wine_gift": {
+          "label": "Wine / bottle box",
+          "hint": "Tall single-bottle presentation box."
+        },
+        "card_sleeve": {
+          "label": "Slim card sleeve",
+          "hint": "Thin sleeve; try a side-opening panel."
+        },
+        "display_pdq": {
+          "label": "Display / PDQ",
+          "hint": "Retail display; both side panels swing open."
+        }
       },
       "openingOptions": {
-        "closed": {"label": "Closed (no motion)", "hint": "Rigid box preview"},
-        "lid_from_back": {"label": "Lid from back", "hint": "Single top hinged along the back edge"},
-        "lid_from_front": {"label": "Lid from front", "hint": "Single top hinged along the front edge"},
-        "lid_from_left": {"label": "Lid from left", "hint": "Single top hinged along the left edge"},
-        "lid_from_right": {"label": "Lid from right", "hint": "Single top hinged along the right edge"},
-        "top_split_meet_center": {"label": "Top center — two flaps", "hint": "Meet in the middle; choose Side A or B for hinge edges, then upload artwork for each half."},
-        "door_left": {"label": "Door opens — left", "hint": "Left panel swings from the front-left edge"},
-        "door_right": {"label": "Door opens — right", "hint": "Right panel swings from the front-right edge"},
-        "double_doors": {"label": "Double doors — left & right", "hint": "Both side panels swing open from their front edges."}
+        "closed": {
+          "label": "Closed (no motion)",
+          "hint": "Rigid box preview"
+        },
+        "lid_from_back": {
+          "label": "Lid from back",
+          "hint": "Single top hinged along the back edge"
+        },
+        "lid_from_front": {
+          "label": "Lid from front",
+          "hint": "Single top hinged along the front edge"
+        },
+        "lid_from_left": {
+          "label": "Lid from left",
+          "hint": "Single top hinged along the left edge"
+        },
+        "lid_from_right": {
+          "label": "Lid from right",
+          "hint": "Single top hinged along the right edge"
+        },
+        "top_split_meet_center": {
+          "label": "Top center — two flaps",
+          "hint": "Meet in the middle; choose Side A or B for hinge edges, then upload artwork for each half."
+        },
+        "door_left": {
+          "label": "Door opens — left",
+          "hint": "Left panel swings from the front-left edge"
+        },
+        "door_right": {
+          "label": "Door opens — right",
+          "hint": "Right panel swings from the front-right edge"
+        },
+        "double_doors": {
+          "label": "Double doors — left & right",
+          "hint": "Both side panels swing open from their front edges."
+        }
       },
       "hinges": {
-        "side_a": {"label": "Side A", "hint": "Hinges on left & right (−X / +X); flaps are half-width and meet along the centerline parallel to depth."},
-        "side_b": {"label": "Side B", "hint": "Hinges on back & front (−Z / +Z); flaps are half-depth and meet along the centerline parallel to width."}
+        "side_a": {
+          "label": "Side A",
+          "hint": "Hinges on left & right (−X / +X); flaps are half-width and meet along the centerline parallel to depth."
+        },
+        "side_b": {
+          "label": "Side B",
+          "hint": "Hinges on back & front (−Z / +Z); flaps are half-depth and meet along the centerline parallel to width."
+        }
       },
       "faces": {
-        "front": "Front (+Z)", "back": "Back (−Z)", "left": "Left (−X)", "right": "Right (+X)",
-        "top": "Top (whole)", "bottom": "Bottom", "topLeft": "Top — left flap", "topRight": "Top — right flap",
-        "topLeftX": "Top — left flap (−X half)", "topRightX": "Top — right flap (+X half)",
-        "topBackZ": "Top — back flap (−Z half)", "topFrontZ": "Top — front flap (+Z half)"
+        "front": "Front (+Z)",
+        "back": "Back (−Z)",
+        "left": "Left (−X)",
+        "right": "Right (+X)",
+        "top": "Top (whole)",
+        "bottom": "Bottom",
+        "topLeft": "Top — left flap",
+        "topRight": "Top — right flap",
+        "topLeftX": "Top — left flap (−X half)",
+        "topRightX": "Top — right flap (+X half)",
+        "topBackZ": "Top — back flap (−Z half)",
+        "topFrontZ": "Top — front flap (+Z half)"
       }
     },
     "routeError": {
       "title": "Something went wrong in the studio",
       "lead": "The 3D Box Studio page hit an unexpected error. Your design may still be recoverable from a share link or JSON export.",
-      "tryAgain": "Try again", "reload": "Reload studio", "backHome": "Back to home"
+      "tryAgain": "Try again",
+      "reload": "Reload studio",
+      "backHome": "Back to home"
     },
     "renderError": {
       "unavailable": "3D preview unavailable",
       "webglLead": "Your browser could not initialize the WebGL viewport. This can happen on older GPUs, when hardware acceleration is disabled, or after a graphics driver update.",
       "webglHint": "Try reloading the page, enabling hardware acceleration in your browser settings, or using a different browser. You can still use File → Export JSON if you have a saved design.",
       "genericLead": "The 3D preview hit an error and stopped. Try again, or reload the studio. You can still use File → Export JSON if you have a saved design.",
-      "reload": "Reload studio", "retry": "Try again"
+      "reload": "Reload studio",
+      "retry": "Try again"
     },
     "auth": {
-      "titles": {"signin": "Sign in", "signup": "Create your account", "forgot": "Reset your password"},
+      "titles": {
+        "signin": "Sign in",
+        "signup": "Create your account",
+        "forgot": "Reset your password"
+      },
       "enterEmail": "Enter your email address.",
       "resetSent": "If an account exists for that email, we've sent a password reset link. Check your inbox.",
       "passwordMinimum": "Password must be at least 8 characters.",
@@ -584,32 +675,65 @@
       "continueGoogle": "Continue with Google"
     },
     "settings": {
-      "title": "Account settings", "sections": "Account settings sections",
+      "title": "Account settings",
+      "sections": "Account settings sections",
       "tabs": {
-        "account": {"label": "Account", "hint": "Email and verification"},
-        "profile": {"label": "Profile", "hint": "Display name"},
-        "password": {"label": "Password", "hint": "Change password"}
+        "account": {
+          "label": "Account",
+          "hint": "Email and verification"
+        },
+        "profile": {
+          "label": "Profile",
+          "hint": "Display name"
+        },
+        "password": {
+          "label": "Password",
+          "hint": "Change password"
+        }
       },
-      "profileUpdated": "Profile updated.", "enterCurrentPassword": "Enter your current password.",
-      "newPasswordMinimum": "New password must be at least {count} characters.", "passwordsMismatch": "New passwords do not match.",
-      "passwordChanged": "Password changed.", "passwordSet": "Password set.",
-      "verificationSent": "Verification email sent. Check your inbox.", "enterNewEmail": "Enter a new email address.",
+      "profileUpdated": "Profile updated.",
+      "enterCurrentPassword": "Enter your current password.",
+      "newPasswordMinimum": "New password must be at least {count} characters.",
+      "passwordsMismatch": "New passwords do not match.",
+      "passwordChanged": "Password changed.",
+      "passwordSet": "Password set.",
+      "verificationSent": "Verification email sent. Check your inbox.",
+      "enterNewEmail": "Enter a new email address.",
       "confirmWithPassword": "Enter your current password to confirm this change.",
       "emailUpdated": "Email updated. Check your inbox to verify the new address.",
-      "account": "Account", "accountLead": "Your sign-in email and verification status.",
-      "currentEmail": "Current email", "verification": "Verification", "verified": "Verified", "notVerified": "Not verified",
-      "verifyHint": "Verify your email to save and share projects from the cloud.", "changeEmail": "Change email",
+      "account": "Account",
+      "accountLead": "Your sign-in email and verification status.",
+      "currentEmail": "Current email",
+      "verification": "Verification",
+      "verified": "Verified",
+      "notVerified": "Not verified",
+      "verifyHint": "Verify your email to save and share projects from the cloud.",
+      "changeEmail": "Change email",
       "changeEmailPasswordLead": "Enter a new address and your current password. We'll send a verification link to the new email.",
       "changeEmailLead": "Enter a new address. We'll send a verification link to the new email.",
-      "newEmail": "New email", "currentPassword": "Current password", "updating": "Updating…", "updateEmail": "Update email",
-      "cancel": "Cancel", "sending": "Sending…", "resendVerification": "Resend verification email",
-      "memberSince": "Member since", "accountId": "Account ID", "profile": "Profile",
-      "profileLead": "This name appears in the studio menu and on your saved projects.", "displayName": "Display name",
-      "displayNameHint": "Leave blank to show your email initial in the menu avatar.", "saving": "Saving…", "saveProfile": "Save profile",
-      "changePassword": "Change password", "setAPassword": "Set a password",
+      "newEmail": "New email",
+      "currentPassword": "Current password",
+      "updating": "Updating…",
+      "updateEmail": "Update email",
+      "cancel": "Cancel",
+      "sending": "Sending…",
+      "resendVerification": "Resend verification email",
+      "memberSince": "Member since",
+      "accountId": "Account ID",
+      "profile": "Profile",
+      "profileLead": "This name appears in the studio menu and on your saved projects.",
+      "displayName": "Display name",
+      "displayNameHint": "Leave blank to show your email initial in the menu avatar.",
+      "saving": "Saving…",
+      "saveProfile": "Save profile",
+      "changePassword": "Change password",
+      "setAPassword": "Set a password",
       "passwordLead": "Choose a strong password you do not use on other sites.",
-      "setPasswordLead": "Add a password if you also want to sign in with email.", "newPassword": "New password",
-      "atLeastCharacters": "At least {count} characters", "confirmNewPassword": "Confirm new password", "setPassword": "Set password"
+      "setPasswordLead": "Add a password if you also want to sign in with email.",
+      "newPassword": "New password",
+      "atLeastCharacters": "At least {count} characters",
+      "confirmNewPassword": "Confirm new password",
+      "setPassword": "Set password"
     },
     "dialog": {
       "close": "Close"

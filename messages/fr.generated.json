@@ -155,9 +155,9 @@
     "gallery": {
       "eyebrow": "Visite produit",
       "title": "À l’intérieur du studio d’emballage 3D",
-      "introBefore": "Voici des captures illustratives de l’interface et des flux clés. Cliquez une image pour ouvrir une lightbox plein format (même visionneuse que le portfolio — flèches pour naviguer, Échap pour fermer). Remplacez les images par de vraies captures de",
-      "introLink": "votre studio en direct",
-      "introAfter": "pour une preuve sociale et une couverture SEO image encore plus fortes.",
+      "introBefore": "Explorez l’interface et les principaux flux de travail d’emballage. Cliquez sur une capture pour l’ouvrir en grand, puis",
+      "introLink": "ouvrez le studio en direct",
+      "introAfter": "pour tester vous-même les dimensions personnalisées, les matériaux, les visuels, les ouvertures et les exports.",
       "openShot": "Ouvrir la capture {index} dans la galerie : {caption}",
       "shot1Alt": "3D Box Studio : panneau de contrôle à côté d’un viewport 3D en direct avec un carton d’exemple",
       "shot1Caption": "Disposition de l’éditeur : paramètres et aperçu d’emballage 3D côte à côte.",
