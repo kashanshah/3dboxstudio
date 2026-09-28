@@ -2,6 +2,7 @@
 
 import { loadFancybox } from "../lib/loadFancybox";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import showcaseManifest from "../../public/showcase/manifest.json";
 import { useTranslations } from "next-intl";
 import LazyShowcaseVideo from "./LazyShowcaseVideo";
 import LandingStudioCta from "./LandingStudioCta";
@@ -18,15 +19,7 @@ export type ShowcaseItem = {
   layout?: ShowcaseLayout;
 };
 
-const FALLBACK_ITEMS: ShowcaseItem[] = [
-  {
-    src: "/showcase/videos/kazomo-spin-mop.mp4",
-    type: "video",
-    layout: "wide",
-    alt: "Product packaging-style rotation video",
-    caption: "Interactive 3D packaging turntable preview.",
-  },
-];
+const INITIAL_ITEMS: ShowcaseItem[] = normalizeManifest(showcaseManifest);
 
 function parseLayout(v: unknown): ShowcaseLayout {
   if (v === "tall" || v === "wide" || v === "standard") return v;
@@ -34,9 +27,9 @@ function parseLayout(v: unknown): ShowcaseLayout {
 }
 
 function normalizeManifest(raw: unknown): ShowcaseItem[] {
-  if (!raw || typeof raw !== "object" || !("items" in raw)) return FALLBACK_ITEMS;
+  if (!raw || typeof raw !== "object" || !("items" in raw)) return [];
   const items = (raw as { items: unknown }).items;
-  if (!Array.isArray(items)) return FALLBACK_ITEMS;
+  if (!Array.isArray(items)) return [];
   const out: ShowcaseItem[] = [];
   for (const x of items) {
     if (!x || typeof x !== "object") continue;
@@ -52,7 +45,7 @@ function normalizeManifest(raw: unknown): ShowcaseItem[] {
       layout: parseLayout(o.layout),
     });
   }
-  return out.length > 0 ? out : FALLBACK_ITEMS;
+  return out;
 }
 
 function layoutClass(layout: ShowcaseLayout | undefined): string {
@@ -85,21 +78,9 @@ function ShowcaseEnlargeIcon() {
 
 export default function ShowcaseSection() {
   const t = useTranslations("landing.showcase");
-  const [allItems, setAllItems] = useState<ShowcaseItem[]>(FALLBACK_ITEMS);
+  const [allItems] = useState<ShowcaseItem[]>(INITIAL_ITEMS);
   const [filter, setFilter] = useState<ShowcaseFilter>("all");
 
-  useEffect(() => {
-    const ac = new AbortController();
-    void fetch("/showcase/manifest.json", { signal: ac.signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        setAllItems(normalizeManifest(data));
-      })
-      .catch(() => {
-        /* keep fallback */
-      });
-    return () => ac.abort();
-  }, []);
 
   useEffect(() => {
     return () => {
