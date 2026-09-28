@@ -10,7 +10,11 @@ export type SignupAnalyticsParams = {
 
 export type SignupAnalytics = SignupAnalyticsParams;
 
+// `@/lib/analytics` resolves to this file, which shadows `analytics/index.ts`.
+// New public helpers must be re-exported here or TypeScript will not see them.
 export {
+  identifyPostHog,
+  resetPostHog,
   trackEvent,
   trackSignup,
   trackLogin,
