@@ -155,9 +155,9 @@
     "gallery": {
       "eyebrow": "Produkt-Tour",
       "title": "Im 3D-Verpackungsstudio",
-      "introBefore": "Unten finden Sie illustrative Screenshots des Interface-Layouts und zentraler Workflows. Klicken Sie auf ein Bild für eine Lightbox in voller Größe (gleicher Viewer wie im Portfolio — Pfeiltasten zum Blättern, Escape zum Schließen). Ersetzen Sie die Bilder durch echte Aufnahmen aus",
-      "introLink": "Ihrem Live-Studio",
-      "introAfter": "für noch stärkeren Social Proof und SEO-Bildabdeckung.",
+      "introBefore": "Entdecke die Benutzeroberfläche und die wichtigsten Verpackungs-Workflows. Klicke auf einen Screenshot für die Vollansicht und",
+      "introLink": "öffne anschließend das Live-Studio",
+      "introAfter": "um eigene Abmessungen, Materialien, Grafiken, Öffnungen und Exporte auszuprobieren.",
       "openShot": "Screenshot {index} in Galerie öffnen: {caption}",
       "shot1Alt": "3D Box Studio: Bedienfeld neben einem Live-3D-Viewport mit Beispielkarton",
       "shot1Caption": "Editor-Layout: Parameter und Live-3D-Verpackungsvorschau nebeneinander.",
