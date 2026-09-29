@@ -196,11 +196,31 @@ function IconPanelToggle() {
   );
 }
 
-function PanelCollapse({ title, children }: { title: string; children: ReactNode }) {
+type StudioTool = "box" | "artwork" | "material" | "opening" | "scene" | "export";
+
+const studioTools: Array<{ id: StudioTool; label: string; glyph: string }> = [
+  { id: "box", label: "Box", glyph: "□" },
+  { id: "artwork", label: "Artwork", glyph: "◫" },
+  { id: "material", label: "Material", glyph: "◩" },
+  { id: "opening", label: "Opening", glyph: "↗" },
+  { id: "scene", label: "Scene", glyph: "✦" },
+  { id: "export", label: "Export", glyph: "⇩" },
+];
+
+function PanelCollapse({
+  title,
+  children,
+  tool,
+}: {
+  title: string;
+  children: ReactNode;
+  tool?: StudioTool;
+}) {
   const [open, setOpen] = useState(true);
   return (
     <details
       className="panel-collapse"
+      data-studio-tool={tool}
       open={open}
       onToggle={(e: SyntheticEvent<HTMLDetailsElement>) => setOpen(e.currentTarget.open)}
     >
@@ -284,6 +304,7 @@ export default function BoxDesigner({
   const [artworkUploadError, setArtworkUploadError] = useState<FaceArtworkUploadError | null>(null);
   const [showViewportHint, setShowViewportHint] = useState(false);
   const [mobileTab, setMobileTab] = useState<"viewport" | "design" | "export">("viewport");
+  const [activeTool, setActiveTool] = useState<StudioTool>("box");
 
   artworkRef.current = { sourceImages, faceFiles, faceImagePlacements };
 
@@ -989,7 +1010,33 @@ export default function BoxDesigner({
         </nav>
       )}
       {!loadingSharedDesign && (
-      <div className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`} data-mobile-tab={mobileTab}>
+      <div
+        className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}
+        data-mobile-tab={mobileTab}
+        data-active-tool={activeTool}
+      >
+      {!viewOnly && (
+        <nav className="studio-tool-rail" aria-label="Studio tools">
+          {studioTools.map((tool) => (
+            <button
+              key={tool.id}
+              type="button"
+              className="studio-tool-rail-button"
+              aria-pressed={activeTool === tool.id}
+              title={tool.label}
+              onClick={() => {
+                setActiveTool(tool.id);
+                setSidebarOpen(true);
+                if (tool.id === "export") setMobileTab("export");
+                else setMobileTab("design");
+              }}
+            >
+              <span className="studio-tool-rail-icon" aria-hidden>{tool.glyph}</span>
+              <span className="studio-tool-rail-label">{tool.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       <div className="studio-viewport-pane">
         <button
           type="button"
@@ -1119,9 +1166,14 @@ export default function BoxDesigner({
       </div>
 
       <aside className="studio-config-panel">
-        <header style={{ marginBottom: "1.25rem" }}>
-          <h1 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.02em" }}>3D Box Studio</h1>
-          <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.88rem" }}>
+        <header className="studio-inspector-header">
+          <div>
+            <span className="studio-inspector-eyebrow">{viewOnly ? "Preview" : "Studio V2"}</span>
+            <h1 className="studio-inspector-title">
+              {viewOnly ? "3D Box Studio" : studioTools.find((tool) => tool.id === activeTool)?.label}
+            </h1>
+          </div>
+          <p className="studio-inspector-description">
             {viewOnly
               ? t("clientPreviewMode")
               : t("editorIntro")}
@@ -1177,7 +1229,7 @@ export default function BoxDesigner({
           </>
         ) : (
           <>
-        <PanelCollapse title={t("outerDimensions")}>
+        <PanelCollapse title={t("outerDimensions")} tool="box">
           <div style={{ marginBottom: "0.65rem" }}>
             <label>{t("boxTemplate")}</label>
             <select value={boxTemplateId} onChange={(e) => applyBoxTemplate(e.target.value)}>
@@ -1235,7 +1287,7 @@ export default function BoxDesigner({
           <div className="dim-badge">{dimHint}</div>
         </PanelCollapse>
 
-        <PanelCollapse title={t("boardMaterial")}>
+        <PanelCollapse title={t("boardMaterial")} tool="material">
           <label>{t("preset")}</label>
           <select value={materialId} onChange={(e) => setMaterialWithAnalytics(e.target.value)}>
             {MATERIAL_PRESETS.map((p) => (
@@ -1249,7 +1301,7 @@ export default function BoxDesigner({
           </p>
         </PanelCollapse>
 
-        <PanelCollapse title={t("openingStyle")}>
+        <PanelCollapse title={t("openingStyle")} tool="opening">
           <label>{t("mechanism")}</label>
           <select value={opening} onChange={(e) => commitOpeningWithAnalytics(e.target.value as OpeningStyle)}>
             {openingOptions.map((o) => (
@@ -1284,7 +1336,7 @@ export default function BoxDesigner({
           )}
         </PanelCollapse>
 
-        <PanelCollapse title={t("faceArtwork")}>
+        <PanelCollapse title={t("faceArtwork")} tool="artwork">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             {t("artworkHint", { size: formatFileSize(MAX_FACE_ARTWORK_BYTES) })}
           </p>
@@ -1380,7 +1432,7 @@ export default function BoxDesigner({
           </>
         )}
 
-        <PanelCollapse title={t("viewportLighting")}>
+        <PanelCollapse title={t("viewportLighting")} tool="scene">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             {t("viewportLightingHint")}
           </p>
@@ -1510,7 +1562,7 @@ export default function BoxDesigner({
         </div>
 
         <div className="studio-mobile-pane studio-mobile-pane--export">
-        <PanelCollapse title={t("viewportCapture")}>
+        <PanelCollapse title={t("viewportCapture")} tool="export">
           <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: "0 0 0.65rem" }}>
             {t("captureHint")}
           </p>
