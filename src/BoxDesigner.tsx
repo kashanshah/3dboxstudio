@@ -1014,6 +1014,7 @@ export default function BoxDesigner({
         className={`box-designer-root${sidebarOpen ? "" : " sidebar-collapsed"}`}
         data-mobile-tab={mobileTab}
         data-active-tool={activeTool}
+        data-editor={viewOnly ? "false" : "true"}
       >
       {!viewOnly && (
         <nav className="studio-tool-rail" aria-label="Studio tools">
