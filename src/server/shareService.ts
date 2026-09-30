@@ -7,6 +7,7 @@ import { getSql } from "./db";
 import { SHARE_MAX_IMAGE_BYTES, SHARE_MAX_OG_IMAGE_BYTES, shareMaxPayloadBytes, shareTtlDays } from "./env";
 import { getShareObject, publicUrlForKey, uploadShareFaceImage, uploadShareOgImage, uploadShareSourceImage } from "./s3";
 import { customAlphabet } from "nanoid";
+import { resolveOwnedProjectId } from "./projectService";
 
 const SHARE_FACE_IDS = new Set<FaceId>([...ALL_FACES, ...SPLIT_TOP_FACES, "top"]);
 const SHARE_TOKEN_RE = /^[0-9A-Za-z]{10,24}$/;
@@ -260,28 +261,32 @@ function assertOwner(ownerId: string | null, userId: string): void {
   }
 }
 
-export type ProjectSummary = {
+export type DesignSummary = {
   id: string;
   previewToken: string;
   name: string | null;
   updatedAt: string;
   createdAt: string;
   thumbnailUrl: string | null;
+  projectId: string | null;
 };
 
-export async function listUserProjects(userId: string): Promise<ProjectSummary[]> {
+export async function listUserDesigns(userId: string, projectId?: string | null): Promise<DesignSummary[]> {
+  const resolvedProjectId = projectId ? await resolveOwnedProjectId(userId, projectId) : null;
   const sql = getSql();
   const rows = (await sql`
-    SELECT id, preview_token, name, og_image_key, created_at, updated_at
+    SELECT id, preview_token, name, project_id, og_image_key, created_at, updated_at
     FROM shared_designs
     WHERE user_id = ${userId}
       AND (expires_at IS NULL OR expires_at > NOW())
+      AND (${resolvedProjectId}::text IS NULL OR project_id = ${resolvedProjectId})
     ORDER BY updated_at DESC
     LIMIT 200
   `) as {
     id: string;
     preview_token: string;
     name: string | null;
+    project_id: string | null;
     og_image_key: string | null;
     created_at: string;
     updated_at: string;
@@ -291,6 +296,7 @@ export async function listUserProjects(userId: string): Promise<ProjectSummary[]
       id: row.id,
       previewToken: row.preview_token,
       name: row.name ?? null,
+      projectId: row.project_id ?? null,
       updatedAt: row.updated_at,
       createdAt: row.created_at,
       thumbnailUrl: buildShareThumbnailUrl(row.og_image_key, row.updated_at),
@@ -332,7 +338,8 @@ export async function createShare(
   designJson: string,
   createdBy: string | null,
   name?: string | null,
-  ogImage?: ShareOgImageInput | null
+  ogImage?: ShareOgImageInput | null,
+  requestedProjectId?: string | null
 ): Promise<ShareLinks> {
   const parsed = await parseAndValidateDesignJson(designJson);
   const id = createShareId();
@@ -343,8 +350,9 @@ export async function createShare(
   const ogMeta = ogImage ? await saveOgImage(id, ogImage) : { og_image_key: null, og_image_width: null, og_image_height: null };
   const ttlDays = shareTtlDays();
   const sql = getSql();
+  const projectId = createdBy ? await resolveOwnedProjectId(createdBy, requestedProjectId) : null;
 
-  // Signed-in projects are permanent; any legacy anonymous share keeps the TTL.
+  // Signed-in designs are permanent; any legacy anonymous share keeps the TTL.
   const expiresAt = createdBy ? null : new Date(Date.now() + ttlDays * 86_400_000).toISOString();
 
   const rows = (await sql`
@@ -357,6 +365,7 @@ export async function createShare(
       expires_at,
       created_by,
       user_id,
+      project_id,
       og_image_key,
       og_image_width,
       og_image_height
@@ -370,6 +379,7 @@ export async function createShare(
       ${expiresAt},
       ${createdBy},
       ${createdBy},
+      ${projectId},
       ${ogMeta.og_image_key},
       ${ogMeta.og_image_width},
       ${ogMeta.og_image_height}
