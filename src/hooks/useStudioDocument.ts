@@ -97,6 +97,12 @@ function readShareUpdatedAt(data: unknown): number | null {
   return toShareCacheVersion(typeof updatedAt === "string" ? updatedAt : null);
 }
 
+function readProjectIdFromPayload(data: unknown): string | null {
+  if (typeof data !== "object" || data === null) return null;
+  const projectId = (data as { projectId?: unknown }).projectId;
+  return typeof projectId === "string" && projectId.trim() ? projectId : null;
+}
+
 type StudioAnalyticsContext = {
   templateType?: TemplateType | string;
   boxType?: BoxType | string;
@@ -145,6 +151,7 @@ export function useStudioDocument({
   const [activeShareId, setActiveShareId] = useState<string | null>(initialShareId);
   const [activePreviewToken, setActivePreviewToken] = useState<string | null>(null);
   const [activeShareName, setActiveShareName] = useState<string | null>(null);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [previewCacheVersion, setPreviewCacheVersion] = useState<number | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [modal, setModal] = useState<StudioFileModal>(null);
@@ -155,6 +162,7 @@ export function useStudioDocument({
   const [saveAsPreviewLink, setSaveAsPreviewLink] = useState<string | null>(null);
   const [saveAsName, setSaveAsName] = useState("");
   const [saveAsNameError, setSaveAsNameError] = useState<string | null>(null);
+  const [saveAsProjectId, setSaveAsProjectId] = useState<string | null>(null);
   const [saveAsIsCopy, setSaveAsIsCopy] = useState(false);
   const [renameInput, setRenameInput] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
@@ -269,9 +277,10 @@ export function useStudioDocument({
       : (activeShareName ?? "");
     setSaveAsName(defaultName);
     setSaveAsNameError(null);
+    setSaveAsProjectId(activeProjectId);
     setSaveAsIsCopy(viewOnly);
     setModal("save-as");
-  }, [activeShareName, viewOnly, ensureCloudAccess]);
+  }, [activeProjectId, activeShareName, viewOnly, ensureCloudAccess]);
 
   // Duplicate the current design into a brand-new project. Reuses the "Save As"
   // create flow (new id, fresh images/preview) so the original stays untouched.
@@ -283,9 +292,10 @@ export function useStudioDocument({
     const base = activeShareName ? `Copy of ${activeShareName}` : "Copy of design";
     setSaveAsName(base.slice(0, 120));
     setSaveAsNameError(null);
+    setSaveAsProjectId(activeProjectId);
     setSaveAsIsCopy(true);
     setModal("save-as");
-  }, [activeShareName, viewOnly, ensureCloudAccess]);
+  }, [activeProjectId, activeShareName, viewOnly, ensureCloudAccess]);
 
   const openRenameModal = useCallback(() => {
     if (viewOnly || !activeShareId) return;
@@ -357,6 +367,7 @@ export function useStudioDocument({
       setActiveShareId(shareId);
       setActivePreviewToken(previewToken);
       setActiveShareName(shareName);
+      setActiveProjectId(readProjectIdFromPayload(data));
       setPreviewCacheVersion(readShareUpdatedAt(data));
       syncUrlToShare(shareId);
       setIsDirty(false);
@@ -542,6 +553,7 @@ export function useStudioDocument({
       const json = await serializeDesign(buildPersistState());
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (normalizedName) headers["X-Share-Name"] = normalizedName;
+      if (saveAsProjectId) headers["X-Project-Id"] = saveAsProjectId;
 
       const res = await fetch("/api/shares", {
         method: "POST",
@@ -555,6 +567,7 @@ export function useStudioDocument({
       setActiveShareId(id);
       setActivePreviewToken(previewToken ?? null);
       setActiveShareName(resolvedName);
+      setActiveProjectId(saveAsProjectId);
 
       const ogUpdatedAt = await uploadOgPreviewIfPresent(id, preview, setSaveOverlayMessage);
       const cacheVersion = ogUpdatedAt ?? toShareCacheVersion(updatedAt);
@@ -595,7 +608,7 @@ export function useStudioDocument({
       setSaveOverlayMessage(null);
       setCloudBusy(false);
     }
-  }, [buildPersistState, capturePreviewImage, saveAsName, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess, markProjectSaved, t]);
+  }, [buildPersistState, capturePreviewImage, saveAsName, saveAsProjectId, showStatus, syncUrlToShare, rememberRecent, viewOnly, ensureCloudAccess, markProjectSaved, t]);
 
   const renameCloudShare = useCallback(async () => {
     if (viewOnly || !activeShareId) return;
@@ -773,6 +786,7 @@ export function useStudioDocument({
     setActiveShareId(null);
     setActivePreviewToken(null);
     setActiveShareName(null);
+    setActiveProjectId(null);
     setPreviewCacheVersion(null);
     syncUrlToShare(null);
     setIsDirty(false);
@@ -894,6 +908,7 @@ export function useStudioDocument({
     activeShareId,
     activePreviewToken,
     activeShareName,
+    activeProjectId,
     viewOnly,
     isDirty,
     modal,
@@ -909,6 +924,8 @@ export function useStudioDocument({
     setSaveAsName,
     saveAsNameError,
     setSaveAsNameError,
+    saveAsProjectId,
+    setSaveAsProjectId,
     saveAsIsCopy,
     renameInput,
     setRenameInput,
