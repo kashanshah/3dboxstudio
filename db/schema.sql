@@ -61,6 +61,19 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_password_reset_user ON password_reset_tokens (user_id);
 
+CREATE TABLE IF NOT EXISTS projects (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL DEFAULT 'My Project',
+  is_default BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_projects_user ON projects (user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_one_default_per_user
+  ON projects (user_id) WHERE is_default = TRUE;
+
 CREATE TABLE IF NOT EXISTS shared_designs (
   id TEXT PRIMARY KEY,
   preview_token TEXT UNIQUE,
@@ -71,6 +84,7 @@ CREATE TABLE IF NOT EXISTS shared_designs (
   expires_at TIMESTAMPTZ,
   created_by TEXT,
   user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+  project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
   view_count INTEGER NOT NULL DEFAULT 0,
   og_image_key TEXT,
   og_image_width INTEGER,
@@ -82,6 +96,21 @@ CREATE TABLE IF NOT EXISTS shared_designs (
 
 CREATE INDEX IF NOT EXISTS idx_shared_designs_expires_at ON shared_designs (expires_at);
 CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id);
+CREATE INDEX IF NOT EXISTS idx_shared_designs_project ON shared_designs (project_id);
+
+CREATE TABLE IF NOT EXISTS scenes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name TEXT,
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  thumbnail_url TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scenes_user ON scenes (user_id);
+CREATE INDEX IF NOT EXISTS idx_scenes_project ON scenes (project_id);
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
   id TEXT PRIMARY KEY,
