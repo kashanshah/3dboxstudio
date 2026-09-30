@@ -3,6 +3,7 @@
 import { useCallback, useState, type ChangeEvent, type DragEvent } from "react";
 import StudioDialog from "./StudioDialog";
 import StudioProjectsPanel from "./StudioProjectsPanel";
+import StudioProjectSelect from "./StudioProjectSelect";
 import type { useStudioDocument } from "@/hooks/useStudioDocument";
 import type { AuthUser } from "@/lib/authTypes";
 import { formatRecentTimestamp } from "@/lib/recentDesigns";
@@ -17,6 +18,7 @@ type StudioFileModalsProps = {
 export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFileModalsProps) {
   const t = useTranslations("studio.files");
   const [dragOver, setDragOver] = useState(false);
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
 
   const onImportChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -113,10 +115,18 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
         )}
 
         <div className="studio-open-section">
-          <h3 className="studio-open-section-title">{t("myProjects")}</h3>
+          <h3 className="studio-open-section-title">Projects & designs</h3>
+          <StudioProjectSelect
+            user={authUser}
+            value={openProjectId}
+            onChange={setOpenProjectId}
+            label="Project"
+            disabled={doc.cloudBusy}
+          />
           <StudioProjectsPanel
             open={doc.modal === "open"}
             user={authUser}
+            projectId={openProjectId}
             onSignIn={onSignIn}
             onOpenProject={(id) => void doc.openProject(id)}
             onStatus={(message) => doc.showStatus(message)}
@@ -253,6 +263,13 @@ export default function StudioFileModals({ doc, authUser, onSignIn }: StudioFile
                 ? t("duplicateLead")
                 : t("saveAsLead")}
             </p>
+            <StudioProjectSelect
+              user={authUser}
+              value={doc.saveAsProjectId}
+              onChange={doc.setSaveAsProjectId}
+              label="Project"
+              disabled={doc.cloudBusy}
+            />
             <label className="studio-dialog-label" htmlFor="studio-save-as-name">
               {t("designName")} <span className="studio-dialog-optional">{t("optional")}</span>
             </label>
