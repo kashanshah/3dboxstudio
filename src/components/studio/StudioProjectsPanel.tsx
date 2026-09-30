@@ -6,7 +6,7 @@ import type { AuthUser } from "@/lib/authTypes";
 import { DEFAULT_UNTITLED_SHARE_NAME, shareNameError } from "@/lib/shareName";
 import StudioDialog from "./StudioDialog";
 
-type ProjectSummary = {
+type DesignSummary = {
   id: string;
   previewToken: string;
   name: string | null;
@@ -18,6 +18,7 @@ type ProjectSummary = {
 type StudioProjectsPanelProps = {
   open: boolean;
   user: AuthUser | null;
+  projectId?: string | null;
   onSignIn: () => void;
   onOpenProject: (id: string) => void;
   onStatus: (message: string) => void;
@@ -34,6 +35,7 @@ function formatUpdated(iso: string): string {
 export default function StudioProjectsPanel({
   open,
   user,
+  projectId = null,
   onSignIn,
   onOpenProject,
   onStatus,
@@ -41,21 +43,22 @@ export default function StudioProjectsPanel({
   listClassName = "studio-projects-list",
 }: StudioProjectsPanelProps) {
   const t = useTranslations("studio.projects");
-  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [projects, setProjects] = useState<DesignSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [renameProject, setRenameProject] = useState<ProjectSummary | null>(null);
+  const [renameProject, setRenameProject] = useState<DesignSummary | null>(null);
   const [renameInput, setRenameInput] = useState("");
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [deleteProject, setDeleteProject] = useState<ProjectSummary | null>(null);
+  const [deleteProject, setDeleteProject] = useState<DesignSummary | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/projects", { cache: "no-store" });
+      const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : "";
+      const res = await fetch(`/api/designs${query}`, { cache: "no-store" });
       const data: unknown = await res.json().catch(() => null);
       if (!res.ok) {
         setError(
@@ -66,14 +69,14 @@ export default function StudioProjectsPanel({
         setProjects([]);
         return;
       }
-      const list = (data as { projects?: ProjectSummary[] }).projects ?? [];
+      const list = (data as { designs?: DesignSummary[] }).designs ?? [];
       setProjects(list);
     } catch {
       setError(t("errors.network"));
     } finally {
       setLoading(false);
     }
-  }, [t, user]);
+  }, [projectId, t, user]);
 
   useEffect(() => {
     if (open && user) void load();
@@ -86,7 +89,7 @@ export default function StudioProjectsPanel({
     }
   }, [open, user, load]);
 
-  const openRenameDialog = useCallback((project: ProjectSummary) => {
+  const openRenameDialog = useCallback((project: DesignSummary) => {
     setRenameProject(project);
     setRenameInput(project.name ?? "");
     setRenameError(null);
