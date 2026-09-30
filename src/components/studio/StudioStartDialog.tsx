@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import type { AuthUser } from "@/lib/authTypes";
 import StudioDialog from "./StudioDialog";
 import StudioProjectsPanel from "./StudioProjectsPanel";
+import StudioProjectSelect from "./StudioProjectSelect";
 
 type StudioStartDialogProps = {
   open: boolean;
@@ -30,6 +32,7 @@ export default function StudioStartDialog({
   onStatus,
 }: StudioStartDialogProps) {
   const t = useTranslations("studio.startDialog");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const handleCreateNew = () => {
     if (!user) {
       onRequireSignUp();
@@ -76,10 +79,17 @@ export default function StudioStartDialog({
       </p>
 
       <div className="studio-start-projects">
-        <h3 className="studio-open-section-title">{t("savedDesigns")}</h3>
+        <h3 className="studio-open-section-title">Projects & designs</h3>
+        <StudioProjectSelect
+          user={user}
+          value={projectId}
+          onChange={setProjectId}
+          label="Project"
+        />
         <StudioProjectsPanel
           open={open}
           user={user}
+          projectId={projectId}
           onSignIn={onSignIn}
           onOpenProject={handleOpenProject}
           onStatus={onStatus}
