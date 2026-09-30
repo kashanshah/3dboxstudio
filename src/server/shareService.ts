@@ -248,6 +248,7 @@ function buildEditorPayload(
     v: 1,
     shareName: row.name ?? null,
     shareUpdatedAt: row.updated_at ?? null,
+    projectId: row.project_id ?? null,
     ...(includePreviewToken ? { previewToken: row.preview_token } : {}),
     ...row.config,
     faceImages,
@@ -555,6 +556,7 @@ type ShareRow = {
   og_image_width: number | null;
   og_image_height: number | null;
   updated_at: string | null;
+  project_id: string | null;
 };
 
 export async function getShareSeoMeta(shareId: string): Promise<ShareSeoMeta | null> {
@@ -668,7 +670,7 @@ export async function getShare(id: string): Promise<Record<string, unknown> | nu
     SET view_count = view_count + 1
     WHERE id = ${id}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, preview_token, name, config, images, expires_at, updated_at
+    RETURNING id, preview_token, name, project_id, config, images, expires_at, updated_at
   `) as ShareRow[];
 
   const row = rows[0];
