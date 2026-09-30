@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertCanCreateShare } from "@/server/shareAuth";
 import { ShareError, deleteShare, getShare, renameShare, updateShare } from "@/server/shareService";
+import { moveDesignToProject, ProjectError } from "@/server/projectService";
 import { parseShareSaveRequest } from "@/server/shareSaveRequest";
 
 export const runtime = "nodejs";
@@ -36,13 +37,28 @@ export async function PATCH(req: Request, context: RouteContext) {
     const userId = await assertCanCreateShare(req);
     const { id } = await context.params;
     const body: unknown = await req.json().catch(() => null);
-    if (typeof body !== "object" || body === null || !("name" in body) || typeof (body as { name: unknown }).name !== "string") {
-      return NextResponse.json({ error: "Expected JSON body with a name field." }, { status: 400 });
+    if (typeof body !== "object" || body === null) {
+      return NextResponse.json({ error: "Expected a JSON request body." }, { status: 400 });
     }
-    const result = await renameShare(id, (body as { name: string }).name, userId);
+
+    const hasName = "name" in body && typeof (body as { name?: unknown }).name === "string";
+    const hasProjectId = "projectId" in body && typeof (body as { projectId?: unknown }).projectId === "string";
+    if (!hasName && !hasProjectId) {
+      return NextResponse.json({ error: "Expected a name or projectId field." }, { status: 400 });
+    }
+
+    let result: { id: string; name?: string | null; updatedAt?: string; projectId?: string } = { id };
+    if (hasName) {
+      result = { ...result, ...(await renameShare(id, (body as { name: string }).name, userId)) };
+    }
+    if (hasProjectId) {
+      const projectId = (body as { projectId: string }).projectId;
+      await moveDesignToProject(userId, id, projectId);
+      result.projectId = projectId;
+    }
     return NextResponse.json(result);
   } catch (e) {
-    if (e instanceof ShareError) {
+    if (e instanceof ShareError || e instanceof ProjectError) {
       return NextResponse.json({ error: e.message }, { status: e.status });
     }
     console.error("PATCH /api/shares/[id] failed:", e);
