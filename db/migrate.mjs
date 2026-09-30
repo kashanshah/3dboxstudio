@@ -147,6 +147,94 @@ await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS user_id TEXT REFER
 await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_user ON shared_designs (user_id)`;
 console.log("OK: shared_designs.user_id column is ready.");
 
+
+// --- Projects + scenes ---------------------------------------------------
+
+await sql`
+  CREATE TABLE IF NOT EXISTS projects (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT 'My Project',
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_projects_user ON projects (user_id)`;
+await sql`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_projects_one_default_per_user
+  ON projects (user_id) WHERE is_default = TRUE
+`;
+console.log("OK: projects table is ready.");
+
+await sql`
+  INSERT INTO projects (id, user_id, name, is_default)
+  SELECT
+    'prj_' || substr(md5(u.id || ':' || random()::text || ':' || clock_timestamp()::text), 1, 16),
+    u.id,
+    'My Project',
+    TRUE
+  FROM users u
+  WHERE NOT EXISTS (
+    SELECT 1 FROM projects p WHERE p.user_id = u.id AND p.is_default = TRUE
+  )
+`;
+console.log("OK: every existing account has a default project.");
+
+await sql`
+  CREATE OR REPLACE FUNCTION create_default_project_for_user()
+  RETURNS TRIGGER AS $
+  BEGIN
+    INSERT INTO projects (id, user_id, name, is_default)
+    VALUES (
+      'prj_' || substr(md5(NEW.id || ':' || random()::text || ':' || clock_timestamp()::text), 1, 16),
+      NEW.id,
+      'My Project',
+      TRUE
+    )
+    ON CONFLICT DO NOTHING;
+    RETURN NEW;
+  END;
+  $ LANGUAGE plpgsql
+`;
+await sql`DROP TRIGGER IF EXISTS users_create_default_project ON users`;
+await sql`
+  CREATE TRIGGER users_create_default_project
+  AFTER INSERT ON users
+  FOR EACH ROW
+  EXECUTE FUNCTION create_default_project_for_user()
+`;
+console.log("OK: new accounts automatically receive My Project.");
+
+await sql`ALTER TABLE shared_designs ADD COLUMN IF NOT EXISTS project_id TEXT REFERENCES projects(id) ON DELETE SET NULL`;
+await sql`CREATE INDEX IF NOT EXISTS idx_shared_designs_project ON shared_designs (project_id)`;
+await sql`
+  UPDATE shared_designs d
+  SET project_id = p.id
+  FROM projects p
+  WHERE d.project_id IS NULL
+    AND d.user_id IS NOT NULL
+    AND p.user_id = d.user_id
+    AND p.is_default = TRUE
+`;
+console.log("OK: existing saved designs are assigned to their account's default project.");
+
+await sql`
+  CREATE TABLE IF NOT EXISTS scenes (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT,
+    config JSONB NOT NULL DEFAULT '{}'::jsonb,
+    thumbnail_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
+await sql`CREATE INDEX IF NOT EXISTS idx_scenes_user ON scenes (user_id)`;
+await sql`CREATE INDEX IF NOT EXISTS idx_scenes_project ON scenes (project_id)`;
+console.log("OK: scenes table is ready.");
+
 await sql`ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`;
 console.log("OK: users.password_hash is nullable for OAuth accounts.");
 
