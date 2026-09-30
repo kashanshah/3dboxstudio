@@ -258,7 +258,7 @@ function buildEditorPayload(
 
 function assertOwner(ownerId: string | null, userId: string): void {
   if (!ownerId || ownerId !== userId) {
-    throw new ShareError("You don't have permission to modify this project.", 403);
+    throw new ShareError("You don't have permission to modify this design.", 403);
   }
 }
 
@@ -320,7 +320,7 @@ export async function getShareOwnerId(id: string): Promise<string | null | undef
 
 export async function deleteShare(id: string, userId: string): Promise<void> {
   if (!SHARE_TOKEN_RE.test(id)) {
-    throw new ShareError("Invalid project id.", 400);
+    throw new ShareError("Invalid design id.", 400);
   }
   const sql = getSql();
   const existing = (await sql`
@@ -328,7 +328,7 @@ export async function deleteShare(id: string, userId: string): Promise<void> {
   `) as { user_id: string | null }[];
 
   if (existing.length === 0) {
-    throw new ShareError("Project not found.", 404);
+    throw new ShareError("Design not found.", 404);
   }
   assertOwner(existing[0].user_id, userId);
 
@@ -417,7 +417,7 @@ export async function updateShare(
   `) as { id: string; preview_token: string; name: string | null; user_id: string | null }[];
 
   if (!existing[0]?.preview_token) {
-    throw new ShareError("Project not found.", 404);
+    throw new ShareError("Design not found.", 404);
   }
   assertOwner(existing[0].user_id, userId);
 
@@ -465,7 +465,7 @@ export async function renameShare(
     LIMIT 1
   `) as { user_id: string | null }[];
   if (existing.length === 0) {
-    throw new ShareError("Project not found.", 404);
+    throw new ShareError("Design not found.", 404);
   }
   assertOwner(existing[0].user_id, userId);
 
@@ -688,7 +688,7 @@ export async function getShareByPreviewToken(previewToken: string): Promise<Reco
     SET view_count = view_count + 1
     WHERE preview_token = ${previewToken}
       AND (expires_at IS NULL OR expires_at > NOW())
-    RETURNING id, preview_token, name, config, images, expires_at, updated_at
+    RETURNING id, preview_token, name, project_id, config, images, expires_at, updated_at
   `) as ShareRow[];
 
   const row = rows[0];
