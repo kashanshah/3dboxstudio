@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import AnalyticsPageView from "@/components/AnalyticsPageView";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import PostHogAnalytics from "@/components/PostHogAnalytics";
 import VercelAnalytics from "@/components/VercelAnalytics";
 import BuyMeACoffeeWidget from "@/components/BuyMeACoffeeWidget";
 import AttributionCapture from "@/components/AttributionCapture";
@@ -52,6 +53,7 @@ export default async function LocaleLayout({ children, params }: Props) {
     <NextIntlClientProvider messages={messages}>
       {children}
       <GoogleAnalytics />
+      <PostHogAnalytics />
       <Suspense fallback={null}>
         <AttributionCapture />
         <AnalyticsPageView />
