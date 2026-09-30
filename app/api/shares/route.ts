@@ -18,8 +18,9 @@ export async function POST(req: Request) {
     }
 
     const name = req.headers.get("X-Share-Name");
+    const projectId = req.headers.get("X-Project-Id");
     const { designJson } = parseShareSaveRequest(req, rawBody);
-    const result = await createShare(designJson, createdBy, name);
+    const result = await createShare(designJson, createdBy, name, null, projectId);
     return NextResponse.json(result);
   } catch (e) {
     if (e instanceof ShareError) {
