@@ -2070,6 +2070,37 @@ html[data-studio-theme="light"] .studio-shell .btn-ghost,
   color: var(--text);
 }
 
+
+.studio-project-select {
+  margin: 0 0 12px;
+}
+
+.studio-project-select-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.studio-project-select-row .studio-dialog-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-project-select-row .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .studio-project-select-row {
+    flex-direction: column;
+  }
+
+  .studio-project-select-row .btn {
+    width: 100%;
+  }
+}
+
 .studio-open-projects-guest {
   display: flex;
   flex-direction: column;
