@@ -760,35 +760,35 @@
     },
     "projects": {
       "errors": {
-        "load": "Could not load your projects.",
+        "load": "Could not load your designs.",
         "network": "Network error. Please try again.",
-        "rename": "Could not rename project.",
-        "delete": "Could not delete project."
+        "rename": "Could not rename design.",
+        "delete": "Could not delete design."
       },
       "status": {
-        "renamed": "Project renamed.",
-        "deleted": "Project deleted."
+        "renamed": "Design renamed.",
+        "deleted": "Design deleted."
       },
-      "signInHint": "Sign in to browse projects saved to your account.",
+      "signInHint": "Sign in to browse designs saved to your account.",
       "signIn": "Sign in",
-      "loading": "Loading your projects…",
-      "empty": "You haven't saved any projects yet. Design a box, then use File → Save As to store it here.",
+      "loading": "Loading your designs…",
+      "empty": "This project does not have any saved designs yet. Create a box, then use File → Save As to store it here.",
       "updated": "Updated {date}",
       "open": "Open",
       "rename": "Rename",
       "delete": "Delete",
-      "renameProjectTitle": "Rename project",
+      "renameProjectTitle": "Rename design",
       "cancel": "Cancel",
       "saving": "Saving…",
-      "renameLead": "Change the display name for this saved project.",
-      "projectName": "Project name",
+      "renameLead": "Change the display name for this saved design.",
+      "projectName": "Design name",
       "renamePlaceholder": "Leave blank to remove the name",
-      "deleteProjectTitle": "Delete project",
+      "deleteProjectTitle": "Delete design",
       "deleting": "Deleting…",
-      "deleteProject": "Delete project",
-      "thisProject": "this project",
+      "deleteProject": "Delete design",
+      "thisProject": "this design",
       "deleteLead": "Delete <strong>{project}</strong>? This cannot be undone.",
-      "deleteHint": "Share links for this project will stop working after deletion."
+      "deleteHint": "Share links for this design will stop working after deletion."
     },
     "status": {
       "checkingAccount": "Checking your account…",
@@ -808,8 +808,8 @@
       "renamedTo": "Renamed to “{name}”.",
       "designNameCleared": "Design name cleared.",
       "couldNotRenameDesign": "Could not rename design.",
-      "projectOpened": "Project opened.",
-      "couldNotOpenProject": "Could not open project.",
+      "projectOpened": "Design opened.",
+      "couldNotOpenProject": "Could not open design.",
       "enterValidShareLink": "Enter a valid share link or ID.",
       "designOpenedFromCloud": "Design opened from cloud.",
       "couldNotOpenDesign": "Could not open design.",
